@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { clerkLogin } = require("../controllers/authController");
-const verifyClerkToken = require("../middleware/verifyClerkToken");
+const { register, login, getMe } = require("../controllers/authController");
+const verifyToken = require("../middleware/verifyToken");
 
-// ✅ POST /api/auth/clerk-login
-router.post("/clerk-login", verifyClerkToken, clerkLogin);
+router.post("/register", register);
+router.post("/login", login);
+router.get("/me", verifyToken, getMe);
 
 module.exports = router;

@@ -2,7 +2,12 @@ require("dotenv").config();
 const Stripe = require("stripe");
 const { db } = require("../config/firebase");
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not configured");
+  }
+  return Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 // ✅ Create Checkout Session (with Apple Pay + Automatic Tax)
 exports.createCheckoutSession = async (req, res) => {
@@ -17,6 +22,7 @@ exports.createCheckoutSession = async (req, res) => {
     }
 
     // ✅ Create Stripe Checkout session
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
@@ -66,6 +72,7 @@ exports.handleWebhook = async (req, res) => {
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(
       req.rawBody,
       sig,
