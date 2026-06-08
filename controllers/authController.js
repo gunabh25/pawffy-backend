@@ -15,13 +15,13 @@ exports.register = asyncHandler(async (req, res) => {
     });
   }
 
-  const { email, phoneNumber, password, name, termsAccepted } = value;
+  const { email, phoneNumber, password, name } = value;
 
   const existingUser = await prisma.user.findFirst({
     where: {
       OR: [
         ...(email ? [{ email }] : []),
-        ...(phoneNumber ? [{ phoneNumber }] : []),
+        ...(phoneNumber ? [{ phone: phoneNumber }] : []),
       ],
     },
   });
@@ -38,11 +38,9 @@ exports.register = asyncHandler(async (req, res) => {
   const user = await prisma.user.create({
     data: {
       email: email || null,
-      phoneNumber: phoneNumber || null,
+      phone: phoneNumber || null,
       passwordHash,
       name: name || null,
-      termsAccepted,
-      isNumberLogin: Boolean(phoneNumber && !email),
     },
   });
 
@@ -70,7 +68,7 @@ exports.login = asyncHandler(async (req, res) => {
   const { email, phoneNumber, password } = value;
 
   const user = await prisma.user.findFirst({
-    where: email ? { email } : { phoneNumber },
+    where: email ? { email } : { phone: phoneNumber },
   });
 
   if (!user) {

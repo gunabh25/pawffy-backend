@@ -1,0 +1,808 @@
+{
+  "info": {
+    "name": "Pawffy 2.0 API",
+    "description": "Complete Postman collection for Pawffy 2.0 – AI Powered Pet Care Platform backend. Import this file into Postman. After registering/logging in, the token is auto-saved to the {{token}} variable.",
+    "_postman_id": "pawffy-2.0-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5001", "type": "string" },
+    { "key": "token",   "value": "", "type": "string" },
+    { "key": "userId",  "value": "", "type": "string" },
+    { "key": "petId",   "value": "", "type": "string" },
+    { "key": "vetId",   "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "recordId",  "value": "", "type": "string" },
+    { "key": "vaccId",    "value": "", "type": "string" },
+    { "key": "notifId",   "value": "", "type": "string" },
+    { "key": "sessionId", "value": "", "type": "string" },
+    { "key": "analysisId","value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  pm.collectionVariables.set('userId', res.data.user.id);",
+                  "  console.log('Token saved:', res.data.token.slice(0,40) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"name\": \"John Doe\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  pm.collectionVariables.set('userId', res.data.user.id);",
+                  "  console.log('Token saved:', res.data.token.slice(0,40) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+        {
+          "name": "Login with Phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  pm.collectionVariables.set('userId', res.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"9876543210\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api","auth","me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"9876543210\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"Delhi\",\n  \"state\": \"Delhi\",\n  \"profileImage\": \"https://example.com/profile.jpg\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api","users","me"] }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api","users"] }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🐾 Pets",
+      "item": [
+        {
+          "name": "Create Pet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('petId', res.data.id);",
+                  "  console.log('Pet ID saved:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buddy\",\n  \"species\": \"Dog\",\n  \"breed\": \"Labrador\",\n  \"gender\": \"Male\",\n  \"age\": 3,\n  \"weight\": 25.5,\n  \"color\": \"Golden\",\n  \"medicalNotes\": \"Allergic to certain pollens\",\n  \"vaccinationStatus\": \"Up to date\",\n  \"imageUrl\": \"https://example.com/buddy.jpg\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pets", "host": ["{{baseUrl}}"], "path": ["api","pets"] }
+          }
+        },
+        {
+          "name": "Get My Pets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/pets", "host": ["{{baseUrl}}"], "path": ["api","pets"] }
+          }
+        },
+        {
+          "name": "Get Pet By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","pets","{{petId}}"] }
+          }
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buddy Updated\",\n  \"age\": 4,\n  \"weight\": 27.0,\n  \"medicalNotes\": \"No known allergies\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","pets","{{petId}}"] }
+          }
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","pets","{{petId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🩺 Vets",
+      "item": [
+        {
+          "name": "Create Vet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('vetId', res.data.id);",
+                  "  console.log('Vet ID saved:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Priya Sharma\",\n  \"email\": \"dr.priya@example.com\",\n  \"specialization\": \"Small Animals\",\n  \"experienceYears\": 8,\n  \"clinicName\": \"Paw Care Clinic\",\n  \"consultationFee\": 500,\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vets", "host": ["{{baseUrl}}"], "path": ["api","vets"] }
+          }
+        },
+        {
+          "name": "Get All Vets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?city=Mumbai&specialization=Small&available=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","vets"],
+              "query": [
+                { "key": "city", "value": "Mumbai", "description": "Filter by city" },
+                { "key": "specialization", "value": "Small", "description": "Filter by specialization (partial match)" },
+                { "key": "available", "value": "true", "description": "Only available vets" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vet By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}", "host": ["{{baseUrl}}"], "path": ["api","vets","{{vetId}}"] }
+          }
+        },
+        {
+          "name": "Update Vet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultationFee\": 600,\n  \"rating\": 4.8,\n  \"availableStatus\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}", "host": ["{{baseUrl}}"], "path": ["api","vets","{{vetId}}"] }
+          }
+        },
+        {
+          "name": "Set Vet Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slots\": [\n    { \"dayOfWeek\": \"Monday\",    \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30, \"isAvailable\": true },\n    { \"dayOfWeek\": \"Tuesday\",   \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30, \"isAvailable\": true },\n    { \"dayOfWeek\": \"Wednesday\", \"startTime\": \"09:00\", \"endTime\": \"13:00\", \"slotDuration\": 30, \"isAvailable\": true },\n    { \"dayOfWeek\": \"Friday\",    \"startTime\": \"10:00\", \"endTime\": \"18:00\", \"slotDuration\": 30, \"isAvailable\": true },\n    { \"dayOfWeek\": \"Saturday\",  \"startTime\": \"10:00\", \"endTime\": \"14:00\", \"slotDuration\": 30, \"isAvailable\": true }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability", "host": ["{{baseUrl}}"], "path": ["api","vets","{{vetId}}","availability"] }
+          }
+        },
+        {
+          "name": "Get Vet Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability", "host": ["{{baseUrl}}"], "path": ["api","vets","{{vetId}}","availability"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('bookingId', res.data.id);",
+                  "  console.log('Booking ID saved:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"10:00\",\n  \"symptoms\": \"Lethargy and loss of appetite for 2 days\",\n  \"notes\": \"First visit\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api","bookings"] }
+          }
+        },
+        {
+          "name": "Create Walking Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"bookingType\": \"walking\",\n  \"bookingDate\": \"2026-07-10\",\n  \"bookingTime\": \"07:30\",\n  \"notes\": \"Morning walk, 1 hour\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api","bookings"] }
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings?status=pending&type=veterinarian",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bookings"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "pending | confirmed | completed | cancelled" },
+                { "key": "type",   "value": "veterinarian", "description": "veterinarian | walking | grooming | boarding" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/all?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bookings","all"],
+              "query": [
+                { "key": "status", "value": "pending" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Booking By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api","bookings","{{bookingId}}"] }
+          }
+        },
+        {
+          "name": "Update Booking Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["api","bookings","{{bookingId}}","status"] }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["api","bookings","{{bookingId}}","status"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Payments",
+      "item": [
+        {
+          "name": "Create Checkout Session (Stripe)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/payments/checkout", "host": ["{{baseUrl}}"], "path": ["api","payments","checkout"] }
+          }
+        },
+        {
+          "name": "Get Payment By Booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/payments/booking/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api","payments","booking","{{bookingId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Medical Records",
+      "item": [
+        {
+          "name": "Create Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('recordId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild ear infection\",\n  \"prescription\": \"Ear drops twice daily for 7 days\",\n  \"allergies\": \"None known\",\n  \"symptoms\": \"Scratching ears, head shaking\",\n  \"reportUrl\": \"https://example.com/report/001.pdf\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/medical-records", "host": ["{{baseUrl}}"], "path": ["api","medical-records"] }
+          }
+        },
+        {
+          "name": "Get Records By Pet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/medical-records/pet/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","medical-records","pet","{{petId}}"] }
+          }
+        },
+        {
+          "name": "Get Record By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/medical-records/{{recordId}}", "host": ["{{baseUrl}}"], "path": ["api","medical-records","{{recordId}}"] }
+          }
+        },
+        {
+          "name": "Update Medical Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnosis\": \"Ear infection – resolved\",\n  \"prescription\": \"Treatment completed\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/medical-records/{{recordId}}", "host": ["{{baseUrl}}"], "path": ["api","medical-records","{{recordId}}"] }
+          }
+        },
+        {
+          "name": "Delete Medical Record",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/medical-records/{{recordId}}", "host": ["{{baseUrl}}"], "path": ["api","medical-records","{{recordId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💉 Vaccinations",
+      "item": [
+        {
+          "name": "Add Vaccination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('vaccId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vaccineName\": \"Rabies\",\n  \"vaccinationDate\": \"2025-01-10\",\n  \"nextDueDate\": \"2026-01-10\",\n  \"vetId\": \"{{vetId}}\",\n  \"notes\": \"Annual rabies booster\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vaccinations", "host": ["{{baseUrl}}"], "path": ["api","vaccinations"] }
+          }
+        },
+        {
+          "name": "Get Vaccinations By Pet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/vaccinations/pet/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","vaccinations","pet","{{petId}}"] }
+          }
+        },
+        {
+          "name": "Update Vaccination",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nextDueDate\": \"2027-01-10\",\n  \"notes\": \"Updated next due date\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vaccinations/{{vaccId}}", "host": ["{{baseUrl}}"], "path": ["api","vaccinations","{{vaccId}}"] }
+          }
+        },
+        {
+          "name": "Delete Vaccination",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/vaccinations/{{vaccId}}", "host": ["{{baseUrl}}"], "path": ["api","vaccinations","{{vaccId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?unread=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","notifications"],
+              "query": [
+                { "key": "unread", "value": "true", "description": "Set to true to only fetch unread" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('notifId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Booking Confirmed\",\n  \"message\": \"Your vet booking for Buddy on July 15 has been confirmed.\",\n  \"type\": \"booking\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/notifications", "host": ["{{baseUrl}}"], "path": ["api","notifications"] }
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notifId}}/read", "host": ["{{baseUrl}}"], "path": ["api","notifications","{{notifId}}","read"] }
+          }
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notifications/read-all", "host": ["{{baseUrl}}"], "path": ["api","notifications","read-all"] }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/notifications/{{notifId}}", "host": ["{{baseUrl}}"], "path": ["api","notifications","{{notifId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI",
+      "item": [
+        {
+          "name": "AI Chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('sessionId', res.data.sessionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"message\": \"My dog Buddy has been lethargic and not eating for 2 days. Should I be worried?\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/ai/chat", "host": ["{{baseUrl}}"], "path": ["api","ai","chat"] }
+          }
+        },
+        {
+          "name": "AI Chat – Emergency",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"message\": \"My dog is bleeding from a cut on its paw and it seems urgent, what should I do?\",\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/ai/chat", "host": ["{{baseUrl}}"], "path": ["api","ai","chat"] }
+          }
+        },
+        {
+          "name": "Get Chat History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/ai/chat/{{sessionId}}", "host": ["{{baseUrl}}"], "path": ["api","ai","chat","{{sessionId}}"] }
+          }
+        },
+        {
+          "name": "AI Image Analysis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data) {",
+                  "  pm.collectionVariables.set('analysisId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"uploadedImage\": \"https://example.com/uploads/skin-issue.jpg\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/ai/analyze-image", "host": ["{{baseUrl}}"], "path": ["api","ai","analyze-image"] }
+          }
+        },
+        {
+          "name": "Get Image Analyses for Pet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/ai/image-analyses/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api","ai","image-analyses","{{petId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "❤️ Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] }
+          }
+        }
+      ]
+    }
+  ]
+}

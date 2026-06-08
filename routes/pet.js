@@ -1,26 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const petController = require("../controllers/petController");
+const verifyToken = require("../middleware/verifyToken");
+const { createPet, getMyPets, getPetById, updatePet, deletePet } = require("../controllers/petController");
 
-// CREATE or UPDATE PET(S)
-router.post("/", petController.createPet);
-
-// READ ALL PETS
-router.get("/", petController.getAllPets);
-
-// READ PET BY DOCUMENT ID
-router.get("/doc/:id", petController.getPet);
-
-// READ SINGLE PET BY PET ID
-router.get("/pet/:petId", petController.getPet);
-
-// READ PET BY USER ID
-router.get("/user/:userId", petController.getPetsByUserId);
-
-// UPDATE PET BY PET ID
-router.put("/:petId", petController.updatePet);
-
-// DELETE PET BY PET ID
-router.delete("/:petId", petController.deletePet);
+router.post("/", verifyToken, createPet);
+router.get("/", verifyToken, getMyPets);
+router.get("/:id", verifyToken, getPetById);
+router.put("/:id", verifyToken, updatePet);
+router.delete("/:id", verifyToken, deletePet);
 
 module.exports = router;
