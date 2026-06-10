@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: pawffy-backend
+    runtime: node
+    region: singapore         # closest to India — change to oregon/frankfurt if preferred
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pawffy-db
+          property: connectionString
+      - key: PORT
+        value: 10000           # Render always uses 10000 internally
+      - key: JWT_SECRET
+        generateValue: true    # auto-generated strong secret on first deploy
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        value: ""              # fill in after frontend is deployed
+      - key: STRIPE_SECRET_KEY
+        value: ""              # fill in if using payments
+      - key: STRIPE_WEBHOOK_SECRET
+        value: ""
+
+databases:
+  - name: pawffy-db
+    databaseName: pawffy
+    user: pawffy
+    region: singapore
+    plan: free
