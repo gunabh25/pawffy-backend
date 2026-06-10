@@ -2,6 +2,9 @@ FROM node:22-slim AS base
 WORKDIR /app
 ENV NODE_ENV=production
 
+# OpenSSL is required by Prisma on slim images
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 # ─── Install dependencies ──────────────────────────────────────────────────────
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
@@ -10,6 +13,6 @@ RUN npm ci --omit=dev
 COPY . .
 RUN npx prisma generate
 
-# ─── Expose port and start ────────────────────────────────────────────────────
+# ─── Start ────────────────────────────────────────────────────────────────────
 EXPOSE 10000
 CMD ["node", "server.js"]
