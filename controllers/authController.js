@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
-const { registerSchema, loginSchema } = require("../models/authModel");
+const { registerSchema, loginSchema } = require("../models/node_modules/strnum/.vscode/authModel");
 const { signToken, sanitizeUser } = require("../utils/auth");
 
 const SALT_ROUNDS = 12;
