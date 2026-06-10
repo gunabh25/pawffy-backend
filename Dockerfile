@@ -13,6 +13,7 @@ RUN npm ci --omit=dev
 COPY . .
 RUN npx prisma generate
 
-# ─── Start ────────────────────────────────────────────────────────────────────
+# ─── Startup script: push schema then start server ────────────────────────────
+RUN chmod +x start.sh
 EXPOSE 10000
-CMD ["node", "server.js"]
+CMD ["sh", "start.sh"]
