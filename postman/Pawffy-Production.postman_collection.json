@@ -2,19 +2,22 @@
   "info": {
     "name": "Pawffy API — Production",
     "_postman_id": "pawffy-prod-2026",
-    "description": "Complete API collection for Pawffy Backend — https://pawffy-backend.onrender.com",
+    "description": "Complete API collection for Pawffy Backend — https://pawffy-backend.onrender.com\n\nVariables are auto-filled via test scripts after Register/Login.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "https://pawffy-backend.onrender.com", "type": "string" },
-    { "key": "token",   "value": "", "type": "string" },
-    { "key": "userId",  "value": "", "type": "string" },
-    { "key": "petId",   "value": "", "type": "string" },
-    { "key": "vetId",   "value": "", "type": "string" },
-    { "key": "bookingId", "value": "", "type": "string" },
-    { "key": "recordId",  "value": "", "type": "string" },
-    { "key": "vaccId",    "value": "", "type": "string" },
-    { "key": "notifId",   "value": "", "type": "string" }
+    { "key": "baseUrl",        "value": "https://pawffy-backend.onrender.com", "type": "string" },
+    { "key": "token",          "value": "", "type": "string" },
+    { "key": "userId",         "value": "", "type": "string" },
+    { "key": "petId",          "value": "", "type": "string" },
+    { "key": "vetId",          "value": "", "type": "string" },
+    { "key": "bookingId",      "value": "", "type": "string" },
+    { "key": "recordId",       "value": "", "type": "string" },
+    { "key": "vaccId",         "value": "", "type": "string" },
+    { "key": "notifId",        "value": "", "type": "string" },
+    { "key": "resetToken",     "value": "", "type": "string" },
+    { "key": "conversationId", "value": "", "type": "string" },
+    { "key": "receiverId",     "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -92,6 +95,67 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
           }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"] }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.resetToken) {",
+                  "  pm.collectionVariables.set('resetToken', r.data.resetToken);",
+                  "  console.log('Reset token saved:', r.data.resetToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "forgot-password"] }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "reset-password"] }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "change-password"] }
+          }
         }
       ]
     },
@@ -116,13 +180,32 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"9876543210\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"address\": \"123 Pet Street\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
           }
         },
         {
-          "name": "Get All Users",
+          "name": "Upload Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a JPEG/PNG/WebP image (max 2MB)"
+                }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me/avatar", "host": ["{{baseUrl}}"], "path": ["api", "users", "me", "avatar"] }
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
@@ -171,7 +254,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Buddy\",\n  \"species\": \"Dog\",\n  \"breed\": \"Labrador\",\n  \"gender\": \"Male\",\n  \"age\": 3,\n  \"weight\": 25.5,\n  \"color\": \"Golden\",\n  \"vaccinationStatus\": \"Up to date\"\n}"
+              "raw": "{\n  \"name\": \"Buddy\",\n  \"species\": \"dog\",\n  \"breed\": \"Golden Retriever\",\n  \"gender\": \"male\",\n  \"age\": 3,\n  \"weight\": 28.5,\n  \"color\": \"golden\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/pets", "host": ["{{baseUrl}}"], "path": ["api", "pets"] }
           }
@@ -202,9 +285,28 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Buddy\",\n  \"age\": 4,\n  \"weight\": 26,\n  \"medicalNotes\": \"Allergic to certain foods\"\n}"
+              "raw": "{\n  \"age\": 4,\n  \"weight\": 30.0,\n  \"medicalNotes\": \"Allergic to peanuts\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}"] }
+          }
+        },
+        {
+          "name": "Upload Pet Image",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a JPEG/PNG/WebP image (max 2MB)"
+                }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/pets/{{petId}}/image", "host": ["{{baseUrl}}"], "path": ["api", "pets", "{{petId}}", "image"] }
           }
         },
         {
@@ -241,7 +343,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Dr. Priya Sharma\",\n  \"email\": \"priya.vet@example.com\",\n  \"specialization\": \"General Practice\",\n  \"experienceYears\": 8,\n  \"clinicName\": \"PawCare Clinic\",\n  \"consultationFee\": 500,\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
+              "raw": "{\n  \"name\": \"Dr. Priya Sharma\",\n  \"email\": \"priya@pawcare.com\",\n  \"serviceType\": \"vet\",\n  \"specialization\": \"Small Animals\",\n  \"experienceYears\": 8,\n  \"clinicName\": \"PawCare Clinic\",\n  \"consultationFee\": 500,\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/vets", "host": ["{{baseUrl}}"], "path": ["api", "vets"] }
           }
@@ -251,14 +353,61 @@
           "request": {
             "method": "GET",
             "header": [],
+            "url": { "raw": "{{baseUrl}}/api/vets", "host": ["{{baseUrl}}"], "path": ["api", "vets"] }
+          }
+        },
+        {
+          "name": "Get Vets — Filter by serviceType",
+          "request": {
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/vets",
+              "raw": "{{baseUrl}}/api/vets?serviceType=groomer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets"],
+              "query": [{ "key": "serviceType", "value": "groomer", "description": "vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper" }]
+            }
+          }
+        },
+        {
+          "name": "Get Vets — Search by name/clinic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?search=PawCare",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets"],
+              "query": [{ "key": "search", "value": "PawCare" }]
+            }
+          }
+        },
+        {
+          "name": "Get Vets — Filter by city",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?city=Mumbai",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets"],
+              "query": [{ "key": "city", "value": "Mumbai" }]
+            }
+          }
+        },
+        {
+          "name": "Get Vets — Combined filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?serviceType=groomer&city=Mumbai&available=true",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vets"],
               "query": [
-                { "key": "city", "value": "Mumbai", "disabled": true },
-                { "key": "specialization", "value": "General Practice", "disabled": true },
-                { "key": "available", "value": "true", "disabled": true }
+                { "key": "serviceType", "value": "groomer" },
+                { "key": "city", "value": "Mumbai" },
+                { "key": "available", "value": "true" }
               ]
             }
           }
@@ -281,7 +430,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"consultationFee\": 600,\n  \"availableStatus\": true,\n  \"rating\": 4.8\n}"
+              "raw": "{\n  \"consultationFee\": 600,\n  \"availableStatus\": true,\n  \"serviceType\": \"groomer\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}", "host": ["{{baseUrl}}"], "path": ["api", "vets", "{{vetId}}"] }
           }
@@ -296,7 +445,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"slots\": [\n    { \"dayOfWeek\": \"Monday\", \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Tuesday\", \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Wednesday\", \"startTime\": \"10:00\", \"endTime\": \"14:00\", \"slotDuration\": 30 }\n  ]\n}"
+              "raw": "{\n  \"slots\": [\n    { \"dayOfWeek\": \"Monday\", \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Wednesday\", \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Friday\", \"startTime\": \"09:00\", \"endTime\": \"13:00\", \"slotDuration\": 30 }\n  ]\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability", "host": ["{{baseUrl}}"], "path": ["api", "vets", "{{vetId}}", "availability"] }
           }
@@ -307,6 +456,37 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability", "host": ["{{baseUrl}}"], "path": ["api", "vets", "{{vetId}}", "availability"] }
+          }
+        },
+        {
+          "name": "Post Vet Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent service! Very caring with our dog.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews", "host": ["{{baseUrl}}"], "path": ["api", "vets", "{{vetId}}", "reviews"] }
+          }
+        },
+        {
+          "name": "Get Vet Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets", "{{vetId}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
           }
         }
       ]
@@ -335,7 +515,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"10:00\",\n  \"symptoms\": \"Not eating well, lethargic\",\n  \"notes\": \"First visit\"\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"10:00\",\n  \"symptoms\": \"Lethargy and loss of appetite\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
           }
@@ -345,15 +525,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/bookings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bookings"],
-              "query": [
-                { "key": "status", "value": "pending", "disabled": true },
-                { "key": "type", "value": "veterinarian", "disabled": true }
-              ]
-            }
+            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
           }
         },
         {
@@ -382,9 +554,73 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"confirmed\"\n}"
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
+            "description": "Valid status values: pending | confirmed | completed | cancelled",
             "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}", "status"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Messages",
+      "item": [
+        {
+          "name": "Get My Conversations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/messages/conversations", "host": ["{{baseUrl}}"], "path": ["api", "messages", "conversations"] }
+          }
+        },
+        {
+          "name": "Send Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.conversationId) {",
+                  "  pm.collectionVariables.set('conversationId', r.data.conversationId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hello! I have a question about my appointment.\"\n}"
+            },
+            "description": "Set receiverId variable to the ID of another user before sending.",
+            "url": { "raw": "{{baseUrl}}/api/messages", "host": ["{{baseUrl}}"], "path": ["api", "messages"] }
+          }
+        },
+        {
+          "name": "Get Messages in Conversation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "{{conversationId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
           }
         }
       ]
@@ -402,7 +638,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}"
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"amount\": 500\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/payments/checkout", "host": ["{{baseUrl}}"], "path": ["api", "payments", "checkout"] }
           }
@@ -441,7 +677,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild fever and dehydration\",\n  \"prescription\": \"Amoxicillin 250mg twice daily for 5 days\",\n  \"allergies\": \"None known\",\n  \"symptoms\": \"Lethargy, loss of appetite, warm nose\"\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild ear infection\",\n  \"prescription\": \"Ear drops twice daily for 7 days\",\n  \"symptoms\": \"Head shaking, scratching ear\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/medical-records", "host": ["{{baseUrl}}"], "path": ["api", "medical-records"] }
           }
@@ -472,7 +708,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"diagnosis\": \"Viral infection — recovering\",\n  \"prescription\": \"Rest, fluids, Paracetamol if needed\"\n}"
+              "raw": "{\n  \"prescription\": \"Ear drops three times daily for 5 days\",\n  \"allergies\": \"None known\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/medical-records/{{recordId}}", "host": ["{{baseUrl}}"], "path": ["api", "medical-records", "{{recordId}}"] }
           }
@@ -511,7 +747,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vaccineName\": \"Rabies\",\n  \"vaccinationDate\": \"2026-06-01\",\n  \"nextDueDate\": \"2027-06-01\",\n  \"notes\": \"Annual booster\"\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vaccineName\": \"Rabies\",\n  \"vaccinationDate\": \"2026-06-01\",\n  \"nextDueDate\": \"2027-06-01\",\n  \"notes\": \"No adverse reactions\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/vaccinations", "host": ["{{baseUrl}}"], "path": ["api", "vaccinations"] }
           }
@@ -534,7 +770,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nextDueDate\": \"2027-07-01\",\n  \"notes\": \"Given at PawCare Clinic\"\n}"
+              "raw": "{\n  \"notes\": \"Booster shot administered\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/vaccinations/{{vaccId}}", "host": ["{{baseUrl}}"], "path": ["api", "vaccinations", "{{vaccId}}"] }
           }
@@ -561,9 +797,7 @@
               "raw": "{{baseUrl}}/api/notifications",
               "host": ["{{baseUrl}}"],
               "path": ["api", "notifications"],
-              "query": [
-                { "key": "unread", "value": "true", "disabled": true }
-              ]
+              "query": [{ "key": "unread", "value": "true", "disabled": true }]
             }
           }
         },
@@ -588,8 +822,9 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Vaccination Due\",\n  \"message\": \"Buddy's rabies vaccination is due next week.\",\n  \"type\": \"health\"\n}"
+              "raw": "{\n  \"title\": \"Appointment Reminder\",\n  \"message\": \"Your pet's appointment is tomorrow at 10:00 AM.\",\n  \"type\": \"booking\"\n}"
             },
+            "description": "userId is automatically set from the auth token — no need to send it in body.",
             "url": { "raw": "{{baseUrl}}/api/notifications", "host": ["{{baseUrl}}"], "path": ["api", "notifications"] }
           }
         },
