@@ -22,6 +22,23 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, data: updated });
 });
 
+// ─── Upload Avatar (multipart/form-data field: "avatar") ──────────────────────
+exports.uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "No image file provided. Send field name: avatar" });
+  }
+
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { profileImage: base64 },
+    select: { id: true, name: true, email: true, profileImage: true },
+  });
+
+  res.json({ success: true, message: "Avatar updated", data: updated });
+});
+
 exports.getAllUsers = asyncHandler(async (req, res) => {
   const users = await prisma.user.findMany({
     select: {

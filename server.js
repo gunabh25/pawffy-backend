@@ -43,6 +43,7 @@ app.use("/api/payments",       paymentRoutes);
 app.use("/api/medical-records",require("./routes/medicalRecord"));
 app.use("/api/vaccinations",   require("./routes/vaccination"));
 app.use("/api/notifications",  require("./routes/notification"));
+app.use("/api/messages",       require("./routes/message"));
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {

@@ -74,6 +74,29 @@ exports.updatePet = asyncHandler(async (req, res) => {
   res.json({ success: true, data: updated });
 });
 
+// ─── Upload Pet Image (multipart/form-data field: "image") ────────────────────
+exports.uploadPetImage = asyncHandler(async (req, res) => {
+  const pet = await prisma.pet.findUnique({ where: { id: req.params.id } });
+  if (!pet) return res.status(404).json({ success: false, message: "Pet not found" });
+  if (pet.ownerId !== req.user.id && req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "No image file provided. Send field name: image" });
+  }
+
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+  const updated = await prisma.pet.update({
+    where: { id: req.params.id },
+    data: { imageUrl: base64 },
+    select: { id: true, name: true, imageUrl: true },
+  });
+
+  res.json({ success: true, message: "Pet image updated", data: updated });
+});
+
 exports.deletePet = asyncHandler(async (req, res) => {
   const pet = await prisma.pet.findUnique({ where: { id: req.params.id } });
   if (!pet) return res.status(404).json({ success: false, message: "Pet not found" });

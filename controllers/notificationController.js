@@ -1,6 +1,26 @@
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
 
+// ─── Create notification — userId is always from the auth token ───────────────
+exports.createNotification = asyncHandler(async (req, res) => {
+  const { title, message, type } = req.body;
+
+  if (!title || !message) {
+    return res.status(400).json({ success: false, message: "title and message are required" });
+  }
+
+  const notification = await prisma.notification.create({
+    data: {
+      userId: req.user.id,
+      title,
+      message,
+      type: type || "general",
+    },
+  });
+
+  res.status(201).json({ success: true, data: notification });
+});
+
 exports.getMyNotifications = asyncHandler(async (req, res) => {
   const { unread } = req.query;
 
@@ -16,12 +36,18 @@ exports.getMyNotifications = asyncHandler(async (req, res) => {
 });
 
 exports.markAsRead = asyncHandler(async (req, res) => {
-  await prisma.notification.update({
+  const notification = await prisma.notification.findUnique({ where: { id: req.params.id } });
+  if (!notification) return res.status(404).json({ success: false, message: "Notification not found" });
+  if (notification.userId !== req.user.id) {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  const updated = await prisma.notification.update({
     where: { id: req.params.id },
     data: { isRead: true },
   });
 
-  res.json({ success: true, message: "Notification marked as read" });
+  res.json({ success: true, data: updated });
 });
 
 exports.markAllAsRead = asyncHandler(async (req, res) => {
@@ -34,24 +60,12 @@ exports.markAllAsRead = asyncHandler(async (req, res) => {
 });
 
 exports.deleteNotification = asyncHandler(async (req, res) => {
-  const notif = await prisma.notification.findUnique({ where: { id: req.params.id } });
-  if (!notif || notif.userId !== req.user.id) {
-    return res.status(404).json({ success: false, message: "Notification not found" });
+  const notification = await prisma.notification.findUnique({ where: { id: req.params.id } });
+  if (!notification) return res.status(404).json({ success: false, message: "Notification not found" });
+  if (notification.userId !== req.user.id) {
+    return res.status(403).json({ success: false, message: "Access denied" });
   }
 
   await prisma.notification.delete({ where: { id: req.params.id } });
   res.json({ success: true, message: "Notification deleted" });
-});
-
-exports.createNotification = asyncHandler(async (req, res) => {
-  const { userId, title, message, type } = req.body;
-  if (!userId || !title || !message) {
-    return res.status(400).json({ success: false, message: "userId, title and message are required" });
-  }
-
-  const notification = await prisma.notification.create({
-    data: { userId, title, message, type: type || "general" },
-  });
-
-  res.status(201).json({ success: true, data: notification });
 });

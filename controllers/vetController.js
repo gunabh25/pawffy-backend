@@ -2,7 +2,7 @@ const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.createVet = asyncHandler(async (req, res) => {
-  const { name, email, specialization, experienceYears, clinicName, consultationFee, city, state } = req.body;
+  const { name, email, serviceType, specialization, experienceYears, clinicName, consultationFee, city, state } = req.body;
 
   if (!name || !email) {
     return res.status(400).json({ success: false, message: "name and email are required" });
@@ -13,7 +13,9 @@ exports.createVet = asyncHandler(async (req, res) => {
 
   const vet = await prisma.vet.create({
     data: {
-      name, email, specialization,
+      name, email,
+      serviceType: serviceType || "vet",
+      specialization,
       experienceYears: experienceYears ? parseInt(experienceYears) : null,
       clinicName,
       consultationFee: consultationFee ? parseFloat(consultationFee) : null,
@@ -25,17 +27,24 @@ exports.createVet = asyncHandler(async (req, res) => {
 });
 
 exports.getAllVets = asyncHandler(async (req, res) => {
-  const { city, specialization, available } = req.query;
+  const { city, specialization, available, serviceType, search } = req.query;
 
   const vets = await prisma.vet.findMany({
     where: {
+      ...(serviceType && { serviceType }),
       ...(city && { city: { contains: city, mode: "insensitive" } }),
       ...(specialization && { specialization: { contains: specialization, mode: "insensitive" } }),
       ...(available === "true" && { availableStatus: true }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { clinicName: { contains: search, mode: "insensitive" } },
+        ],
+      }),
     },
     include: {
       availability: true,
-      _count: { select: { bookings: true } },
+      _count: { select: { bookings: true, reviews: true } },
     },
     orderBy: { rating: "desc" },
   });
@@ -46,7 +55,15 @@ exports.getAllVets = asyncHandler(async (req, res) => {
 exports.getVetById = asyncHandler(async (req, res) => {
   const vet = await prisma.vet.findUnique({
     where: { id: req.params.id },
-    include: { availability: true },
+    include: {
+      availability: true,
+      reviews: {
+        include: { user: { select: { id: true, name: true, profileImage: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+      _count: { select: { reviews: true } },
+    },
   });
 
   if (!vet) return res.status(404).json({ success: false, message: "Vet not found" });
@@ -57,12 +74,12 @@ exports.updateVet = asyncHandler(async (req, res) => {
   const vet = await prisma.vet.findUnique({ where: { id: req.params.id } });
   if (!vet) return res.status(404).json({ success: false, message: "Vet not found" });
 
-  const { name, specialization, experienceYears, clinicName, consultationFee, rating, city, state, availableStatus } = req.body;
+  const { name, serviceType, specialization, experienceYears, clinicName, consultationFee, rating, city, state, availableStatus } = req.body;
 
   const updated = await prisma.vet.update({
     where: { id: req.params.id },
     data: {
-      name, specialization,
+      name, serviceType, specialization,
       experienceYears: experienceYears !== undefined ? parseInt(experienceYears) : undefined,
       clinicName,
       consultationFee: consultationFee !== undefined ? parseFloat(consultationFee) : undefined,
