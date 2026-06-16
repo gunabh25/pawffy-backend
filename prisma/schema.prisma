@@ -127,7 +127,10 @@ model Vet {
   specialization  String?
   experienceYears Int?        @map("experience_years")
   clinicName      String?     @map("clinic_name")
+  clinicAddress   String?     @map("clinic_address")
+  clinicCity      String?     @map("clinic_city")
   profileImage    String?     @map("profile_image")
+  phone           String?
   consultationFee Decimal?    @map("consultation_fee") @db.Decimal(10, 2)
   rating          Decimal?    @db.Decimal(3, 2)
   city            String?
@@ -141,8 +144,25 @@ model Vet {
   medicalRecords MedicalRecord[]
   vaccinations   Vaccination[]
   reviews        VetReview[]
+  services       VetService[]
 
   @@map("vets")
+}
+
+model VetService {
+  id          String   @id @default(uuid()) @db.Uuid
+  vetId       String   @map("vet_id") @db.Uuid
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  duration    Int      @default(30)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  vet      Vet       @relation(fields: [vetId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("vet_services")
 }
 
 model VetAvailability {
@@ -176,22 +196,26 @@ model VetReview {
 }
 
 model Booking {
-  id          String        @id @default(uuid()) @db.Uuid
-  userId      String        @map("user_id") @db.Uuid
-  petId       String        @map("pet_id") @db.Uuid
-  vetId       String?       @map("vet_id") @db.Uuid
-  bookingType BookingType   @map("booking_type")
-  bookingDate DateTime      @map("booking_date") @db.Date
-  bookingTime String        @map("booking_time")
-  status      BookingStatus @default(pending)
-  symptoms    String?
-  notes       String?
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  petId             String        @map("pet_id") @db.Uuid
+  vetId             String?       @map("vet_id") @db.Uuid
+  serviceId         String?       @map("service_id") @db.Uuid
+  bookingType       BookingType   @map("booking_type")
+  bookingDate       DateTime      @map("booking_date") @db.Date
+  bookingTime       String        @map("booking_time")
+  status            BookingStatus @default(pending)
+  reasonForVisit    String?       @map("reason_for_visit")
+  symptoms          String?
+  symptomsDuration  String?       @map("symptoms_duration")
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pet     Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
-  vet     Vet?     @relation(fields: [vetId], references: [id])
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet     Pet         @relation(fields: [petId], references: [id], onDelete: Cascade)
+  vet     Vet?        @relation(fields: [vetId], references: [id])
+  service VetService? @relation(fields: [serviceId], references: [id])
   payment Payment?
 
   @@map("bookings")
@@ -200,7 +224,13 @@ model Booking {
 model Payment {
   id            String        @id @default(uuid()) @db.Uuid
   bookingId     String        @unique @map("booking_id") @db.Uuid
+  subtotal      Decimal       @default(0) @db.Decimal(10, 2)
+  platformFee   Decimal       @default(5) @map("platform_fee") @db.Decimal(10, 2)
+  taxAmount     Decimal       @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  couponCode    String?       @map("coupon_code")
   amount        Decimal       @db.Decimal(10, 2)
+  pawPoints     Int           @default(0) @map("paw_points")
   paymentMethod String?       @map("payment_method")
   paymentStatus PaymentStatus @default(pending) @map("payment_status")
   transactionId String?       @map("transaction_id")
@@ -210,6 +240,20 @@ model Payment {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+model Coupon {
+  id         String    @id @default(uuid()) @db.Uuid
+  code       String    @unique
+  discount   Decimal   @db.Decimal(5, 2)
+  isPercent  Boolean   @default(true) @map("is_percent")
+  maxUses    Int?      @map("max_uses")
+  usedCount  Int       @default(0) @map("used_count")
+  expiresAt  DateTime? @map("expires_at")
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("coupons")
 }
 
 model MedicalRecord {

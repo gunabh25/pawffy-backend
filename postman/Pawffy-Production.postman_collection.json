@@ -17,7 +17,9 @@
     { "key": "notifId",        "value": "", "type": "string" },
     { "key": "resetToken",     "value": "", "type": "string" },
     { "key": "conversationId", "value": "", "type": "string" },
-    { "key": "receiverId",     "value": "", "type": "string" }
+    { "key": "receiverId",     "value": "", "type": "string" },
+    { "key": "serviceId",      "value": "", "type": "string" },
+    { "key": "couponCode",     "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -488,21 +490,87 @@
               ]
             }
           }
-        }
-      ]
-    },
-    {
-      "name": "📅 Bookings",
-      "item": [
+        },
         {
-          "name": "Create Booking",
+          "name": "Get Vet Services [Screen 1]",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.id) pm.collectionVariables.set('bookingId', r.data.id);"
+                  "if (r.data && r.data.length > 0) {",
+                  "  pm.collectionVariables.set('serviceId', r.data[0].id);",
+                  "  console.log('First service:', r.data[0].name, '- $' + r.data[0].price);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets", "{{vetId}}", "services"]
+            },
+            "description": "Screen 1 — Select Veterinary Service\nReturns all active services for a vet with name, description, price.\nExample: General Consultancy $40, Vaccination $60, Emergency Care $100"
+          }
+        },
+        {
+          "name": "Create Vet Service (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  { \"name\": \"General Consultancy\", \"description\": \"Health checkup and basic consultancy\", \"price\": 40, \"duration\": 30 },\n  { \"name\": \"Vaccination\", \"description\": \"Vaccine and preventive care\", \"price\": 60, \"duration\": 20 },\n  { \"name\": \"Emergency Care\", \"description\": \"Immediate care for urgent conditions\", \"price\": 100, \"duration\": 60 },\n  { \"name\": \"Dental Care\", \"description\": \"Teeth cleaning and oral hygiene\", \"price\": 70, \"duration\": 45 },\n  { \"name\": \"Others\", \"description\": \"Other medical concerns\", \"price\": 70, \"duration\": 30 }\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Send one service object (not array). Repeat for each service.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets", "{{vetId}}", "services"]
+            }
+          }
+        },
+        {
+          "name": "Get Available Slots [Screen 2]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/slots?date=2026-07-15",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vets", "{{vetId}}", "slots"],
+              "query": [{ "key": "date", "value": "2026-07-15", "description": "YYYY-MM-DD format" }]
+            },
+            "description": "Screen 2 — Select Date & Time Slot\nReturns time slots with available: true/false.\nSlots already booked (pending/confirmed) are marked available: false."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Bookings — Full Flow",
+      "description": "Complete 5-step booking flow matching the app screens:\n1. Select Service → GET /api/vets/:vetId/services (in Vets folder)\n2. Select Date/Slot → GET /api/vets/:vetId/slots?date=... (in Vets folder)\n3. Select Pet → GET /api/pets (in Pets folder)\n4. Enter Symptoms/Reason → collected client-side\n5. Create Booking → POST /api/bookings\n6. Price Summary → GET /api/payments/summary/:bookingId\n7. Apply Coupon → POST /api/payments/apply-coupon\n8. Confirm Payment → POST /api/payments/confirm\n9. Booking Confirmed → GET /api/bookings/:id",
+      "item": [
+        {
+          "name": "STEP 5 — Create Booking (after selecting all options)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('bookingId', r.data.id);",
+                  "  console.log('bookingId saved:', r.data.id);",
+                  "}"
                 ]
               }
             }
@@ -515,9 +583,68 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"10:00\",\n  \"symptoms\": \"Lethargy and loss of appetite\"\n}"
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"11:00\",\n  \"reasonForVisit\": \"My dog has been lethargic for 2 days\",\n  \"symptoms\": \"Vomiting,Lethargy,Loss of appetite\",\n  \"symptomsDuration\": \"2 Days ago\",\n  \"notes\": \"Please check ears as well\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
+            "description": "bookingType values: veterinarian | grooming | walking | training | boarding | sitting\n\nsymptoms: comma-separated string (Vomiting, Diarrhea, Loss of appetite, Coughing, Fever, Lethargy, Others)\n\nsymptomsDuration: 'Today' | '2 Days ago' | 'A week ago' | 'More than a week'",
             "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
+          }
+        },
+        {
+          "name": "STEP 6 — Price Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "summary", "{{bookingId}}"],
+              "query": [{ "key": "coupon", "value": "SAVE10", "disabled": true, "description": "Optional coupon code" }]
+            },
+            "description": "Screen 6 — Price Summary\nReturns: servicePrice + platformFee ($5) + tax (5%) - discount = total\nAlso returns pawPoints earned on this booking."
+          }
+        },
+        {
+          "name": "STEP 7 — Apply Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"code\": \"SAVE10\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Validates coupon and returns discount + new total. Use the response to update price summary UI.",
+            "url": { "raw": "{{baseUrl}}/api/payments/apply-coupon", "host": ["{{baseUrl}}"], "path": ["api", "payments", "apply-coupon"] }
+          }
+        },
+        {
+          "name": "STEP 8 — Confirm Payment (PAY button)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"upi\",\n  \"couponCode\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Screen 7-8 — Payment Method Selection → PAY button\n\npaymentMethod values: card | upi | wallet | net_banking\n\nOn success: booking.status → 'confirmed', payment.status → 'paid'\nReturns: appointmentId, booking details, payment breakdown, pawPoints earned",
+            "url": { "raw": "{{baseUrl}}/api/payments/confirm", "host": ["{{baseUrl}}"], "path": ["api", "payments", "confirm"] }
+          }
+        },
+        {
+          "name": "STEP 9 — Get Booking Confirmation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}"] },
+            "description": "Screen 9 — Booking Confirmed\nReturns: appointmentId (VET1234...), vet name, dateTimeFormatted, pet name, total paid, paymentStatus"
           }
         },
         {
@@ -525,7 +652,15 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/bookings", "host": ["{{baseUrl}}"], "path": ["api", "bookings"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                { "key": "status", "value": "confirmed", "disabled": true },
+                { "key": "type", "value": "veterinarian", "disabled": true }
+              ]
+            }
           }
         },
         {
@@ -534,14 +669,6 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{baseUrl}}/api/bookings/all", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "all"] }
-          }
-        },
-        {
-          "name": "Get Booking By ID",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}"] }
           }
         },
         {
@@ -554,12 +681,8 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"confirmed\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"status\": \"cancelled\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "description": "Valid status values: pending | confirmed | completed | cancelled",
             "url": { "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "bookings", "{{bookingId}}", "status"] }
@@ -676,7 +799,20 @@
       "name": "💳 Payments",
       "item": [
         {
-          "name": "Create Checkout Session",
+          "name": "Get Price Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "summary", "{{bookingId}}"]
+            },
+            "description": "Returns: serviceName, servicePrice, platformFee ($5), tax (5%), discount, total, pawPoints"
+          }
+        },
+        {
+          "name": "Apply Coupon",
           "request": {
             "method": "POST",
             "header": [
@@ -685,9 +821,26 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"amount\": 500\n}"
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"code\": \"SAVE10\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/api/payments/checkout", "host": ["{{baseUrl}}"], "path": ["api", "payments", "checkout"] }
+            "url": { "raw": "{{baseUrl}}/api/payments/apply-coupon", "host": ["{{baseUrl}}"], "path": ["api", "payments", "apply-coupon"] }
+          }
+        },
+        {
+          "name": "Confirm Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"upi\",\n  \"couponCode\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "paymentMethod: card | upi | wallet | net_banking",
+            "url": { "raw": "{{baseUrl}}/api/payments/confirm", "host": ["{{baseUrl}}"], "path": ["api", "payments", "confirm"] }
           }
         },
         {
