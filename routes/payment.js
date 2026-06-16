@@ -1,28 +1,40 @@
 const express = require("express");
 const router = express.Router();
-const bodyParser = require("body-parser");
 const verifyToken = require("../middleware/verifyToken");
 const {
   getPriceSummary,
   applyCoupon,
+  createPaymentIntent,
   confirmPayment,
+  verifyPayment,
   getPaymentByBooking,
   handleWebhook,
 } = require("../controllers/paymentController");
 
-// Stripe webhook — needs raw body
-router.post("/webhook", bodyParser.raw({ type: "application/json" }), handleWebhook);
+// ─── Stripe webhook — MUST receive raw body, no auth ─────────────────────────
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  (req, res, next) => { req.rawBody = req.body; next(); },
+  handleWebhook
+);
 
-// Price summary — Screen 6
+// ─── Price summary — Screen 6 ─────────────────────────────────────────────────
 router.get("/summary/:bookingId", verifyToken, getPriceSummary);
 
-// Apply coupon code
+// ─── Coupon validation ────────────────────────────────────────────────────────
 router.post("/apply-coupon", verifyToken, applyCoupon);
 
-// Confirm payment — Screen 8 (PAY button)
+// ─── Stripe: Card / Net Banking — returns clientSecret for flutter_stripe ─────
+router.post("/create-intent", verifyToken, createPaymentIntent);
+
+// ─── Wallet — direct confirmation, no Stripe ─────────────────────────────────
 router.post("/confirm", verifyToken, confirmPayment);
 
-// Get payment details by booking
+// ─── Verify after Stripe payment sheet closes ─────────────────────────────────
+router.post("/verify", verifyToken, verifyPayment);
+
+// ─── Get payment details ──────────────────────────────────────────────────────
 router.get("/booking/:bookingId", verifyToken, getPaymentByBooking);
 
 module.exports = router;

@@ -19,8 +19,11 @@ app.use(
   })
 );
 
-// ─── JSON body parser ─────────────────────────────────────────────────────────
-app.use(express.json({ limit: "5mb" })); // 5MB allows base64 profile images
+// ─── Stripe webhook needs raw body — register BEFORE express.json() ──────────
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+
+// ─── JSON body parser for all other routes ────────────────────────────────────
+app.use(express.json({ limit: "5mb" }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth",            require("./routes/auth"));

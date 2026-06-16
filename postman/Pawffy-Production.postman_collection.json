@@ -622,7 +622,7 @@
           }
         },
         {
-          "name": "STEP 8 — Confirm Payment (PAY button)",
+          "name": "STEP 8a — Create Stripe PaymentIntent (Card / Net Banking)",
           "request": {
             "method": "POST",
             "header": [
@@ -631,11 +631,45 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"upi\",\n  \"couponCode\": \"\"\n}",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"card\",\n  \"couponCode\": \"\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Screen 7-8 — Payment Method Selection → PAY button\n\npaymentMethod values: card | upi | wallet | net_banking\n\nOn success: booking.status → 'confirmed', payment.status → 'paid'\nReturns: appointmentId, booking details, payment breakdown, pawPoints earned",
+            "description": "Screen 8 — Card or Net Banking payment.\n\npaymentMethod: 'card' | 'net_banking'\n\nReturns clientSecret → pass to flutter_stripe:\n  await Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  await Stripe.instance.presentPaymentSheet()\n\nBooking is confirmed automatically via Stripe webhook.",
+            "url": { "raw": "{{baseUrl}}/api/payments/create-intent", "host": ["{{baseUrl}}"], "path": ["api", "payments", "create-intent"] }
+          }
+        },
+        {
+          "name": "STEP 8b — Confirm Wallet Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"couponCode\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Screen 8 — Wallet payment (no Stripe needed).\nConfirms booking immediately. Returns appointmentId + booking details.",
             "url": { "raw": "{{baseUrl}}/api/payments/confirm", "host": ["{{baseUrl}}"], "path": ["api", "payments", "confirm"] }
+          }
+        },
+        {
+          "name": "STEP 8c — Verify Stripe Payment (after sheet closes)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Call this after flutter_stripe payment sheet closes to confirm payment succeeded.\nSyncs Stripe status with DB if webhook hasn't fired yet.\nReturns: stripeStatus, paymentStatus, bookingStatus, appointmentId",
+            "url": { "raw": "{{baseUrl}}/api/payments/verify", "host": ["{{baseUrl}}"], "path": ["api", "payments", "verify"] }
           }
         },
         {
@@ -827,7 +861,7 @@
           }
         },
         {
-          "name": "Confirm Payment",
+          "name": "Create Stripe PaymentIntent (Card / Net Banking)",
           "request": {
             "method": "POST",
             "header": [
@@ -836,11 +870,40 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"upi\",\n  \"couponCode\": \"\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"card\",\n  \"couponCode\": \"\"\n}"
             },
-            "description": "paymentMethod: card | upi | wallet | net_banking",
+            "description": "paymentMethod: card | net_banking\nReturns clientSecret for flutter_stripe",
+            "url": { "raw": "{{baseUrl}}/api/payments/create-intent", "host": ["{{baseUrl}}"], "path": ["api", "payments", "create-intent"] }
+          }
+        },
+        {
+          "name": "Confirm Wallet Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"couponCode\": \"\"\n}"
+            },
             "url": { "raw": "{{baseUrl}}/api/payments/confirm", "host": ["{{baseUrl}}"], "path": ["api", "payments", "confirm"] }
+          }
+        },
+        {
+          "name": "Verify Stripe Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/payments/verify", "host": ["{{baseUrl}}"], "path": ["api", "payments", "verify"] }
           }
         },
         {
