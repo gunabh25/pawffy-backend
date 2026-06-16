@@ -70,3 +70,26 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   await prisma.user.delete({ where: { id: req.params.id } });
   res.json({ success: true, message: "User deleted" });
 });
+
+exports.changeUserRole = asyncHandler(async (req, res) => {
+  const { role } = req.body;
+  const validRoles = ["user", "admin", "vet"];
+
+  if (!role || !validRoles.includes(role)) {
+    return res.status(400).json({
+      success: false,
+      message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+    });
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!target) return res.status(404).json({ success: false, message: "User not found" });
+
+  const updated = await prisma.user.update({
+    where: { id: req.params.id },
+    data: { role },
+    select: { id: true, name: true, email: true, role: true },
+  });
+
+  res.json({ success: true, message: `Role updated to "${role}"`, data: updated });
+});

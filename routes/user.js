@@ -6,13 +6,14 @@ const validate = require("../middleware/validate");
 const upload = require("../middleware/upload");
 const { uploadLimiter } = require("../middleware/rateLimiter");
 const v = require("../models/validators");
-const { getProfile, updateProfile, uploadAvatar, getAllUsers, getUserById, deleteUser } = require("../controllers/userController");
+const { getProfile, updateProfile, uploadAvatar, getAllUsers, getUserById, deleteUser, changeUserRole } = require("../controllers/userController");
 
 router.get   ("/me",       verifyToken,                                     getProfile);
 router.put   ("/me",       verifyToken, validate(v.updateProfileSchema),    updateProfile);
 router.post  ("/me/avatar",verifyToken, uploadLimiter, upload.single("avatar"), uploadAvatar);
 router.get   ("/",         verifyToken, requireRole("admin"),               getAllUsers);
 router.get   ("/:id",      verifyToken,                                     getUserById);
+router.patch ("/:id/role", verifyToken, requireRole("admin"),               changeUserRole);
 router.delete("/:id",      verifyToken, requireRole("admin"),               deleteUser);
 
 module.exports = router;
