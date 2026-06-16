@@ -575,7 +575,57 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/messages/conversations", "host": ["{{baseUrl}}"], "path": ["api", "messages", "conversations"] }
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "conversations"],
+              "query": [{ "key": "search", "value": "Pawfection", "disabled": true, "description": "Filter conversations by other user's name" }]
+            },
+            "description": "Returns list of conversations with: otherUser (id, name, profileImage), lastMessage, updatedAt, unreadCount (orange dot count).\n\nOptional: ?search=name to filter by other user's name."
+          }
+        },
+        {
+          "name": "Open / Start Chat with a User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.conversationId) {",
+                  "  pm.collectionVariables.set('conversationId', r.data.conversationId);",
+                  "  console.log('conversationId saved:', r.data.conversationId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversation/with/{{receiverId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "conversation", "with", "{{receiverId}}"]
+            },
+            "description": "Tap a vet/user profile → call this to get (or create) a conversation. Returns conversationId + otherUser info. Use conversationId to fetch messages."
+          }
+        },
+        {
+          "name": "Get Messages in Conversation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "{{conversationId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Returns messages grouped with date separators.\n\nEach item is either:\n  { type: 'date_separator', label: 'Today' }\n  { type: 'message', content, isMine, isRead, time, createdAt, sender }\n\nAlso auto-marks incoming messages as read."
           }
         },
         {
@@ -601,26 +651,23 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hello! I have a question about my appointment.\"\n}"
+              "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hi! I wanted to confirm the availability for tomorrow.\"\n}"
             },
-            "description": "Set receiverId variable to the ID of another user before sending.",
+            "description": "Send a message to a user. Creates conversation automatically if first message.\nSet {{receiverId}} to the other user's ID.",
             "url": { "raw": "{{baseUrl}}/api/messages", "host": ["{{baseUrl}}"], "path": ["api", "messages"] }
           }
         },
         {
-          "name": "Get Messages in Conversation",
+          "name": "Mark Conversation as Read",
           "request": {
-            "method": "GET",
+            "method": "PATCH",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": {
-              "raw": "{{baseUrl}}/api/messages/{{conversationId}}?page=1&limit=50",
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}/read",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", "{{conversationId}}"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "50" }
-              ]
-            }
+              "path": ["api", "messages", "{{conversationId}}", "read"]
+            },
+            "description": "Call when user opens a conversation — clears the unread (orange dot) count."
           }
         }
       ]
