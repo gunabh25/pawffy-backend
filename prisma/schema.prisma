@@ -32,6 +32,9 @@ enum BookingType {
   training
   boarding
   sitting
+  sitter
+  poop_scooper
+  transport
 }
 
 enum BookingStatus {
