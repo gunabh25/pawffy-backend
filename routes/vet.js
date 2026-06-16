@@ -1,30 +1,30 @@
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
+const { requireRole } = require("../middleware/rbac");
+const validate = require("../middleware/validate");
+const v = require("../models/validators");
 const { createVet, getAllVets, getVetById, updateVet, setAvailability, getAvailability } = require("../controllers/vetController");
 const { createReview, getReviews } = require("../controllers/vetReviewController");
 const { getVetServices, createVetService, updateVetService, deleteVetService, getAvailableSlots } = require("../controllers/vetServiceController");
 
-router.post("/", verifyToken, createVet);
-router.get("/", getAllVets);
+// Public
+router.get("/",    getAllVets);
 router.get("/:id", getVetById);
-router.put("/:id", verifyToken, updateVet);
+router.get("/:id/availability",  getAvailability);
+router.get("/:vetId/slots",      getAvailableSlots);
+router.get("/:vetId/services",   getVetServices);
+router.get("/:vetId/reviews",    getReviews);
 
-// Availability
-router.put("/:id/availability", verifyToken, setAvailability);
-router.get("/:id/availability", getAvailability);
+// Authenticated
+router.post("/:vetId/reviews",   verifyToken, validate(v.createReviewSchema), createReview);
 
-// Available time slots for a date — Screen 2 (Schedule)
-router.get("/:vetId/slots", getAvailableSlots);
-
-// Services offered by a vet — Screen 1 (Select Service)
-router.get("/:vetId/services", getVetServices);
-router.post("/:vetId/services", verifyToken, createVetService);
-router.put("/:vetId/services/:serviceId", verifyToken, updateVetService);
-router.delete("/:vetId/services/:serviceId", verifyToken, deleteVetService);
-
-// Reviews
-router.post("/:vetId/reviews", verifyToken, createReview);
-router.get("/:vetId/reviews", getReviews);
+// Admin / Partner only
+router.post  ("/",           verifyToken, requireRole("admin", "partner"), validate(v.createVetSchema),        createVet);
+router.put   ("/:id",        verifyToken, requireRole("admin", "partner"), validate(v.updateVetSchema),        updateVet);
+router.put   ("/:id/availability", verifyToken, requireRole("admin", "partner"),                               setAvailability);
+router.post  ("/:vetId/services",  verifyToken, requireRole("admin", "partner"), validate(v.createVetServiceSchema), createVetService);
+router.put   ("/:vetId/services/:serviceId", verifyToken, requireRole("admin", "partner"),                     updateVetService);
+router.delete("/:vetId/services/:serviceId", verifyToken, requireRole("admin", "partner"),                     deleteVetService);
 
 module.exports = router;

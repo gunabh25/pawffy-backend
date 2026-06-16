@@ -2,17 +2,14 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
-const { registerSchema, loginSchema } = require("../models/authModel");
 const { signToken, sanitizeUser } = require("../utils/auth");
+const logger = require("../utils/logger");
 
 const SALT_ROUNDS = 12;
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 exports.register = asyncHandler(async (req, res) => {
-  const { error, value } = registerSchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
-
-  const { email, phoneNumber, password, name } = value;
+  const { email, phoneNumber, password, name } = req.body; // already validated by middleware
 
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -38,16 +35,16 @@ exports.register = asyncHandler(async (req, res) => {
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 exports.login = asyncHandler(async (req, res) => {
-  const { error, value } = loginSchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
-
-  const { email, phoneNumber, password } = value;
+  const { email, phoneNumber, password } = req.body;
   const user = await prisma.user.findFirst({ where: email ? { email } : { phone: phoneNumber } });
 
   if (!user) return res.status(401).json({ success: false, message: "Invalid email/phone or password" });
 
   const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-  if (!isValidPassword) return res.status(401).json({ success: false, message: "Invalid email/phone or password" });
+  if (!isValidPassword) {
+    logger.authFail("INVALID_PASSWORD", { identifier: email || phoneNumber, ip: req.ip });
+    return res.status(401).json({ success: false, message: "Invalid email/phone or password" });
+  }
 
   const token = signToken(user);
   res.status(200).json({ success: true, message: "Login successful", data: { user: sanitizeUser(user), token } });
@@ -59,9 +56,13 @@ exports.getMe = asyncHandler(async (req, res) => {
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
-// JWT is stateless — client must discard the token. This endpoint confirms the action.
+// Increments tokenVersion — invalidates ALL tokens ever issued for this user.
 exports.logout = asyncHandler(async (req, res) => {
-  res.status(200).json({ success: true, message: "Logged out successfully. Please discard your token." });
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: { tokenVersion: { increment: 1 } },
+  });
+  res.status(200).json({ success: true, message: "Logged out successfully." });
 });
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────
@@ -137,7 +138,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
   await prisma.$transaction([
-    prisma.user.update({ where: { id: resetRecord.userId }, data: { passwordHash } }),
+    // Increment tokenVersion to invalidate all existing sessions
+    prisma.user.update({ where: { id: resetRecord.userId }, data: { passwordHash, tokenVersion: { increment: 1 } } }),
     prisma.passwordResetToken.update({ where: { id: resetRecord.id }, data: { used: true } }),
   ]);
 
@@ -147,18 +149,23 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 // ─── Change Password ──────────────────────────────────────────────────────────
 exports.changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ success: false, message: "currentPassword and newPassword are required" });
-  }
-  if (newPassword.length < 8) {
-    return res.status(400).json({ success: false, message: "New password must be at least 8 characters" });
-  }
 
   const isValid = await bcrypt.compare(currentPassword, req.user.passwordHash);
-  if (!isValid) return res.status(401).json({ success: false, message: "Current password is incorrect" });
+  if (!isValid) {
+    logger.authFail("WRONG_CURRENT_PASSWORD", { userId: req.user.id, ip: req.ip });
+    return res.status(401).json({ success: false, message: "Current password is incorrect" });
+  }
 
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-  await prisma.user.update({ where: { id: req.user.id }, data: { passwordHash } });
 
-  res.status(200).json({ success: true, message: "Password changed successfully" });
+  // Increment tokenVersion to invalidate all existing sessions (force re-login on other devices)
+  await prisma.user.update({
+    where: { id: req.user.id },
+    data: { passwordHash, tokenVersion: { increment: 1 } },
+  });
+
+  const updatedUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+  const newToken = signToken(updatedUser); // issue fresh token for current session
+
+  res.status(200).json({ success: true, message: "Password changed. All other sessions have been logged out.", data: { token: newToken } });
 });

@@ -64,9 +64,10 @@ model User {
   name         String?
   email        String?  @unique
   phone        String?  @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(customer)
-  profileImage String?  @map("profile_image")
+  passwordHash  String   @map("password_hash")
+  tokenVersion  Int      @default(0) @map("token_version")
+  role          Role     @default(customer)
+  profileImage  String?  @map("profile_image")
   address      String?
   city         String?
   state        String?

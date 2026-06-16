@@ -1,52 +1,68 @@
-function errorHandler(err, req, res, next) {
-  console.error("Error:", err.message);
+const logger = require("../utils/logger");
 
-  // All Gemini models overloaded / unavailable
-  if (err.message && err.message.includes("All Gemini models are currently unavailable")) {
-    return res.status(503).json({
-      success: false,
-      message: "AI service is temporarily overloaded. Please try again in a few seconds.",
-    });
-  }
+const isProd = process.env.NODE_ENV === "production";
 
-  // Gemini / OpenAI 503 high demand
-  if (err.message && (err.message.includes("503") || err.message.includes("high demand") || err.message.includes("Service Unavailable"))) {
-    return res.status(503).json({
-      success: false,
-      message: "AI service is temporarily overloaded. Please try again in a few seconds.",
-    });
-  }
-
-  // OpenAI quota / billing
-  if (err.status === 429 || (err.message && err.message.includes("429"))) {
-    return res.status(402).json({
-      success: false,
-      message: "AI quota exceeded. Add billing at platform.openai.com or switch AI_PROVIDER=gemini in .env",
-    });
-  }
-
-  // AI API key missing
-  if (err.message && (err.message.includes("GEMINI_API_KEY") || err.message.includes("OPENAI_API_KEY"))) {
-    return res.status(503).json({
-      success: false,
-      message: err.message,
-    });
-  }
-
-  // Prisma not found
-  if (err.code === "P2025") {
-    return res.status(404).json({ success: false, message: "Record not found" });
-  }
-
-  // Prisma unique constraint
-  if (err.code === "P2002") {
-    return res.status(409).json({ success: false, message: "A record with this value already exists" });
-  }
-
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
+const errorHandler = (err, req, res, next) => {
+  // Log full error internally
+  logger.error({
+    event:  "UNHANDLED_ERROR",
+    method: req.method,
+    path:   req.path,
+    error:  err.message,
+    stack:  isProd ? undefined : err.stack,
+    userId: req.user?.id,
+    ip:     req.ip,
   });
-}
+
+  // ── Prisma errors ──────────────────────────────────────────────────────────
+  if (err.code) {
+    switch (err.code) {
+      case "P2002":
+        return res.status(409).json({ success: false, message: "A record with this value already exists." });
+      case "P2025":
+        return res.status(404).json({ success: false, message: "Record not found." });
+      case "P2003":
+        return res.status(400).json({ success: false, message: "Referenced record does not exist." });
+      case "P2014":
+        return res.status(400).json({ success: false, message: "Invalid relation." });
+    }
+  }
+
+  // ── Multer errors ──────────────────────────────────────────────────────────
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ success: false, message: "File too large. Maximum size is 2MB." });
+  }
+  if (err.message?.includes("Only JPEG")) {
+    return res.status(415).json({ success: false, message: err.message });
+  }
+
+  // ── Validation errors ──────────────────────────────────────────────────────
+  if (err.isJoi || err.name === "ValidationError") {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+
+  // ── JWT errors ────────────────────────────────────────────────────────────
+  if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+    return res.status(401).json({ success: false, message: "Invalid or expired token." });
+  }
+
+  // ── Stripe errors ─────────────────────────────────────────────────────────
+  if (err.type === "StripeCardError") {
+    return res.status(402).json({ success: false, message: err.message });
+  }
+  if (err.type?.startsWith("Stripe")) {
+    return res.status(502).json({ success: false, message: "Payment service error. Please try again." });
+  }
+
+  // ── Custom status ─────────────────────────────────────────────────────────
+  const status = err.status || err.statusCode || 500;
+
+  // In production: never expose stack traces or internal error messages for 5xx
+  const message = (status >= 500 && isProd)
+    ? "An unexpected error occurred. Please try again later."
+    : (err.message || "Internal Server Error");
+
+  res.status(status).json({ success: false, message });
+};
 
 module.exports = errorHandler;
