@@ -73,7 +73,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
 
 exports.changeUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
-  const validRoles = ["user", "admin", "vet"];
+  const validRoles = ["customer", "admin", "partner", "vet"];
 
   if (!role || !validRoles.includes(role)) {
     return res.status(400).json({

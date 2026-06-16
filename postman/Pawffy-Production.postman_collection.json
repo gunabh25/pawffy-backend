@@ -570,7 +570,7 @@
                 "role"
               ]
             },
-            "description": "Change the role of any user. Admin only.\n\nValid roles: user | admin | vet\n\nRate limit: general (100/15min)"
+            "description": "Change the role of any user. Admin only.\n\nValid roles: customer | admin | partner | vet\n\nRate limit: general (100/15min)"
           }
         },
         {
