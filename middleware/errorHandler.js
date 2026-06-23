@@ -59,6 +59,10 @@ const errorHandler = (err, req, res, next) => {
     return res.status(err.status || 400).json({ success: false, message: err.message });
   }
 
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({ success: false, message: err.message });
+  }
+
   // ── Custom status ─────────────────────────────────────────────────────────
   const status = err.status || err.statusCode || 500;
 

@@ -70,4 +70,38 @@ const uploadLimiter = rateLimit({
   },
 });
 
-module.exports = { generalLimiter, authLimiter, forgotPasswordLimiter, paymentLimiter, uploadLimiter };
+// ─── Public read endpoints: 60 requests / 15 min per IP ───────────────────────
+const publicReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many requests. Please try again later." },
+  handler: (req, res, next, options) => {
+    onLimitReached(req);
+    res.status(429).json(options.message);
+  },
+});
+
+// ─── Write/mutation endpoints: 30 requests / 15 min per IP ────────────────────
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many requests. Please slow down." },
+  handler: (req, res, next, options) => {
+    onLimitReached(req);
+    res.status(429).json(options.message);
+  },
+});
+
+module.exports = {
+  generalLimiter,
+  authLimiter,
+  forgotPasswordLimiter,
+  paymentLimiter,
+  uploadLimiter,
+  publicReadLimiter,
+  writeLimiter,
+};

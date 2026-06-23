@@ -3,19 +3,19 @@ const AppError = require("../middleware/errors");
 const { getRandomPetCareQuote } = require("../utils/quotes");
 const { getDistanceFromLatLonInKm } = require("../utils/geo");
 const { sanitizeUser } = require("../utils/auth");
+const { assertOwnerOrAdmin } = require("../utils/petAccess");
+const {
+  PARTNER_PUBLIC_SELECT,
+  PRIVATE_USER_SELECT,
+  PUBLIC_USER_SELECT,
+} = require("../constants/userSelect");
 
 const PARTNER_RADIUS_KM = 25;
-
-const USER_SELECT = {
-  id: true, name: true, email: true, phone: true, role: true,
-  profileImage: true, address: true, city: true, state: true,
-  latitude: true, longitude: true,
-};
 
 async function getPartnersNearby(latitude, longitude) {
   const partners = await prisma.user.findMany({
     where: { role: "partner", latitude: { not: null }, longitude: { not: null } },
-    select: USER_SELECT,
+    select: PARTNER_PUBLIC_SELECT,
   });
 
   return partners
@@ -26,18 +26,23 @@ async function getPartnersNearby(latitude, longitude) {
         Number(partner.latitude),
         Number(partner.longitude)
       );
-      return { ...partner, distance };
+      return { ...sanitizeUser(partner), distance };
     })
     .filter((p) => p.distance <= PARTNER_RADIUS_KM)
     .sort((a, b) => a.distance - b.distance);
 }
 
-async function getUserSummary(userId) {
+async function getUserSummary(userId, { allowPrivate = false } = {}) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: USER_SELECT,
+    select: allowPrivate ? PRIVATE_USER_SELECT : PUBLIC_USER_SELECT,
   });
   return user ? sanitizeUser(user) : null;
+}
+
+async function getUserSummaryForRequest(req, userId) {
+  assertOwnerOrAdmin(req, userId);
+  return getUserSummary(userId, { allowPrivate: true });
 }
 
 async function getUserNotifications(userId) {
@@ -46,6 +51,11 @@ async function getUserNotifications(userId) {
     orderBy: { createdAt: "desc" },
     take: 20,
   });
+}
+
+async function getUserNotificationsForRequest(req, userId) {
+  assertOwnerOrAdmin(req, userId);
+  return getUserNotifications(userId);
 }
 
 async function getActiveCategories() {
@@ -69,12 +79,12 @@ async function getBannerByPlatform(platform) {
   return banner;
 }
 
-async function getDashboard(userId, { latitude, longitude, platform } = {}) {
+async function getDashboard(req, { latitude, longitude, platform } = {}) {
   const response = { success: true, data: {} };
 
-  if (userId) {
-    response.data.user = await getUserSummary(userId);
-    response.data.notifications = await getUserNotifications(userId);
+  if (req.user) {
+    response.data.user = await getUserSummary(req.user.id, { allowPrivate: true });
+    response.data.notifications = await getUserNotifications(req.user.id);
   }
 
   if (latitude != null && longitude != null) {
@@ -101,8 +111,10 @@ async function getDashboard(userId, { latitude, longitude, platform } = {}) {
 module.exports = {
   getDashboard,
   getUserSummary,
+  getUserSummaryForRequest,
   getPartnersNearby,
   getUserNotifications,
+  getUserNotificationsForRequest,
   getActiveCategories,
   getBannerByPlatform,
 };

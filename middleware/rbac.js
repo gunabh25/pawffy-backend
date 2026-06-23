@@ -1,20 +1,14 @@
 const logger = require("../utils/logger");
+const AppError = require("./errors");
 
-/**
- * Role-Based Access Control middleware.
- * Usage: requireRole("admin")  or  requireRole("admin", "partner")
- */
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ success: false, message: "Authentication required" });
+    return next(new AppError("Authentication required", 401));
   }
 
   if (!allowedRoles.includes(req.user.role)) {
     logger.forbidden({ userId: req.user.id, role: req.user.role, required: allowedRoles, path: req.path });
-    return res.status(403).json({
-      success: false,
-      message: `Access denied. Required role: ${allowedRoles.join(" or ")}`,
-    });
+    return next(new AppError(`Access denied. Required role: ${allowedRoles.join(" or ")}`, 403));
   }
 
   next();

@@ -30,7 +30,7 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
 });
 
 exports.verifyPayment = asyncHandler(async (req, res) => {
-  const data = await paymentService.verifyPayment(req.body.paymentIntentId);
+  const data = await paymentService.verifyPayment(req.user.id, req.body.paymentIntentId);
   res.json({ success: true, data });
 });
 

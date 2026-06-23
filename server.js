@@ -1,27 +1,35 @@
 require("dotenv").config();
 
-// ─── Startup: validate critical environment variables ─────────────────────────
-const REQUIRED_ENV = ["JWT_SECRET", "DATABASE_URL"];
-const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-if (missing.length) {
-  console.error(`❌ Missing required environment variables: ${missing.join(", ")}`);
-  process.exit(1);
-}
+const { validateEnv } = require("./config/env");
+validateEnv();
 
 const express  = require("express");
 const cors     = require("cors");
 const helmet   = require("helmet");
 const morgan   = require("morgan");
 const hpp      = require("hpp");
+const crypto   = require("crypto");
 const logger   = require("./utils/logger");
 const sanitize = require("./middleware/sanitize");
 const { generalLimiter } = require("./middleware/rateLimiter");
 const errorHandler = require("./middleware/errorHandler");
+const AppError = require("./middleware/errors");
 
 const app = express();
 
-// ─── Trust proxy (Render / reverse proxies) ───────────────────────────────────
+app.disable("x-powered-by");
 app.set("trust proxy", 1);
+
+process.on("unhandledRejection", (reason) => {
+  logger.error({ event: "UNHANDLED_REJECTION", error: String(reason) });
+});
+
+// ─── Request correlation ID ───────────────────────────────────────────────────
+app.use((req, res, next) => {
+  req.requestId = req.headers["x-request-id"] || crypto.randomUUID();
+  res.setHeader("X-Request-Id", req.requestId);
+  next();
+});
 
 // ─── Security headers (helmet) ────────────────────────────────────────────────
 app.use(
@@ -40,11 +48,11 @@ app.use(
     hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
     referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     permittedCrossDomainPolicies: false,
-    crossOriginEmbedderPolicy: false, // allow base64 images
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "same-site" },
   })
 );
 
-// ─── HTTP request logging ─────────────────────────────────────────────────────
 app.use(
   morgan("combined", {
     stream: { write: (msg) => logger.info(msg.trim()) },
@@ -62,33 +70,26 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Allow requests with no origin (mobile apps, Postman, curl)
       if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-      cb(new Error("Not allowed by CORS"));
+      cb(new AppError("Not allowed by CORS", 403));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
     credentials: true,
   })
 );
 
-// ─── Stripe webhook — must receive raw body BEFORE json parser ────────────────
-app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+// ─── Stripe webhook — raw body BEFORE json parser ─────────────────────────────
+app.use("/api/payments/webhook", express.raw({ type: "application/json", limit: "1mb" }));
 
-// ─── Body parsers ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: "5mb" }));       // 5MB allows base64 images
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// ─── HTTP Parameter Pollution prevention ──────────────────────────────────────
 app.use(hpp());
-
-// ─── XSS input sanitization ───────────────────────────────────────────────────
 app.use(sanitize);
-
-// ─── Global rate limiter ──────────────────────────────────────────────────────
 app.use("/api", generalLimiter);
 
-// ─── Routes (Prisma / PostgreSQL stack) ───────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth",            require("./routes/auth"));
 app.use("/api/users",           require("./routes/user"));
 app.use("/api/pets",            require("./routes/pet"));
@@ -104,18 +105,14 @@ app.use("/api/found-pets",      require("./routes/foundPet"));
 app.use("/api/reports",         require("./routes/report"));
 app.use("/api/dashboard",       require("./routes/dashboard"));
 
-// ─── Health check (no rate limit, no auth) ────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", message: "Pawffy API is running 🐾" }));
 
-// ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   logger.warn({ event: "ROUTE_NOT_FOUND", method: req.method, path: req.path, ip: req.ip });
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
 });
 
-// ─── Centralized error handler ────────────────────────────────────────────────
 app.use(errorHandler);
 
-// ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => logger.info(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => logger.info(`Server running on port ${PORT}`));

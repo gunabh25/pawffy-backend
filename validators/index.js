@@ -182,6 +182,15 @@ exports.createVaccinationSchema = Joi.object({
   notes:           Joi.string().max(500).optional(),
 });
 
+exports.updateMedicalRecordSchema = exports.createMedicalRecordSchema.fork(["petId"], (f) => f.forbidden());
+
+exports.updateVaccinationSchema = Joi.object({
+  vaccineName:     Joi.string().min(1).max(200).allow(null, "").optional(),
+  vaccinationDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).allow(null, "").optional(),
+  nextDueDate:     Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).allow(null, "").optional(),
+  notes:           Joi.string().max(500).allow(null, "").optional(),
+});
+
 // ─── Pet Reports (Lost / Found) ───────────────────────────────────────────────
 const locationSchema = Joi.object({
   latitude:  Joi.number().required(),
@@ -266,7 +275,6 @@ exports.createWalkingBookingSchema = Joi.object({
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 exports.dashboardSchema = Joi.object({
-  userId:    uuid().optional(),
   latitude:  Joi.number().optional(),
   longitude: Joi.number().optional(),
   platform:  Joi.string().valid("web", "app", "Web", "App").optional(),

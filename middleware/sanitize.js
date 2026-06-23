@@ -22,9 +22,23 @@ function sanitizeObject(obj) {
  * Middleware: sanitize req.body, req.query, req.params
  */
 const sanitizeInputs = (req, res, next) => {
-  if (req.body)   req.body   = sanitizeObject(req.body);
-  if (req.query)  req.query  = sanitizeObject(req.query);
-  if (req.params) req.params = sanitizeObject(req.params);
+  const skipKeys = new Set(["profileImage", "imageUrl", "reportUrl"]);
+
+  const sanitizeObjectSkipBinary = (obj) => {
+    const clean = {};
+    for (const key of Object.keys(obj)) {
+      if (skipKeys.has(key) && typeof obj[key] === "string") {
+        clean[key] = obj[key];
+      } else {
+        clean[key] = sanitizeValue(obj[key]);
+      }
+    }
+    return clean;
+  };
+
+  if (req.body) req.body = sanitizeObjectSkipBinary(req.body);
+  if (req.query) req.query = sanitizeObjectSkipBinary(req.query);
+  if (req.params) req.params = sanitizeObjectSkipBinary(req.params);
   next();
 };
 

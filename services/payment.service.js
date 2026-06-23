@@ -256,7 +256,7 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
   };
 }
 
-async function verifyPayment(paymentIntentId) {
+async function verifyPayment(userId, paymentIntentId) {
   const stripe = getStripe();
   const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
@@ -265,6 +265,7 @@ async function verifyPayment(paymentIntentId) {
     include: {
       booking: {
         select: {
+          userId: true,
           id: true, status: true, bookingDate: true, bookingTime: true,
           pet: { select: { name: true } },
           vet: { select: { name: true } },
@@ -274,6 +275,7 @@ async function verifyPayment(paymentIntentId) {
   });
 
   if (!payment) throw new AppError("Payment record not found", 404);
+  if (payment.booking.userId !== userId) throw new AppError("Access denied", 403);
 
   if (intent.status === "succeeded" && payment.paymentStatus !== "paid") {
     await prisma.payment.update({
@@ -320,6 +322,10 @@ async function getPaymentByBooking(req, bookingId) {
 async function handleStripeWebhook(rawBody, signature) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
     return { received: true };
+  }
+
+  if (!signature) {
+    throw new AppError("Missing Stripe signature", 400);
   }
 
   const stripe = getStripe();

@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { JWT_ALGORITHM } = require("../constants/security");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -17,7 +18,7 @@ function signToken(user) {
       tokenVersion: user.tokenVersion ?? 0,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
+    { expiresIn: JWT_EXPIRES_IN, algorithm: JWT_ALGORITHM }
   );
 }
 
