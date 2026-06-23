@@ -3,7 +3,7 @@ const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
 const validate = require("../middleware/validate");
 const { authLimiter, forgotPasswordLimiter } = require("../middleware/rateLimiter");
-const v = require("../models/validators");
+const v = require("../validators");
 const {
   register, login, getMe, logout,
   forgotPassword, resetPassword, changePassword,

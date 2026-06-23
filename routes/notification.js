@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
 const validate = require("../middleware/validate");
-const v = require("../models/validators");
+const v = require("../validators");
 const { getMyNotifications, markAsRead, markAllAsRead, deleteNotification, createNotification } = require("../controllers/notificationController");
 
 router.get   ("/",            verifyToken,                                        getMyNotifications);

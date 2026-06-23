@@ -181,3 +181,98 @@ exports.createVaccinationSchema = Joi.object({
   vetId:           uuid().optional(),
   notes:           Joi.string().max(500).optional(),
 });
+
+// ─── Pet Reports (Lost / Found) ───────────────────────────────────────────────
+const locationSchema = Joi.object({
+  latitude:  Joi.number().required(),
+  longitude: Joi.number().required(),
+  address:   Joi.string().required(),
+});
+
+const reportImagesSchema = Joi.array()
+  .items(Joi.string().uri())
+  .min(1)
+  .max(3)
+  .required()
+  .messages({
+    "array.min": "At least 1 image is required.",
+    "array.max": "You can upload a maximum of 3 images.",
+  });
+
+exports.createLostPetReportSchema = Joi.object({
+  images:      reportImagesSchema,
+  name:        Joi.string().trim().required(),
+  age:         Joi.number().min(0).required(),
+  color:       Joi.string().trim().required(),
+  height:      Joi.string().trim().required(),
+  weight:      Joi.string().trim().required(),
+  breed:       Joi.string().trim().required(),
+  gender:      Joi.string().valid("Male", "Female", "Prefer Not to Say").required(),
+  description: Joi.string().trim().required(),
+  location:    locationSchema.required(),
+});
+
+exports.updateLostPetReportSchema = exports.createLostPetReportSchema.fork(
+  ["images", "name", "age", "color", "height", "weight", "breed", "gender", "description", "location"],
+  (f) => f.optional()
+);
+
+exports.createFoundPetReportSchema = Joi.object({
+  images:      reportImagesSchema,
+  color:       Joi.string().trim().required(),
+  breed:       Joi.string().trim().required(),
+  location:    locationSchema.required(),
+  description: Joi.string().trim().required(),
+  gender:      Joi.string().valid("Male", "Female", "Prefer Not to Say").required(),
+});
+
+exports.updateFoundPetReportSchema = exports.createFoundPetReportSchema.fork(
+  ["images", "color", "breed", "location", "description", "gender"],
+  (f) => f.optional()
+);
+
+// ─── Walking Booking ──────────────────────────────────────────────────────────
+const walkingSlotTimeSchema = Joi.object({
+  morningSlot: Joi.string().allow(""),
+  eveningSlot: Joi.string().allow(""),
+});
+
+exports.createWalkingBookingSchema = Joi.object({
+  selectedAddress: Joi.object({
+    fullAddress: Joi.string().required(),
+    latitude:    Joi.number().optional(),
+    longitude:   Joi.number().optional(),
+    city:        Joi.string().optional(),
+    state:       Joi.string().optional(),
+    country:     Joi.string().optional(),
+    postalCode:  Joi.string().optional(),
+  }).optional(),
+
+  selectedDays:    Joi.string().required(),
+  selectedPetList: Joi.array().min(1).required(),
+  selectedService: Joi.object({
+    title:       Joi.string().required(),
+    description: Joi.string().allow(""),
+    price:       Joi.number().optional(),
+  }).required(),
+  selectedPackage: Joi.object().allow(null),
+  isPackage:       Joi.boolean().required(),
+  partnerId:       uuid().required(),
+  walkingType:     Joi.string().valid("Once a day", "Twice a day").required(),
+  slotTime:        walkingSlotTimeSchema.required(),
+  walkingDuration: Joi.string().required(),
+  paymentStatus:   Joi.string().valid("Pending", "Paid", "pending", "paid").optional(),
+});
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+exports.dashboardSchema = Joi.object({
+  userId:    uuid().optional(),
+  latitude:  Joi.number().optional(),
+  longitude: Joi.number().optional(),
+  platform:  Joi.string().valid("web", "app", "Web", "App").optional(),
+});
+
+exports.partnersNearbySchema = Joi.object({
+  latitude:  Joi.number().required(),
+  longitude: Joi.number().required(),
+});

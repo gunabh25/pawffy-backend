@@ -88,7 +88,7 @@ app.use(sanitize);
 // ─── Global rate limiter ──────────────────────────────────────────────────────
 app.use("/api", generalLimiter);
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── Routes (Prisma / PostgreSQL stack) ───────────────────────────────────────
 app.use("/api/auth",            require("./routes/auth"));
 app.use("/api/users",           require("./routes/user"));
 app.use("/api/pets",            require("./routes/pet"));
@@ -99,6 +99,10 @@ app.use("/api/medical-records", require("./routes/medicalRecord"));
 app.use("/api/vaccinations",    require("./routes/vaccination"));
 app.use("/api/notifications",   require("./routes/notification"));
 app.use("/api/messages",        require("./routes/message"));
+app.use("/api/lost-pets",       require("./routes/lostPet"));
+app.use("/api/found-pets",      require("./routes/foundPet"));
+app.use("/api/reports",         require("./routes/report"));
+app.use("/api/dashboard",       require("./routes/dashboard"));
 
 // ─── Health check (no rate limit, no auth) ────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", message: "Pawffy API is running 🐾" }));

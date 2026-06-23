@@ -1,24 +1,20 @@
 const express = require("express");
 const router = express.Router();
+const verifyToken = require("../middleware/verifyToken");
+const validate = require("../middleware/validate");
+const v = require("../validators");
 const {
-  createLostPetReport,
-  getLostPetReports,
-  getLostPetReportById,
-  updateLostPetReport,
-  deleteLostPetReport,
-} = require("../controllers/lostPetController");
+  createLostReport,
+  getLostReports,
+  getLostReportById,
+  updateLostReport,
+  deleteLostReport,
+} = require("../controllers/petReportController");
 
-// CREATE
-router.post("/", createLostPetReport);
-
-// READ
-router.get("/reports", getLostPetReports);
-router.get("/report/:id", getLostPetReportById);
-
-// UPDATE
-router.put("/report/:id", updateLostPetReport);
-
-// DELETE
-router.delete("/report/:id", deleteLostPetReport);
+router.post("/", verifyToken, validate(v.createLostPetReportSchema), createLostReport);
+router.get("/reports", getLostReports);
+router.get("/report/:id", getLostReportById);
+router.put("/report/:id", verifyToken, validate(v.updateLostPetReportSchema), updateLostReport);
+router.delete("/report/:id", verifyToken, deleteLostReport);
 
 module.exports = router;

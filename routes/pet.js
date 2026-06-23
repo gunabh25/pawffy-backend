@@ -4,7 +4,7 @@ const verifyToken = require("../middleware/verifyToken");
 const validate = require("../middleware/validate");
 const upload = require("../middleware/upload");
 const { uploadLimiter } = require("../middleware/rateLimiter");
-const v = require("../models/validators");
+const v = require("../validators");
 const { createPet, getMyPets, getPetById, updatePet, uploadPetImage, deletePet } = require("../controllers/petController");
 
 router.post  ("/",           verifyToken, validate(v.createPetSchema),   createPet);

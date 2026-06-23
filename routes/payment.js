@@ -4,7 +4,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { requireRole } = require("../middleware/rbac");
 const validate = require("../middleware/validate");
 const { paymentLimiter } = require("../middleware/rateLimiter");
-const v = require("../models/validators");
+const v = require("../validators");
 const {
   getPriceSummary, applyCoupon,
   createPaymentIntent, confirmPayment, verifyPayment,

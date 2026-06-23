@@ -9,7 +9,7 @@ npm-debug.log*
 # Environment variables
 .env
 
-# Firebase service keys
+# Secrets and local config
 serviceAccountKey.json
 
 # OS files

@@ -5,7 +5,7 @@ const { requireRole } = require("../middleware/rbac");
 const validate = require("../middleware/validate");
 const upload = require("../middleware/upload");
 const { uploadLimiter } = require("../middleware/rateLimiter");
-const v = require("../models/validators");
+const v = require("../validators");
 const { getProfile, updateProfile, uploadAvatar, getAllUsers, getUserById, deleteUser, changeUserRole } = require("../controllers/userController");
 
 router.get   ("/me",       verifyToken,                                     getProfile);

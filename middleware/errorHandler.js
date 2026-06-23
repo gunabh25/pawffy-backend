@@ -54,6 +54,11 @@ const errorHandler = (err, req, res, next) => {
     return res.status(502).json({ success: false, message: "Payment service error. Please try again." });
   }
 
+  // ── AppError (thrown from services/controllers) ────────────────────────────
+  if (err.name === "AppError") {
+    return res.status(err.status || 400).json({ success: false, message: err.message });
+  }
+
   // ── Custom status ─────────────────────────────────────────────────────────
   const status = err.status || err.statusCode || 500;
 

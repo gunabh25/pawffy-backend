@@ -1,5 +1,7 @@
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
+const AppError = require("../middleware/errors");
+const { assertOwnerOrAdmin } = require("../utils/petAccess");
 
 exports.getProfile = asyncHandler(async (req, res) => {
   const { passwordHash, ...user } = req.user;
@@ -62,7 +64,8 @@ exports.getUserById = asyncHandler(async (req, res) => {
     },
   });
 
-  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+  if (!user) throw new AppError("User not found", 404);
+  assertOwnerOrAdmin(req, user.id);
   res.json({ success: true, data: user });
 });
 
