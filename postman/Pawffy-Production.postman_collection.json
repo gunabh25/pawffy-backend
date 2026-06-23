@@ -2,7 +2,7 @@
   "info": {
     "name": "Pawffy API — Production",
     "_postman_id": "pawffy-prod-2026",
-    "description": "Complete Pawffy Backend API — https://pawffy-backend.onrender.com\n\n## Security\n- All endpoints require Bearer token (except public ones)\n- Tokens auto-stored after Register/Login via test scripts\n- Rate limits: Auth 10/15min · Payments 20/15min · Uploads 10/15min · General 120/15min\n- Validation errors return: { success:false, errors: [\"field message\", ...] }\n\n## Password Policy\nMin 8 chars · Must contain uppercase + lowercase + digit\n\n## RBAC\n🔒 Admin only: GET /users, DELETE /users/:id, GET /bookings/all\n🔒 Admin/Partner: POST/PUT /vets, /vet-services, /availability\n\n## Variables (auto-filled)\ntoken · userId · petId · vetId · serviceId · bookingId · conversationId · resetToken",
+    "description": "Complete Pawffy Backend API — {{baseUrl}}\n\n## Architecture\nRoutes → middleware → controllers → services → Prisma/PostgreSQL\n\n## Security\n- JWT HS256 · tokenVersion invalidation on logout/password change\n- Bearer token required on protected routes (public routes marked 🌐)\n- UUID params validated · ownership checks on user/pet/payment data\n- Rate limits: Auth 10/15min · Payments 20/15min · Uploads 10/15min · Writes 30/15min · Public reads 60/15min · General 120/15min\n- Validation errors: { success:false, message:\"Validation failed\", errors:[...] }\n\n## Password Policy\nMin 8 chars · uppercase + lowercase + digit\n\n## RBAC\n🔒 Admin: GET /users, DELETE /users/:id, GET /bookings/all\n🔒 Admin/Partner: POST/PUT /vets, services, availability\n🔒 Self or Admin: GET /users/:id, dashboard user/notifications\n\n## Auto variables\ntoken · userId · petId · vetId · serviceId · bookingId · walkingBookingId · partnerId · recordId · vaccId · notifId · conversationId · receiverId · lostReportId · foundReportId · resetToken · couponCode",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -42,6 +42,16 @@
       "type": "string"
     },
     {
+      "key": "walkingBookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "partnerId",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "recordId",
       "value": "",
       "type": "string"
@@ -68,6 +78,16 @@
     },
     {
       "key": "receiverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lostReportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "foundReportId",
       "value": "",
       "type": "string"
     },
@@ -532,7 +552,8 @@
                 "users",
                 "{{userId}}"
               ]
-            }
+            },
+            "description": "🔒 Requires auth. Own profile or admin role only."
           }
         },
         {
@@ -546,7 +567,7 @@
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{authToken}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
@@ -570,7 +591,7 @@
                 "role"
               ]
             },
-            "description": "Change the role of any user. Admin only.\n\nValid roles: customer | admin | partner | vet\n\nRate limit: general (100/15min)"
+            "description": "🔒 Admin only. Valid roles: customer | admin | partner | vet"
           }
         },
         {
@@ -1924,7 +1945,7 @@
               "mode": "raw",
               "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}"
             },
-            "description": "Call after flutter_stripe payment sheet closes. Returns: stripeStatus, bookingStatus, appointmentId",
+            "description": "🔒 Must own the booking linked to the payment intent.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/verify",
               "host": [
@@ -1994,7 +2015,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild ear infection\",\n  \"prescription\": \"Ear drops twice daily for 7 days\",\n  \"symptoms\": \"Head shaking, scratching ear\"\n}",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild ear infection\",\n  \"prescription\": \"Ear drops twice daily for 7 days\",\n  \"symptoms\": \"Head shaking, scratching ear\",\n  \"reportUrl\": null\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2010,7 +2031,8 @@
                 "api",
                 "medical-records"
               ]
-            }
+            },
+            "description": "reportUrl accepts null, empty string, or URL/base64. petId must belong to authenticated user."
           }
         },
         {
@@ -2401,6 +2423,594 @@
                 "api",
                 "notifications",
                 "{{notifId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏠 Dashboard",
+      "description": "Optional Bearer on POST /dashboard for personalized data. User/notifications endpoints require self or admin.",
+      "item": [
+        {
+          "name": "Get Dashboard (optional auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.877,\n  \"platform\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Send Bearer token for user profile + notifications. Without token: public data only (categories, partners, banner, quote). Do NOT send userId in body.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "dashboard"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID 🔒 Self/Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "🔒 Requires auth. Returns private profile only for self or admin.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Partners Nearby 🌐",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.877\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "🌐 Public. Returns partners within 25km (no email/phone exposed).",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/partners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "partners"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notifications By User 🔒 Self/Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "🔒 Requires auth. Own notifications or admin only.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/notifications/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "notifications",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active Categories 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Banner 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/banner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "banner"
+              ],
+              "query": [
+                {
+                  "key": "platform",
+                  "value": "app",
+                  "description": "web | app"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚨 Lost Pets",
+      "description": "Public read · Auth required for create/update/delete · userId from token",
+      "item": [
+        {
+          "name": "Create Lost Pet Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('lostReportId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://example.com/pet1.jpg\"],\n  \"name\": \"Bruno\",\n  \"age\": 3,\n  \"color\": \"Brown\",\n  \"height\": \"45 cm\",\n  \"weight\": \"12 kg\",\n  \"breed\": \"Labrador\",\n  \"gender\": \"Male\",\n  \"description\": \"Last seen near park wearing red collar\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Lost Reports 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "reports"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lost Report By ID 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Lost Pet Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated: seen near Bandra station\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Lost Pet Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Found Pets",
+      "item": [
+        {
+          "name": "Create Found Pet Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('foundReportId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://example.com/found1.jpg\"],\n  \"color\": \"White\",\n  \"breed\": \"Indie\",\n  \"gender\": \"Female\",\n  \"description\": \"Friendly dog found near station\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Found Reports 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Found Report By ID 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Found Pet Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Now at local shelter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Found Pet Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 All Pet Reports",
+      "item": [
+        {
+          "name": "Get All Reports (Lost + Found) 🌐",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Returns lostPets and foundPets arrays combined.",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚶 Walking Bookings",
+      "description": "partnerId must be a user with role=partner. userId comes from auth token.",
+      "item": [
+        {
+          "name": "Create Walking Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.bookingId) pm.collectionVariables.set('walkingBookingId', r.bookingId);",
+                  "else if (r.data && r.data.id) pm.collectionVariables.set('walkingBookingId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partnerId\": \"{{partnerId}}\",\n  \"walkingType\": \"Once a day\",\n  \"selectedDays\": \"Mon,Wed,Fri\",\n  \"walkingDuration\": \"30 mins\",\n  \"isPackage\": false,\n  \"selectedPackage\": null,\n  \"selectedPetList\": [\n    { \"name\": \"Buddy\", \"petType\": \"dog\", \"breed\": \"Golden Retriever\" }\n  ],\n  \"selectedService\": {\n    \"title\": \"Standard Walk\",\n    \"description\": \"30 minute walk\",\n    \"price\": 299\n  },\n  \"selectedAddress\": {\n    \"fullAddress\": \"123 Pet Street, Mumbai\"\n  },\n  \"slotTime\": {\n    \"morningSlot\": \"07:00 AM\"\n  },\n  \"paymentStatus\": \"Pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Walking Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Walking Booking By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking/{{walkingBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking",
+                "{{walkingBookingId}}"
               ]
             }
           }
