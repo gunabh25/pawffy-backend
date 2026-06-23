@@ -165,11 +165,11 @@ exports.verifyPaymentSchema = Joi.object({
 // ─── Medical Record ───────────────────────────────────────────────────────────
 exports.createMedicalRecordSchema = Joi.object({
   petId:        uuid().required(),
-  diagnosis:    Joi.string().max(1000).optional(),
-  prescription: Joi.string().max(1000).optional(),
-  allergies:    Joi.string().max(500).optional(),
-  symptoms:     Joi.string().max(500).optional(),
-  reportUrl:    Joi.string().uri().optional(),
+  diagnosis:    Joi.string().max(1000).allow(null, "").optional(),
+  prescription: Joi.string().max(1000).allow(null, "").optional(),
+  allergies:    Joi.string().max(500).allow(null, "").optional(),
+  symptoms:     Joi.string().max(500).allow(null, "").optional(),
+  reportUrl:    Joi.string().max(1048576).allow(null, "").optional(),
 });
 
 // ─── Vaccination ──────────────────────────────────────────────────────────────
