@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
 
-// ─── Create notification — userId is always from the auth token ───────────────
+// ─── Create notification — admin/system use only ────────────────────────────
 exports.createNotification = asyncHandler(async (req, res) => {
   const { title, message, type } = req.body;
 

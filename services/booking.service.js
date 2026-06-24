@@ -104,7 +104,16 @@ async function getBookingById(req, bookingId) {
 async function updateBookingStatus(req, bookingId, status) {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking) throw new AppError("Booking not found", 404);
-  assertOwnerOrAdmin(req, booking.userId);
+
+  if (req.user.role === "admin") {
+    // admins may set any valid status
+  } else if (booking.userId === req.user.id) {
+    if (status !== "cancelled") {
+      throw new AppError("You can only cancel your booking", 403);
+    }
+  } else {
+    throw new AppError("Access denied", 403);
+  }
 
   return prisma.booking.update({
     where: { id: bookingId },

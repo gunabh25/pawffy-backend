@@ -26,12 +26,24 @@ async function createWalkingBooking(userId, body) {
     walkingType,
     slotTime,
     walkingDuration,
-    paymentStatus,
   } = body;
 
   const partner = await prisma.user.findUnique({ where: { id: partnerId } });
   if (!partner || partner.role !== "partner") {
     throw new AppError("Partner not found", 404);
+  }
+
+  const petIds = selectedPetList.map((pet) => (typeof pet === "string" ? pet : pet?.id)).filter(Boolean);
+  if (petIds.length === 0) {
+    throw new AppError("At least one valid pet is required", 400);
+  }
+
+  const ownedPets = await prisma.pet.findMany({
+    where: { id: { in: petIds }, ownerId: userId },
+    select: { id: true },
+  });
+  if (ownedPets.length !== petIds.length) {
+    throw new AppError("One or more pets do not belong to you", 403);
   }
 
   const user = await prisma.user.findUnique({
@@ -52,7 +64,7 @@ async function createWalkingBooking(userId, body) {
       selectedPackage: selectedPackage || null,
       isPackage: isPackage ?? false,
       slotTime: buildSlotTime(walkingType, slotTime),
-      paymentStatus: paymentStatus || "Pending",
+      paymentStatus: "Pending",
     },
     include: {
       user: { select: { id: true, name: true, email: true, phone: true } },

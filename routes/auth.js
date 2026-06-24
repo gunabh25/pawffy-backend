@@ -14,7 +14,7 @@ router.post("/login",           authLimiter, validate(v.loginSchema),           
 router.get ("/me",              verifyToken,                                     getMe);
 router.post("/logout",          verifyToken,                                     logout);
 router.post("/forgot-password", forgotPasswordLimiter, validate(v.forgotPasswordSchema), forgotPassword);
-router.post("/reset-password",  validate(v.resetPasswordSchema),                resetPassword);
+router.post("/reset-password",  forgotPasswordLimiter, validate(v.resetPasswordSchema), resetPassword);
 router.post("/change-password", verifyToken, validate(v.changePasswordSchema),  changePassword);
 
 module.exports = router;

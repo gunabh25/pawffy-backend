@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
+const AppError = require("../middleware/errors");
 
 // ─── POST /api/vets/:vetId/reviews ────────────────────────────────────────────
 exports.createReview = asyncHandler(async (req, res) => {
@@ -10,17 +11,18 @@ exports.createReview = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: "rating must be between 1 and 5" });
   }
 
+  if (!bookingId) {
+    return res.status(400).json({ success: false, message: "bookingId is required to review a vet" });
+  }
+
   const vet = await prisma.vet.findUnique({ where: { id: vetId } });
   if (!vet) return res.status(404).json({ success: false, message: "Vet not found" });
 
-  // Optionally verify the user had a completed booking with this vet
-  if (bookingId) {
-    const booking = await prisma.booking.findFirst({
-      where: { id: bookingId, userId: req.user.id, vetId, status: "completed" },
-    });
-    if (!booking) {
-      return res.status(400).json({ success: false, message: "No completed booking found for this vet" });
-    }
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, userId: req.user.id, vetId, status: "completed" },
+  });
+  if (!booking) {
+    return res.status(400).json({ success: false, message: "No completed booking found for this vet" });
   }
 
   const existing = await prisma.vetReview.findUnique({
@@ -31,11 +33,10 @@ exports.createReview = asyncHandler(async (req, res) => {
   }
 
   const review = await prisma.vetReview.create({
-    data: { vetId, userId: req.user.id, rating: parseInt(rating), comment, bookingId: bookingId || null },
+    data: { vetId, userId: req.user.id, rating: parseInt(rating), comment, bookingId },
     include: { user: { select: { id: true, name: true, profileImage: true } } },
   });
 
-  // Recalculate average rating
   const { _avg } = await prisma.vetReview.aggregate({
     where: { vetId },
     _avg: { rating: true },

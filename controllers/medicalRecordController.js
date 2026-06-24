@@ -3,10 +3,17 @@ const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { requirePetAccess, assertPetAccess } = require("../utils/petAccess");
 
+async function resolveVetIdForUser(user) {
+  if (!user.email || user.role === "customer") return null;
+  const vet = await prisma.vet.findUnique({ where: { email: user.email } });
+  return vet?.id || null;
+}
+
 exports.createRecord = asyncHandler(async (req, res) => {
   const { petId, diagnosis, prescription, allergies, symptoms, reportUrl } = req.body;
 
-  const pet = await requirePetAccess(req.user, petId, { allowVet: true });
+  const pet = await requirePetAccess(req.user, petId);
+  const createdByVet = await resolveVetIdForUser(req.user);
 
   const record = await prisma.medicalRecord.create({
     data: {
@@ -16,7 +23,7 @@ exports.createRecord = asyncHandler(async (req, res) => {
       allergies,
       symptoms,
       reportUrl,
-      createdByVet: req.user.role === "vet" ? req.user.id : null,
+      createdByVet,
     },
   });
 
@@ -24,7 +31,7 @@ exports.createRecord = asyncHandler(async (req, res) => {
 });
 
 exports.getRecordsByPet = asyncHandler(async (req, res) => {
-  const pet = await requirePetAccess(req.user, req.params.petId, { allowVet: true });
+  const pet = await requirePetAccess(req.user, req.params.petId);
 
   const records = await prisma.medicalRecord.findMany({
     where: { petId: pet.id },
@@ -41,7 +48,7 @@ exports.getRecordById = asyncHandler(async (req, res) => {
   });
 
   if (!record) throw new AppError("Record not found", 404);
-  assertPetAccess(req.user, record.pet, { allowVet: true });
+  assertPetAccess(req.user, record.pet);
 
   res.json({ success: true, data: record });
 });
@@ -52,7 +59,7 @@ exports.updateRecord = asyncHandler(async (req, res) => {
     include: { pet: { select: { ownerId: true } } },
   });
   if (!record) throw new AppError("Record not found", 404);
-  assertPetAccess(req.user, record.pet, { allowVet: true });
+  assertPetAccess(req.user, record.pet);
 
   const { diagnosis, prescription, allergies, symptoms, reportUrl } = req.body;
 
@@ -70,7 +77,7 @@ exports.deleteRecord = asyncHandler(async (req, res) => {
     include: { pet: { select: { ownerId: true } } },
   });
   if (!record) throw new AppError("Record not found", 404);
-  assertPetAccess(req.user, record.pet, { allowVet: true });
+  assertPetAccess(req.user, record.pet);
 
   await prisma.medicalRecord.delete({ where: { id: req.params.id } });
   res.json({ success: true, message: "Record deleted" });

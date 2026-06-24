@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
+const { assertVetManagementAccess } = require("../utils/vetAccess");
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -27,6 +28,12 @@ async function getVetOrThrow(vetId) {
   return vet;
 }
 
+async function requireManagedVet(req, vetId) {
+  const vet = await getVetOrThrow(vetId);
+  assertVetManagementAccess(req, vet);
+  return vet;
+}
+
 async function getVetServices(vetId) {
   await getVetOrThrow(vetId);
 
@@ -36,8 +43,8 @@ async function getVetServices(vetId) {
   });
 }
 
-async function createVetService(vetId, { name, description, price, duration }) {
-  await getVetOrThrow(vetId);
+async function createVetService(req, vetId, { name, description, price, duration }) {
+  await requireManagedVet(req, vetId);
 
   return prisma.vetService.create({
     data: {
@@ -50,7 +57,8 @@ async function createVetService(vetId, { name, description, price, duration }) {
   });
 }
 
-async function updateVetService(vetId, serviceId, data) {
+async function updateVetService(req, vetId, serviceId, data) {
+  await requireManagedVet(req, vetId);
   const service = await prisma.vetService.findFirst({
     where: { id: serviceId, vetId },
   });
@@ -70,7 +78,8 @@ async function updateVetService(vetId, serviceId, data) {
   });
 }
 
-async function deleteVetService(vetId, serviceId) {
+async function deleteVetService(req, vetId, serviceId) {
+  await requireManagedVet(req, vetId);
   const service = await prisma.vetService.findFirst({
     where: { id: serviceId, vetId },
   });

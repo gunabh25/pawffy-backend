@@ -7,17 +7,17 @@ exports.getVetServices = asyncHandler(async (req, res) => {
 });
 
 exports.createVetService = asyncHandler(async (req, res) => {
-  const service = await vetServiceService.createVetService(req.params.vetId, req.body);
+  const service = await vetServiceService.createVetService(req, req.params.vetId, req.body);
   res.status(201).json({ success: true, data: service });
 });
 
 exports.updateVetService = asyncHandler(async (req, res) => {
-  const updated = await vetServiceService.updateVetService(req.params.vetId, req.params.serviceId, req.body);
+  const updated = await vetServiceService.updateVetService(req, req.params.vetId, req.params.serviceId, req.body);
   res.json({ success: true, data: updated });
 });
 
 exports.deleteVetService = asyncHandler(async (req, res) => {
-  await vetServiceService.deleteVetService(req.params.vetId, req.params.serviceId);
+  await vetServiceService.deleteVetService(req, req.params.vetId, req.params.serviceId);
   res.json({ success: true, message: "Service deactivated" });
 });
 

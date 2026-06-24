@@ -3,10 +3,18 @@ const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { requirePetAccess, assertPetAccess } = require("../utils/petAccess");
 
+async function resolveVetIdForUser(user) {
+  if (!user.email || user.role === "customer") return null;
+  const vet = await prisma.vet.findUnique({ where: { email: user.email } });
+  return vet?.id || null;
+}
+
 exports.addVaccination = asyncHandler(async (req, res) => {
   const { petId, vaccineName, vaccinationDate, nextDueDate, vetId, notes } = req.body;
 
-  await requirePetAccess(req.user, petId, { allowVet: true });
+  await requirePetAccess(req.user, petId);
+
+  const resolvedVetId = vetId || (await resolveVetIdForUser(req.user));
 
   const vaccination = await prisma.vaccination.create({
     data: {
@@ -14,7 +22,7 @@ exports.addVaccination = asyncHandler(async (req, res) => {
       vaccineName,
       vaccinationDate: new Date(vaccinationDate),
       nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-      vetId: vetId || null,
+      vetId: resolvedVetId,
       notes,
     },
   });
@@ -23,7 +31,7 @@ exports.addVaccination = asyncHandler(async (req, res) => {
 });
 
 exports.getVaccinationsByPet = asyncHandler(async (req, res) => {
-  await requirePetAccess(req.user, req.params.petId, { allowVet: true });
+  await requirePetAccess(req.user, req.params.petId);
 
   const vaccinations = await prisma.vaccination.findMany({
     where: { petId: req.params.petId },
@@ -40,7 +48,7 @@ exports.updateVaccination = asyncHandler(async (req, res) => {
     include: { pet: { select: { ownerId: true } } },
   });
   if (!vacc) throw new AppError("Vaccination not found", 404);
-  assertPetAccess(req.user, vacc.pet, { allowVet: true });
+  assertPetAccess(req.user, vacc.pet);
 
   const { vaccineName, vaccinationDate, nextDueDate, notes } = req.body;
 
@@ -63,7 +71,7 @@ exports.deleteVaccination = asyncHandler(async (req, res) => {
     include: { pet: { select: { ownerId: true } } },
   });
   if (!vacc) throw new AppError("Vaccination not found", 404);
-  assertPetAccess(req.user, vacc.pet, { allowVet: true });
+  assertPetAccess(req.user, vacc.pet);
 
   await prisma.vaccination.delete({ where: { id: req.params.id } });
   res.json({ success: true, message: "Vaccination record deleted" });

@@ -83,7 +83,6 @@ exports.createVetSchema = Joi.object({
 
 exports.updateVetSchema = exports.createVetSchema.fork(["name", "email"], (f) => f.optional()).append({
   availableStatus: Joi.boolean().optional(),
-  rating:          Joi.number().min(0).max(5).optional(),
   profileImage:    Joi.string().max(1048576).optional(),
 });
 
@@ -123,7 +122,7 @@ exports.updateBookingStatusSchema = Joi.object({
 exports.createReviewSchema = Joi.object({
   rating:    Joi.number().integer().min(1).max(5).required(),
   comment:   Joi.string().max(1000).optional(),
-  bookingId: uuid().optional(),
+  bookingId: uuid().required(),
 });
 
 // ─── Notification ─────────────────────────────────────────────────────────────
@@ -270,7 +269,6 @@ exports.createWalkingBookingSchema = Joi.object({
   walkingType:     Joi.string().valid("Once a day", "Twice a day").required(),
   slotTime:        walkingSlotTimeSchema.required(),
   walkingDuration: Joi.string().required(),
-  paymentStatus:   Joi.string().valid("Pending", "Paid", "pending", "paid").optional(),
 });
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────

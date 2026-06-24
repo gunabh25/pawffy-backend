@@ -1,11 +1,17 @@
 const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
+const AppError = require("../middleware/errors");
+const { assertVetManagementAccess } = require("../utils/vetAccess");
 
 exports.createVet = asyncHandler(async (req, res) => {
   const { name, email, serviceType, specialization, experienceYears, clinicName, consultationFee, city, state } = req.body;
 
   if (!name || !email) {
     return res.status(400).json({ success: false, message: "name and email are required" });
+  }
+
+  if (req.user.role === "partner" && req.user.email !== email) {
+    throw new AppError("Partners can only create a vet profile for their own email", 403);
   }
 
   const existing = await prisma.vet.findUnique({ where: { email } });
@@ -74,7 +80,9 @@ exports.updateVet = asyncHandler(async (req, res) => {
   const vet = await prisma.vet.findUnique({ where: { id: req.params.id } });
   if (!vet) return res.status(404).json({ success: false, message: "Vet not found" });
 
-  const { name, serviceType, specialization, experienceYears, clinicName, consultationFee, rating, city, state, availableStatus } = req.body;
+  assertVetManagementAccess(req, vet);
+
+  const { name, serviceType, specialization, experienceYears, clinicName, consultationFee, city, state, availableStatus } = req.body;
 
   const updated = await prisma.vet.update({
     where: { id: req.params.id },
@@ -83,7 +91,6 @@ exports.updateVet = asyncHandler(async (req, res) => {
       experienceYears: experienceYears !== undefined ? parseInt(experienceYears) : undefined,
       clinicName,
       consultationFee: consultationFee !== undefined ? parseFloat(consultationFee) : undefined,
-      rating: rating !== undefined ? parseFloat(rating) : undefined,
       city, state, availableStatus,
     },
   });
@@ -92,6 +99,11 @@ exports.updateVet = asyncHandler(async (req, res) => {
 });
 
 exports.setAvailability = asyncHandler(async (req, res) => {
+  const vet = await prisma.vet.findUnique({ where: { id: req.params.id } });
+  if (!vet) return res.status(404).json({ success: false, message: "Vet not found" });
+
+  assertVetManagementAccess(req, vet);
+
   const { slots } = req.body;
 
   if (!Array.isArray(slots) || slots.length === 0) {

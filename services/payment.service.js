@@ -181,6 +181,10 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
 }
 
 async function confirmWalletPayment(userId, { bookingId, couponCode }) {
+  if (process.env.WALLET_PAYMENTS_ENABLED !== "true") {
+    throw new AppError("Wallet payments are not enabled", 503);
+  }
+
   const booking = await getBookingForUser(userId, bookingId, {
     service: { select: { name: true, price: true } },
     vet: { select: { name: true, consultationFee: true } },
@@ -321,6 +325,9 @@ async function getPaymentByBooking(req, bookingId) {
 
 async function handleStripeWebhook(rawBody, signature) {
   if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    if (process.env.NODE_ENV === "production") {
+      throw new AppError("Stripe webhook is not configured", 503);
+    }
     return { received: true };
   }
 

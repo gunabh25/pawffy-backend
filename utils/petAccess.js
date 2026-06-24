@@ -8,15 +8,14 @@ async function getPetOrThrow(petId) {
   return pet;
 }
 
-function assertPetAccess(user, pet, { allowVet = false } = {}) {
+function assertPetAccess(user, pet) {
   if (user.id === pet.ownerId || user.role === "admin") return;
-  if (allowVet && user.role === "vet") return;
   throw new AppError("Access denied", 403);
 }
 
-async function requirePetAccess(user, petId, options = {}) {
+async function requirePetAccess(user, petId) {
   const pet = await getPetOrThrow(petId);
-  assertPetAccess(user, pet, options);
+  assertPetAccess(user, pet);
   return pet;
 }
 
