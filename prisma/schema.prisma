@@ -94,6 +94,14 @@ enum DocumentType {
   other
 }
 
+enum PartnerBookingStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+  rejected
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
@@ -124,6 +132,7 @@ model User {
   walkingBookings     WalkingBooking[]     @relation("WalkingBookingUser")
   partnerWalkBookings WalkingBooking[]     @relation("WalkingBookingPartner")
   partnerBusiness     PartnerBusiness?
+  partnerBookings     PartnerBooking[]     @relation("PartnerBookingCustomer")
 
   @@map("users")
 }
@@ -428,27 +437,37 @@ model WalkingBooking {
 }
 
 model PartnerBusiness {
-  id                 String             @id @default(uuid()) @db.Uuid
-  userId             String             @unique @map("user_id") @db.Uuid
-  businessName       String?            @map("business_name")
-  contactName        String?            @map("contact_name")
-  phone              String?
-  location           String?
-  description        String?
-  sameDayRequests    Boolean            @default(false) @map("same_day_requests")
-  onboardingStep     OnboardingStep     @default(business) @map("onboarding_step")
-  verificationStatus VerificationStatus @default(incomplete) @map("verification_status")
-  rejectionReason    String?            @map("rejection_reason")
-  termsAcceptedAt    DateTime?          @map("terms_accepted_at")
-  submittedAt        DateTime?          @map("submitted_at")
-  verifiedAt         DateTime?          @map("verified_at")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
+  id                   String             @id @default(uuid()) @db.Uuid
+  userId               String             @unique @map("user_id") @db.Uuid
+  businessName         String?            @map("business_name")
+  contactName          String?            @map("contact_name")
+  phone                String?
+  location             String?
+  city                 String?
+  state                String?
+  description          String?
+  profileTitle         String?            @map("profile_title")
+  isOnline             Boolean            @default(true) @map("is_online")
+  sameDayRequests      Boolean            @default(false) @map("same_day_requests")
+  onboardingStep       OnboardingStep     @default(business) @map("onboarding_step")
+  verificationStatus   VerificationStatus @default(incomplete) @map("verification_status")
+  rejectionReason      String?            @map("rejection_reason")
+  termsAcceptedAt      DateTime?          @map("terms_accepted_at")
+  submittedAt          DateTime?          @map("submitted_at")
+  verifiedAt           DateTime?          @map("verified_at")
+  membershipPlan       String             @default("free") @map("membership_plan")
+  membershipExpiresAt  DateTime?          @map("membership_expires_at")
+  rating               Decimal?           @db.Decimal(3, 2)
+  reviewCount          Int                @default(0) @map("review_count")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
 
   user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   services     PartnerService[]
   availability PartnerAvailability[]
   documents    PartnerDocument[]
+  blockedDates PartnerBlockedDate[]
+  bookings     PartnerBooking[]
 
   @@map("partner_businesses")
 }
@@ -471,7 +490,8 @@ model PartnerService {
   createdAt       DateTime            @default(now()) @map("created_at")
   updatedAt       DateTime            @updatedAt @map("updated_at")
 
-  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business PartnerBusiness  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings PartnerBooking[]
 
   @@map("partner_services")
 }
@@ -502,6 +522,50 @@ model PartnerDocument {
   business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@map("partner_documents")
+}
+
+model PartnerBlockedDate {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  date       DateTime @db.Date
+  reason     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, date])
+  @@map("partner_blocked_dates")
+}
+
+model PartnerBooking {
+  id           String               @id @default(uuid()) @db.Uuid
+  businessId   String               @map("business_id") @db.Uuid
+  customerId   String               @map("customer_id") @db.Uuid
+  petId        String?              @map("pet_id") @db.Uuid
+  serviceId    String?              @map("service_id") @db.Uuid
+  serviceName  String               @map("service_name")
+  petName      String?              @map("pet_name")
+  petBreed     String?              @map("pet_breed")
+  petAge       String?              @map("pet_age")
+  petImageUrl  String?              @map("pet_image_url")
+  bookingDate  DateTime             @map("booking_date") @db.Date
+  bookingTime  String               @map("booking_time")
+  location     String?
+  price        Decimal              @db.Decimal(10, 2)
+  status       PartnerBookingStatus @default(pending)
+  notes        String?
+  isNew        Boolean              @default(true) @map("is_new")
+  respondedAt  DateTime?            @map("responded_at")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer User            @relation("PartnerBookingCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  service  PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, status])
+  @@index([businessId, bookingDate])
+  @@map("partner_bookings")
 }
 
 model Category {

@@ -8,9 +8,30 @@ const { validateUuidParams } = require("../middleware/accessControl");
 const { uploadLimiter, writeLimiter } = require("../middleware/rateLimiter");
 const v = require("../validators");
 const ctrl = require("../controllers/vendorOnboardingController");
+const appCtrl = require("../controllers/vendorAppController");
 
 const partnerOnly = [verifyToken, requireRole("partner")];
 const adminOnly = [verifyToken, requireRole("admin")];
+
+// ─── Main app screens (Home, Requests, Calendar, Profile, Chats) ─────────────
+router.get("/home", ...partnerOnly, appCtrl.getHome);
+router.patch("/status", ...partnerOnly, writeLimiter, validate(v.vendorOnlineStatusSchema), appCtrl.setOnlineStatus);
+
+router.get("/requests", ...partnerOnly, validate(v.vendorRequestsQuerySchema, "query"), appCtrl.getRequests);
+router.post("/requests/:id/accept", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.acceptRequest);
+router.post("/requests/:id/reject", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.rejectRequest);
+
+router.get("/calendar", ...partnerOnly, validate(v.vendorCalendarQuerySchema, "query"), appCtrl.getCalendar);
+router.get("/blocked-dates", ...partnerOnly, appCtrl.listBlockedDates);
+router.post("/blocked-dates", ...partnerOnly, writeLimiter, validate(v.vendorBlockedDateSchema), appCtrl.addBlockedDate);
+router.delete("/blocked-dates/:id", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.removeBlockedDate);
+
+router.get("/profile", ...partnerOnly, validate(v.vendorProfileQuerySchema, "query"), appCtrl.getProfile);
+router.put("/profile", ...partnerOnly, writeLimiter, validate(v.vendorProfileUpdateSchema), appCtrl.updateProfile);
+router.get("/services", ...partnerOnly, appCtrl.listServices);
+
+router.get("/chats", ...partnerOnly, appCtrl.getChats);
+router.get("/notifications/unread-count", ...partnerOnly, appCtrl.getUnreadNotifications);
 
 // ─── Onboarding (matches vendor app UI flow) ─────────────────────────────────
 router.get("/onboarding", ...partnerOnly, ctrl.getOnboarding);

@@ -369,3 +369,42 @@ exports.vendorReviewSchema = Joi.object({
     otherwise: Joi.forbidden(),
   }),
 });
+
+// ─── Vendor main app screens ──────────────────────────────────────────────────
+exports.vendorOnlineStatusSchema = Joi.object({
+  isOnline: Joi.boolean().required(),
+});
+
+exports.vendorRequestsQuerySchema = Joi.object({
+  status: Joi.string().valid("pending", "upcoming", "completed", "canceled", "cancelled").default("pending"),
+  search: Joi.string().max(100).optional().allow(""),
+});
+
+exports.vendorCalendarQuerySchema = Joi.object({
+  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional().messages({
+    "string.pattern.base": "date must be in YYYY-MM-DD format",
+  }),
+});
+
+exports.vendorBlockedDateSchema = Joi.object({
+  date:   Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "string.pattern.base": "date must be in YYYY-MM-DD format",
+  }),
+  reason: Joi.string().max(200).optional().allow("", null),
+});
+
+exports.vendorProfileQuerySchema = Joi.object({
+  period: Joi.string().valid("week", "month", "year").default("month"),
+});
+
+exports.vendorProfileUpdateSchema = Joi.object({
+  contactName:  Joi.string().min(2).max(100).optional(),
+  businessName: Joi.string().min(2).max(200).optional(),
+  phone:        Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional(),
+  location:     Joi.string().max(500).optional(),
+  city:         Joi.string().max(100).optional(),
+  state:        Joi.string().max(100).optional(),
+  description:  Joi.string().max(2000).allow("", null).optional(),
+  profileTitle: Joi.string().max(150).optional(),
+  profileImage: Joi.string().max(1048576).optional(),
+}).min(1);
