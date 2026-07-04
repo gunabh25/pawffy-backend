@@ -91,6 +91,7 @@ app.use("/api", generalLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth",            require("./routes/auth"));
+app.use("/api/vendor",          require("./routes/vendor"));
 app.use("/api/users",           require("./routes/user"));
 app.use("/api/pets",            require("./routes/pet"));
 app.use("/api/vets",            require("./routes/vet"));

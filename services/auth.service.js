@@ -29,6 +29,55 @@ async function register({ email, phoneNumber, password, name }) {
   return { user: sanitizeUser(user), token: signToken(user) };
 }
 
+async function registerVendor({ email, password, name, acceptTerms }) {
+  if (!acceptTerms) {
+    throw new AppError("You must agree to the Terms & Conditions", 400);
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: { email },
+  });
+
+  if (existingUser) {
+    throw new AppError("User already exists with this email", 409);
+  }
+
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        email,
+        passwordHash,
+        name: name || null,
+        role: "partner",
+      },
+    });
+
+    await tx.partnerBusiness.create({
+      data: {
+        userId: created.id,
+        contactName: name || null,
+        termsAcceptedAt: new Date(),
+        onboardingStep: "business",
+        verificationStatus: "incomplete",
+      },
+    });
+
+    return created;
+  });
+
+  return { user: sanitizeUser(user), token: signToken(user) };
+}
+
+async function loginVendor({ email, password }, ip) {
+  const result = await login({ email, password }, ip);
+  if (result.user.role !== "partner") {
+    throw new AppError("This account is not a vendor account", 403);
+  }
+  return result;
+}
+
 async function login({ email, phoneNumber, password }, ip) {
   const user = await prisma.user.findFirst({ where: email ? { email } : { phone: phoneNumber } });
 
@@ -131,7 +180,9 @@ async function changePassword(user, { currentPassword, newPassword }, ip) {
 
 module.exports = {
   register,
+  registerVendor,
   login,
+  loginVendor,
   logout,
   forgotPassword,
   resetPassword,

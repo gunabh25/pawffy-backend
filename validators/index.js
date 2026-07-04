@@ -282,3 +282,90 @@ exports.partnersNearbySchema = Joi.object({
   latitude:  Joi.number().required(),
   longitude: Joi.number().required(),
 });
+
+// ─── Vendor onboarding ────────────────────────────────────────────────────────
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const TIME_PATTERN = /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$|^([01]\d|2[0-3]):[0-5]\d$/i;
+
+exports.vendorRegisterSchema = Joi.object({
+  name:        Joi.string().min(2).max(100).required(),
+  email:       Joi.string().email().lowercase().required(),
+  password:    pw().required(),
+  acceptTerms: Joi.boolean().valid(true).required().messages({
+    "any.only": "You must agree to the Terms & Conditions",
+  }),
+});
+
+exports.vendorLoginSchema = Joi.object({
+  email:    Joi.string().email().lowercase().required(),
+  password: Joi.string().required(),
+});
+
+exports.vendorBusinessSchema = Joi.object({
+  businessName: Joi.string().min(2).max(200).required(),
+  contactName:  Joi.string().min(2).max(100).required(),
+  phone:        Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
+    "string.pattern.base": "Invalid phone number format",
+  }),
+  location:     Joi.string().min(2).max(500).required(),
+  description:  Joi.string().max(2000).allow("", null).optional(),
+});
+
+exports.vendorServiceSchema = Joi.object({
+  serviceType:     Joi.string().valid(...SERVICE_TYPES).required(),
+  name:            Joi.string().min(2).max(150).required(),
+  description:     Joi.string().max(2000).allow("", null).optional(),
+  inclusions:      Joi.array().items(Joi.string().min(1).max(100)).max(20).default([]),
+  durationMinutes: Joi.number().integer().min(5).max(480).default(60),
+  priceType:       Joi.string().valid("fixed", "range").required(),
+  price:           Joi.number().min(0).max(99999).optional(),
+  minPrice:        Joi.number().min(0).max(99999).optional(),
+  maxPrice:        Joi.number().min(0).max(99999).optional(),
+  serviceLocation: Joi.string().valid("at_my_place", "at_client_place").default("at_my_place"),
+}).custom((value, helpers) => {
+  if (value.priceType === "fixed" && value.price == null) {
+    return helpers.message("price is required when priceType is fixed");
+  }
+  if (value.priceType === "range") {
+    if (value.minPrice == null || value.maxPrice == null) {
+      return helpers.message("minPrice and maxPrice are required when priceType is range");
+    }
+    if (value.minPrice > value.maxPrice) {
+      return helpers.message("minPrice cannot be greater than maxPrice");
+    }
+  }
+  return value;
+});
+
+exports.vendorServiceUpdateSchema = Joi.object({
+  serviceType:     Joi.string().valid(...SERVICE_TYPES).optional(),
+  name:            Joi.string().min(2).max(150).optional(),
+  description:     Joi.string().max(2000).allow("", null).optional(),
+  inclusions:      Joi.array().items(Joi.string().min(1).max(100)).max(20).optional(),
+  durationMinutes: Joi.number().integer().min(5).max(480).optional(),
+  priceType:       Joi.string().valid("fixed", "range").optional(),
+  price:           Joi.number().min(0).max(99999).optional(),
+  minPrice:        Joi.number().min(0).max(99999).optional(),
+  maxPrice:        Joi.number().min(0).max(99999).optional(),
+  serviceLocation: Joi.string().valid("at_my_place", "at_client_place").optional(),
+}).min(1);
+
+exports.vendorAvailabilitySchema = Joi.object({
+  workingDays:      Joi.array().items(Joi.string().valid(...DAYS)).min(1).max(7).unique().required(),
+  startTime:        Joi.string().pattern(TIME_PATTERN).required().messages({
+    "string.pattern.base": "startTime must be like 09:00 AM or 09:00",
+  }),
+  endTime:          Joi.string().pattern(TIME_PATTERN).required().messages({
+    "string.pattern.base": "endTime must be like 06:00 PM or 18:00",
+  }),
+  sameDayRequests:  Joi.boolean().default(false),
+});
+
+exports.vendorReviewSchema = Joi.object({
+  status:          Joi.string().valid("verified", "rejected").required(),
+  rejectionReason: Joi.string().max(500).when("status", {
+    is: "rejected",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+});

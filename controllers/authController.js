@@ -7,8 +7,22 @@ exports.register = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, message: "User registered successfully", data: result });
 });
 
+exports.registerVendor = asyncHandler(async (req, res) => {
+  const result = await authService.registerVendor(req.body);
+  res.status(201).json({
+    success: true,
+    message: "Vendor account created successfully",
+    data: result,
+  });
+});
+
 exports.login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body, req.ip);
+  res.status(200).json({ success: true, message: "Login successful", data: result });
+});
+
+exports.loginVendor = asyncHandler(async (req, res) => {
+  const result = await authService.loginVendor(req.body, req.ip);
   res.status(200).json({ success: true, message: "Login successful", data: result });
 });
 

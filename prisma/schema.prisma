@@ -63,6 +63,37 @@ enum ReportType {
   Found
 }
 
+enum OnboardingStep {
+  business
+  services
+  availability
+  documents
+  review
+  submitted
+}
+
+enum VerificationStatus {
+  incomplete
+  pending
+  verified
+  rejected
+}
+
+enum PriceType {
+  fixed
+  range
+}
+
+enum ServiceLocationType {
+  at_my_place
+  at_client_place
+}
+
+enum DocumentType {
+  business_license
+  other
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
@@ -92,6 +123,7 @@ model User {
   petReports          PetReport[]
   walkingBookings     WalkingBooking[]     @relation("WalkingBookingUser")
   partnerWalkBookings WalkingBooking[]     @relation("WalkingBookingPartner")
+  partnerBusiness     PartnerBusiness?
 
   @@map("users")
 }
@@ -393,6 +425,83 @@ model WalkingBooking {
   partner User @relation("WalkingBookingPartner", fields: [partnerId], references: [id])
 
   @@map("walking_bookings")
+}
+
+model PartnerBusiness {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @unique @map("user_id") @db.Uuid
+  businessName       String?            @map("business_name")
+  contactName        String?            @map("contact_name")
+  phone              String?
+  location           String?
+  description        String?
+  sameDayRequests    Boolean            @default(false) @map("same_day_requests")
+  onboardingStep     OnboardingStep     @default(business) @map("onboarding_step")
+  verificationStatus VerificationStatus @default(incomplete) @map("verification_status")
+  rejectionReason    String?            @map("rejection_reason")
+  termsAcceptedAt    DateTime?          @map("terms_accepted_at")
+  submittedAt        DateTime?          @map("submitted_at")
+  verifiedAt         DateTime?          @map("verified_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services     PartnerService[]
+  availability PartnerAvailability[]
+  documents    PartnerDocument[]
+
+  @@map("partner_businesses")
+}
+
+model PartnerService {
+  id              String              @id @default(uuid()) @db.Uuid
+  businessId      String              @map("business_id") @db.Uuid
+  serviceType     ServiceType         @map("service_type")
+  name            String
+  description     String?
+  inclusions      String[]            @default([])
+  durationMinutes Int                 @default(60) @map("duration_minutes")
+  priceType       PriceType           @default(fixed) @map("price_type")
+  price           Decimal?            @db.Decimal(10, 2)
+  minPrice        Decimal?            @map("min_price") @db.Decimal(10, 2)
+  maxPrice        Decimal?            @map("max_price") @db.Decimal(10, 2)
+  serviceLocation ServiceLocationType @default(at_my_place) @map("service_location")
+  isActive        Boolean             @default(true) @map("is_active")
+  sortOrder       Int                 @default(0) @map("sort_order")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("partner_services")
+}
+
+model PartnerAvailability {
+  id          String  @id @default(uuid()) @db.Uuid
+  businessId  String  @map("business_id") @db.Uuid
+  dayOfWeek   String  @map("day_of_week")
+  startTime   String  @map("start_time")
+  endTime     String  @map("end_time")
+  isAvailable Boolean @default(true) @map("is_available")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, dayOfWeek])
+  @@map("partner_availability")
+}
+
+model PartnerDocument {
+  id           String       @id @default(uuid()) @db.Uuid
+  businessId   String       @map("business_id") @db.Uuid
+  documentType DocumentType @default(business_license) @map("document_type")
+  fileName     String       @map("file_name")
+  mimeType     String       @map("mime_type")
+  fileData     String       @map("file_data")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("partner_documents")
 }
 
 model Category {

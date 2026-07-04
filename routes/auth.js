@@ -5,12 +5,14 @@ const validate = require("../middleware/validate");
 const { authLimiter, forgotPasswordLimiter } = require("../middleware/rateLimiter");
 const v = require("../validators");
 const {
-  register, login, getMe, logout,
+  register, registerVendor, login, loginVendor, getMe, logout,
   forgotPassword, resetPassword, changePassword,
 } = require("../controllers/authController");
 
 router.post("/register",        authLimiter, validate(v.registerSchema),       register);
+router.post("/vendor/register", authLimiter, validate(v.vendorRegisterSchema), registerVendor);
 router.post("/login",           authLimiter, validate(v.loginSchema),           login);
+router.post("/vendor/login",    authLimiter, validate(v.vendorLoginSchema),     loginVendor);
 router.get ("/me",              verifyToken,                                     getMe);
 router.post("/logout",          verifyToken,                                     logout);
 router.post("/forgot-password", forgotPasswordLimiter, validate(v.forgotPasswordSchema), forgotPassword);
