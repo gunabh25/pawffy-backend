@@ -22,6 +22,8 @@ router.post("/requests/:id/accept", ...partnerOnly, writeLimiter, validateUuidPa
 router.post("/requests/:id/reject", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.rejectRequest);
 
 router.get("/calendar", ...partnerOnly, validate(v.vendorCalendarQuerySchema, "query"), appCtrl.getCalendar);
+router.get("/availability", ...partnerOnly, ctrl.getAvailability);
+router.put("/availability", ...partnerOnly, writeLimiter, validate(v.vendorAvailabilitySchema), ctrl.manageAvailability);
 router.get("/blocked-dates", ...partnerOnly, appCtrl.listBlockedDates);
 router.post("/blocked-dates", ...partnerOnly, writeLimiter, validate(v.vendorBlockedDateSchema), appCtrl.addBlockedDate);
 router.delete("/blocked-dates/:id", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.removeBlockedDate);
@@ -29,6 +31,22 @@ router.delete("/blocked-dates/:id", ...partnerOnly, writeLimiter, validateUuidPa
 router.get("/profile", ...partnerOnly, validate(v.vendorProfileQuerySchema, "query"), appCtrl.getProfile);
 router.put("/profile", ...partnerOnly, writeLimiter, validate(v.vendorProfileUpdateSchema), appCtrl.updateProfile);
 router.get("/services", ...partnerOnly, appCtrl.listServices);
+router.post("/services", ...partnerOnly, writeLimiter, validate(v.vendorServiceSchema), ctrl.createLiveService);
+router.put(
+  "/services/:id",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("id"),
+  validate(v.vendorServiceUpdateSchema),
+  ctrl.updateLiveService
+);
+router.delete(
+  "/services/:id",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("id"),
+  ctrl.deleteLiveService
+);
 
 router.get("/chats", ...partnerOnly, appCtrl.getChats);
 router.get("/notifications/unread-count", ...partnerOnly, appCtrl.getUnreadNotifications);

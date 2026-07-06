@@ -31,6 +31,31 @@ exports.updateAvailability = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Availability saved", data });
 });
 
+exports.getAvailability = asyncHandler(async (req, res) => {
+  const data = await vendorOnboardingService.getAvailability(req.user.id);
+  res.json({ success: true, data });
+});
+
+exports.manageAvailability = asyncHandler(async (req, res) => {
+  const data = await vendorOnboardingService.manageAvailability(req.user.id, req.body);
+  res.json({ success: true, message: "Availability updated", data });
+});
+
+exports.createLiveService = asyncHandler(async (req, res) => {
+  const data = await vendorOnboardingService.createService(req.user.id, req.body, { live: true });
+  res.status(201).json({ success: true, message: "Service added", data });
+});
+
+exports.updateLiveService = asyncHandler(async (req, res) => {
+  const data = await vendorOnboardingService.updateService(req.user.id, req.params.id, req.body, { live: true });
+  res.json({ success: true, message: "Service updated", data });
+});
+
+exports.deleteLiveService = asyncHandler(async (req, res) => {
+  const data = await vendorOnboardingService.deleteService(req.user.id, req.params.id, { live: true });
+  res.json({ success: true, message: "Service deleted", data });
+});
+
 exports.uploadDocument = asyncHandler(async (req, res) => {
   const documentType = req.body.documentType || "business_license";
   const data = await vendorOnboardingService.uploadDocument(req.user.id, req.file, documentType);

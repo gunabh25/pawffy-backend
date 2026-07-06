@@ -409,8 +409,40 @@
     },
     {
       "name": "3. Admin Verification",
-      "description": "Requires admin token. Set adminToken after logging in as admin.",
+      "description": "Requires admin token. Login as admin first, then set adminToken.",
       "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('adminToken', r.data.token);",
+                  "  console.log('adminToken saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gunabhsharan.25@gmail.com\",\n  \"password\": \"<admin-password>\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Regular login (not vendor login). User must have role: admin."
+          }
+        },
         {
           "name": "List Pending Applications",
           "request": {
@@ -738,6 +770,19 @@
           }
         },
         {
+          "name": "Get Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "availability"]
+            },
+            "description": "Works after vendor is approved."
+          }
+        },
+        {
           "name": "Manage Availability",
           "request": {
             "method": "PUT",
@@ -747,11 +792,11 @@
               "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"],\n  \"startTime\": \"10:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": false\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/vendor/onboarding/availability",
+              "raw": "{{baseUrl}}/api/vendor/availability",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "availability"]
+              "path": ["api", "vendor", "availability"]
             },
-            "description": "Same endpoint as onboarding — blocked while application is pending review."
+            "description": "Use this after vendor is approved. Onboarding route is only for pre-verification setup."
           }
         }
       ]
@@ -924,11 +969,39 @@
               "raw": "{\n  \"serviceType\": \"sitter\",\n  \"name\": \"Pet Sitting\",\n  \"description\": \"In-home pet sitting\",\n  \"inclusions\": [\"Feeding\", \"Walks\", \"Playtime\"],\n  \"durationMinutes\": 120,\n  \"priceType\": \"fixed\",\n  \"price\": 40,\n  \"serviceLocation\": \"at_client_place\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/vendor/onboarding/services",
+              "raw": "{{baseUrl}}/api/vendor/services",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "services"]
+              "path": ["api", "vendor", "services"]
             },
-            "description": "Blocked while application is pending review."
+            "description": "Works after vendor is approved. Use onboarding/services only during initial setup."
+          }
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Full Grooming\",\n  \"priceType\": \"fixed\",\n  \"price\": 70\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "services", "{{serviceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "services", "{{serviceId}}"]
+            }
           }
         }
       ]

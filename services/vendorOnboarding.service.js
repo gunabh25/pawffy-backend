@@ -156,10 +156,16 @@ async function getOrCreateBusiness(userId) {
   return business;
 }
 
-function assertEditable(business) {
+function assertOnboardingEditable(business) {
   if (business.verificationStatus === "verified") {
     throw new AppError("Business is already verified. Contact support to update details.", 400);
   }
+  if (business.verificationStatus === "pending") {
+    throw new AppError("Application is under review and cannot be edited", 400);
+  }
+}
+
+function assertNotUnderReview(business) {
   if (business.verificationStatus === "pending") {
     throw new AppError("Application is under review and cannot be edited", 400);
   }
@@ -235,7 +241,7 @@ async function getOnboarding(userId) {
 
 async function updateBusiness(userId, data) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  assertOnboardingEditable(business);
 
   const updated = await prisma.partnerBusiness.update({
     where: { id: business.id },
@@ -292,9 +298,15 @@ function validateServicePricing(data) {
   };
 }
 
-async function createService(userId, data) {
+async function listSerializedServices(userId) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  return business.services.map(serializeService);
+}
+
+async function createService(userId, data, { live = false } = {}) {
+  const business = await getOrCreateBusiness(userId);
+  if (live) assertNotUnderReview(business);
+  else assertOnboardingEditable(business);
 
   const pricing = validateServicePricing(data);
   const count = await prisma.partnerService.count({ where: { businessId: business.id } });
@@ -314,6 +326,8 @@ async function createService(userId, data) {
     },
   });
 
+  if (live) return { services: await listSerializedServices(userId) };
+
   const updated = await prisma.partnerBusiness.update({
     where: { id: business.id },
     data: {
@@ -330,9 +344,10 @@ async function createService(userId, data) {
   return serializeOnboarding(updated);
 }
 
-async function updateService(userId, serviceId, data) {
+async function updateService(userId, serviceId, data, { live = false } = {}) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  if (live) assertNotUnderReview(business);
+  else assertOnboardingEditable(business);
 
   const service = await prisma.partnerService.findFirst({
     where: { id: serviceId, businessId: business.id },
@@ -368,12 +383,14 @@ async function updateService(userId, serviceId, data) {
   }
 
   await prisma.$transaction(ops);
+  if (live) return { services: await listSerializedServices(userId) };
   return getOnboarding(userId);
 }
 
-async function deleteService(userId, serviceId) {
+async function deleteService(userId, serviceId, { live = false } = {}) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  if (live) assertNotUnderReview(business);
+  else assertOnboardingEditable(business);
 
   const service = await prisma.partnerService.findFirst({
     where: { id: serviceId, businessId: business.id },
@@ -387,13 +404,23 @@ async function deleteService(userId, serviceId) {
   }
 
   await prisma.$transaction(ops);
+  if (live) return { services: await listSerializedServices(userId) };
   return getOnboarding(userId);
 }
 
 async function updateAvailability(userId, data) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  assertOnboardingEditable(business);
+  return saveAvailability(userId, business, data, { advanceOnboarding: true });
+}
 
+async function manageAvailability(userId, data) {
+  const business = await getOrCreateBusiness(userId);
+  assertNotUnderReview(business);
+  return saveAvailability(userId, business, data, { advanceOnboarding: false });
+}
+
+async function saveAvailability(userId, business, data, { advanceOnboarding }) {
   const workingDays = data.workingDays;
   for (const day of workingDays) {
     if (!DAYS.includes(day)) throw new AppError(`Invalid day: ${day}`, 400);
@@ -418,18 +445,38 @@ async function updateAvailability(userId, data) {
       where: { id: business.id },
       data: {
         sameDayRequests: data.sameDayRequests ?? false,
-        onboardingStep: advanceStep(business.onboardingStep, "documents"),
-        ...rejectionResetData(business),
+        ...(advanceOnboarding && {
+          onboardingStep: advanceStep(business.onboardingStep, "documents"),
+          ...rejectionResetData(business),
+        }),
       },
     });
   });
 
-  return getOnboarding(userId);
+  if (advanceOnboarding) return getOnboarding(userId);
+
+  const updated = await getOrCreateBusiness(userId);
+  const availabilitySlots = sortAvailability(updated.availability || []);
+  return {
+    availability: formatAvailabilitySummary(availabilitySlots, updated.sameDayRequests),
+    availabilitySlots,
+    sameDayRequests: updated.sameDayRequests,
+  };
+}
+
+async function getAvailability(userId) {
+  const business = await getOrCreateBusiness(userId);
+  const availabilitySlots = sortAvailability(business.availability || []);
+  return {
+    availability: formatAvailabilitySummary(availabilitySlots, business.sameDayRequests),
+    availabilitySlots,
+    sameDayRequests: business.sameDayRequests,
+  };
 }
 
 async function uploadDocument(userId, file, documentType = "business_license") {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  assertOnboardingEditable(business);
 
   if (!file) throw new AppError("No document file provided. Send field name: document", 400);
 
@@ -463,7 +510,7 @@ async function uploadDocument(userId, file, documentType = "business_license") {
 
 async function deleteDocument(userId, documentId) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  assertOnboardingEditable(business);
 
   const doc = await prisma.partnerDocument.findFirst({
     where: { id: documentId, businessId: business.id },
@@ -505,7 +552,7 @@ async function getReview(userId) {
 
 async function submitOnboarding(userId) {
   const business = await getOrCreateBusiness(userId);
-  assertEditable(business);
+  assertOnboardingEditable(business);
 
   if (!business.businessName || !business.contactName || !business.phone || !business.location) {
     throw new AppError("Business information is incomplete", 400);
@@ -609,6 +656,8 @@ module.exports = {
   updateService,
   deleteService,
   updateAvailability,
+  getAvailability,
+  manageAvailability,
   uploadDocument,
   deleteDocument,
   getReview,
