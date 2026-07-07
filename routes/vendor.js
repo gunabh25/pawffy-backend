@@ -4,11 +4,13 @@ const verifyToken = require("../middleware/verifyToken");
 const { requireRole } = require("../middleware/rbac");
 const validate = require("../middleware/validate");
 const documentUpload = require("../middleware/documentUpload");
+const serviceMediaUpload = require("../middleware/serviceMediaUpload");
 const { validateUuidParams } = require("../middleware/accessControl");
 const { uploadLimiter, writeLimiter } = require("../middleware/rateLimiter");
 const v = require("../validators");
 const ctrl = require("../controllers/vendorOnboardingController");
 const appCtrl = require("../controllers/vendorAppController");
+const businessReviewCtrl = require("../controllers/businessReviewController");
 
 const partnerOnly = [verifyToken, requireRole("partner")];
 const adminOnly = [verifyToken, requireRole("admin")];
@@ -20,6 +22,23 @@ router.patch("/status", ...partnerOnly, writeLimiter, validate(v.vendorOnlineSta
 router.get("/requests", ...partnerOnly, validate(v.vendorRequestsQuerySchema, "query"), appCtrl.getRequests);
 router.post("/requests/:id/accept", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.acceptRequest);
 router.post("/requests/:id/reject", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.rejectRequest);
+router.post("/requests/:id/start", ...partnerOnly, writeLimiter, validateUuidParams("id"), validate(v.vendorRequestStartSchema), appCtrl.startRequest);
+router.patch("/requests/:id/progress", ...partnerOnly, writeLimiter, validateUuidParams("id"), validate(v.vendorRequestProgressSchema), appCtrl.updateRequestProgress);
+router.post("/requests/:id/media", ...partnerOnly, uploadLimiter, validateUuidParams("id"), serviceMediaUpload.array("media", 10), appCtrl.addRequestMedia);
+router.post("/requests/:id/location", ...partnerOnly, writeLimiter, validateUuidParams("id"), validate(v.vendorRequestLocationSchema), appCtrl.updateRequestLocation);
+router.post(
+  "/requests/:id/complete",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("id"),
+  serviceMediaUpload.fields([
+    { name: "prescriptionFile", maxCount: 1 },
+    { name: "walkPhotos", maxCount: 10 },
+    { name: "media", maxCount: 10 },
+  ]),
+  validate(v.vendorRequestCompleteSchema),
+  appCtrl.completeRequest
+);
 
 router.get("/calendar", ...partnerOnly, validate(v.vendorCalendarQuerySchema, "query"), appCtrl.getCalendar);
 router.get("/availability", ...partnerOnly, ctrl.getAvailability);
@@ -50,6 +69,16 @@ router.delete(
 
 router.get("/chats", ...partnerOnly, appCtrl.getChats);
 router.get("/notifications/unread-count", ...partnerOnly, appCtrl.getUnreadNotifications);
+router.get("/reviews", ...partnerOnly, validate(v.businessReviewsQuerySchema, "query"), businessReviewCtrl.getMyVendorReviews);
+router.post("/reviews/:reviewId/reply", ...partnerOnly, writeLimiter, validateUuidParams("reviewId"), validate(v.replyToBusinessReviewSchema), businessReviewCtrl.replyToVendorReview);
+router.get("/preferences/notifications", ...partnerOnly, appCtrl.getNotificationPreferences);
+router.put(
+  "/preferences/notifications",
+  ...partnerOnly,
+  writeLimiter,
+  validate(v.vendorNotificationPreferencesSchema),
+  appCtrl.updateNotificationPreferences
+);
 
 // ─── Onboarding (matches vendor app UI flow) ─────────────────────────────────
 router.get("/onboarding", ...partnerOnly, ctrl.getOnboarding);

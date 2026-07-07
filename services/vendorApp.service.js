@@ -122,6 +122,8 @@ function serializeService(service) {
 }
 
 function serializeBooking(booking) {
+  const serviceMedia = Array.isArray(booking.serviceMedia) ? booking.serviceMedia : [];
+  const progressData = booking.progressData && typeof booking.progressData === "object" ? booking.progressData : {};
   return {
     id: booking.id,
     serviceName: booking.serviceName,
@@ -141,8 +143,22 @@ function serializeBooking(booking) {
     priceDisplay: `$${Number(booking.price)}`,
     status: booking.status,
     statusLabel: booking.status.charAt(0).toUpperCase() + booking.status.slice(1),
+    servicePhase: booking.servicePhase || "not_started",
     isNew: booking.isNew,
     notes: booking.notes,
+    completionSummary: booking.completionSummary,
+    startedAt: booking.startedAt,
+    inProgressAt: booking.inProgressAt,
+    completedAt: booking.completedAt,
+    progressData,
+    mediaCount: serviceMedia.length,
+    serviceMedia,
+    currentLocation: booking.serviceLatitude != null && booking.serviceLongitude != null ? {
+      latitude: Number(booking.serviceLatitude),
+      longitude: Number(booking.serviceLongitude),
+      address: booking.serviceAddress,
+      updatedAt: booking.lastLocationAt,
+    } : null,
     customer: booking.customer
       ? { id: booking.customer.id, name: booking.customer.name, profileImage: booking.customer.profileImage }
       : undefined,
@@ -176,6 +192,67 @@ async function getBusinessOrThrow(userId) {
 
 async function unreadNotificationCount(userId) {
   return prisma.notification.count({ where: { userId, isRead: false } });
+}
+
+function ensureVerifiedBusiness(business) {
+  if (business.verificationStatus !== "verified") {
+    throw new AppError("You can access this feature only after approval", 403);
+  }
+}
+
+async function getPartnerBookingOrThrow(userId, bookingId) {
+  const business = await getBusinessOrThrow(userId);
+  ensureVerifiedBusiness(business);
+
+  const booking = await prisma.partnerBooking.findFirst({
+    where: { id: bookingId, businessId: business.id },
+    include: {
+      customer: { select: { id: true, name: true, profileImage: true } },
+    },
+  });
+  if (!booking) throw new AppError("Request not found", 404);
+
+  return { business, booking };
+}
+
+function ensureConfirmedBooking(booking) {
+  if (booking.status !== "confirmed") {
+    throw new AppError("Only confirmed requests can enter service execution", 400);
+  }
+}
+
+function dataUrlFromFile(file) {
+  return `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+}
+
+function normalizeMediaFiles(files = [], kind = "general") {
+  return files.map((file) => ({
+    kind,
+    fileName: file.originalname || "media",
+    mimeType: file.mimetype,
+    fileData: dataUrlFromFile(file),
+    uploadedAt: new Date().toISOString(),
+  }));
+}
+
+function appendProgressEntry(progressData, entry) {
+  const existing = progressData && typeof progressData === "object" ? progressData : {};
+  const entries = Array.isArray(existing.entries) ? existing.entries : [];
+  return {
+    ...existing,
+    entries: [...entries, entry],
+  };
+}
+
+async function createCustomerNotification(userId, title, message) {
+  await prisma.notification.create({
+    data: {
+      userId,
+      title,
+      message,
+      type: "booking",
+    },
+  });
 }
 
 async function countByStatus(businessId, status, extraWhere = {}) {
@@ -354,16 +431,7 @@ async function getRequests(userId, { status = "pending", search } = {}) {
 }
 
 async function respondToRequest(userId, bookingId, action) {
-  const business = await getBusinessOrThrow(userId);
-  if (business.verificationStatus !== "verified") {
-    throw new AppError("You can respond to requests only after approval", 403);
-  }
-
-  const booking = await prisma.partnerBooking.findFirst({
-    where: { id: bookingId, businessId: business.id },
-    include: { customer: { select: { id: true, name: true, profileImage: true } } },
-  });
-  if (!booking) throw new AppError("Request not found", 404);
+  const { business, booking } = await getPartnerBookingOrThrow(userId, bookingId);
   if (booking.status !== "pending") {
     throw new AppError("Only pending requests can be accepted or rejected", 400);
   }
@@ -375,20 +443,183 @@ async function respondToRequest(userId, bookingId, action) {
       status,
       isNew: false,
       respondedAt: new Date(),
+      ...(action === "accept" ? { servicePhase: "not_started" } : {}),
     },
     include: { customer: { select: { id: true, name: true, profileImage: true } } },
   });
 
-  await prisma.notification.create({
+  await createCustomerNotification(
+    booking.customerId,
+    action === "accept" ? "Request accepted" : "Request declined",
+    action === "accept"
+      ? `${business.businessName || "A partner"} accepted your ${booking.serviceName} request.`
+      : `${business.businessName || "A partner"} declined your ${booking.serviceName} request.`
+  );
+
+  return serializeBooking(updated);
+}
+
+async function startRequest(userId, bookingId) {
+  const { business, booking } = await getPartnerBookingOrThrow(userId, bookingId);
+  ensureConfirmedBooking(booking);
+  if (booking.servicePhase && booking.servicePhase !== "not_started") {
+    throw new AppError("Service session has already started", 400);
+  }
+
+  const startedAt = new Date();
+  const updated = await prisma.partnerBooking.update({
+    where: { id: bookingId },
     data: {
-      userId: booking.customerId,
-      title: action === "accept" ? "Request accepted" : "Request declined",
-      message: action === "accept"
-        ? `${business.businessName || "A partner"} accepted your ${booking.serviceName} request.`
-        : `${business.businessName || "A partner"} declined your ${booking.serviceName} request.`,
-      type: "booking",
+      servicePhase: "started",
+      startedAt,
+      isNew: false,
     },
+    include: { customer: { select: { id: true, name: true, profileImage: true } } },
   });
+
+  await createCustomerNotification(
+    booking.customerId,
+    "Service started",
+    `${business.businessName || "Your provider"} started ${booking.serviceName}.`
+  );
+
+  return {
+    booking: serializeBooking(updated),
+    startTime: startedAt,
+  };
+}
+
+async function updateRequestProgress(userId, bookingId, data) {
+  const { booking } = await getPartnerBookingOrThrow(userId, bookingId);
+  ensureConfirmedBooking(booking);
+  if (booking.servicePhase === "completed") {
+    throw new AppError("Completed services cannot be updated", 400);
+  }
+
+  const now = new Date();
+  const progressData = appendProgressEntry(booking.progressData, {
+    type: "progress",
+    sessionNotes: data.sessionNotes || null,
+    summary: data.summary || null,
+    milestones: data.milestones || null,
+    focusAreas: data.focusAreas || null,
+    createdAt: now.toISOString(),
+  });
+
+  const updated = await prisma.partnerBooking.update({
+    where: { id: bookingId },
+    data: {
+      servicePhase: "in_progress",
+      ...(booking.startedAt ? {} : { startedAt: now }),
+      ...(booking.inProgressAt ? {} : { inProgressAt: now }),
+      progressData,
+    },
+    include: { customer: { select: { id: true, name: true, profileImage: true } } },
+  });
+
+  return serializeBooking(updated);
+}
+
+async function addRequestMedia(userId, bookingId, files) {
+  const { booking } = await getPartnerBookingOrThrow(userId, bookingId);
+  ensureConfirmedBooking(booking);
+  if (!files || !files.length) {
+    throw new AppError("No media files provided. Send field name: media", 400);
+  }
+
+  const existingMedia = Array.isArray(booking.serviceMedia) ? booking.serviceMedia : [];
+  const media = [...existingMedia, ...normalizeMediaFiles(files, "progress_media")];
+
+  const updated = await prisma.partnerBooking.update({
+    where: { id: bookingId },
+    data: {
+      serviceMedia: media,
+      ...(booking.startedAt ? {} : { startedAt: new Date() }),
+      ...(booking.inProgressAt ? {} : { inProgressAt: new Date() }),
+      servicePhase: booking.servicePhase === "not_started" ? "in_progress" : booking.servicePhase,
+    },
+    include: { customer: { select: { id: true, name: true, profileImage: true } } },
+  });
+
+  return serializeBooking(updated);
+}
+
+async function updateRequestLocation(userId, bookingId, data) {
+  const { booking } = await getPartnerBookingOrThrow(userId, bookingId);
+  ensureConfirmedBooking(booking);
+
+  const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
+  const updated = await prisma.partnerBooking.update({
+    where: { id: bookingId },
+    data: {
+      serviceLatitude: data.latitude,
+      serviceLongitude: data.longitude,
+      serviceAddress: data.address || booking.serviceAddress || null,
+      lastLocationAt: timestamp,
+      ...(booking.startedAt ? {} : { startedAt: timestamp }),
+      ...(booking.inProgressAt ? {} : { inProgressAt: timestamp }),
+      servicePhase: booking.servicePhase === "not_started" ? "in_progress" : booking.servicePhase,
+    },
+    include: { customer: { select: { id: true, name: true, profileImage: true } } },
+  });
+
+  return serializeBooking(updated);
+}
+
+async function completeRequest(userId, bookingId, data, files = {}) {
+  const { business, booking } = await getPartnerBookingOrThrow(userId, bookingId);
+  ensureConfirmedBooking(booking);
+  if (booking.servicePhase === "completed" || booking.status === "completed") {
+    throw new AppError("Service is already completed", 400);
+  }
+
+  const uploadedFiles = [
+    ...(files.media || []),
+    ...(files.prescriptionFile || []),
+    ...(files.walkPhotos || []),
+  ];
+  const existingMedia = Array.isArray(booking.serviceMedia) ? booking.serviceMedia : [];
+  const newMedia = normalizeMediaFiles(uploadedFiles, "completion_media");
+
+  const completionDetails = {
+    clinicalNotes: data.clinicalNotes || null,
+    diagnostics: data.diagnostics || null,
+    treatments: data.treatments || null,
+    petMood: data.petMood || null,
+    durationMinutes: data.durationMinutes || null,
+    followUpRequired: data.followUpRequired || false,
+    followUpDate: data.followUpDate || null,
+    assignedExercises: data.assignedExercises || [],
+    mediaUrls: data.mediaUrls || [],
+  };
+
+  const progressData = appendProgressEntry(booking.progressData, {
+    type: "completion",
+    summary: data.summary,
+    details: completionDetails,
+    createdAt: new Date().toISOString(),
+  });
+
+  const updated = await prisma.partnerBooking.update({
+    where: { id: bookingId },
+    data: {
+      status: "completed",
+      servicePhase: "completed",
+      completionSummary: data.summary,
+      progressData,
+      serviceMedia: [...existingMedia, ...newMedia],
+      ...(booking.startedAt ? {} : { startedAt: new Date() }),
+      ...(booking.inProgressAt ? {} : { inProgressAt: new Date() }),
+      completedAt: new Date(),
+    },
+    include: { customer: { select: { id: true, name: true, profileImage: true } } },
+  });
+
+  await createCustomerNotification(
+    booking.customerId,
+    "Service completed",
+    `${business.businessName || "Your provider"} completed ${booking.serviceName}.`
+  );
 
   return serializeBooking(updated);
 }
@@ -637,11 +868,46 @@ async function getUnreadNotifications(userId) {
   return { count, hasUnread: count > 0 };
 }
 
+async function getNotificationPreferences(userId) {
+  const business = await getBusinessOrThrow(userId);
+  return {
+    pushRequests: business.pushRequests,
+    pushMessages: business.pushMessages,
+    emailMarketing: business.emailMarketing,
+    smsAlerts: business.smsAlerts,
+  };
+}
+
+async function updateNotificationPreferences(userId, data) {
+  const business = await getBusinessOrThrow(userId);
+  const updated = await prisma.partnerBusiness.update({
+    where: { id: business.id },
+    data: {
+      pushRequests: data.pushRequests,
+      pushMessages: data.pushMessages,
+      emailMarketing: data.emailMarketing,
+      smsAlerts: data.smsAlerts,
+    },
+    select: {
+      pushRequests: true,
+      pushMessages: true,
+      emailMarketing: true,
+      smsAlerts: true,
+    },
+  });
+  return updated;
+}
+
 module.exports = {
   getHome,
   setOnlineStatus,
   getRequests,
   respondToRequest,
+  startRequest,
+  updateRequestProgress,
+  addRequestMedia,
+  updateRequestLocation,
+  completeRequest,
   getCalendar,
   listBlockedDates,
   addBlockedDate,
@@ -651,4 +917,6 @@ module.exports = {
   listServices,
   getChats,
   getUnreadNotifications,
+  getNotificationPreferences,
+  updateNotificationPreferences,
 };

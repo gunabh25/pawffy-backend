@@ -102,6 +102,21 @@ enum PartnerBookingStatus {
   rejected
 }
 
+enum PartnerServicePhase {
+  not_started
+  started
+  in_progress
+  completed
+}
+
+enum SupportTicketCategory {
+  technical_issue
+  account_issue
+  booking_issue
+  payment_issue
+  general
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
@@ -133,6 +148,8 @@ model User {
   partnerWalkBookings WalkingBooking[]     @relation("WalkingBookingPartner")
   partnerBusiness     PartnerBusiness?
   partnerBookings     PartnerBooking[]     @relation("PartnerBookingCustomer")
+  businessReviews     BusinessReview[]
+  supportTickets      SupportTicket[]
 
   @@map("users")
 }
@@ -459,6 +476,10 @@ model PartnerBusiness {
   membershipExpiresAt  DateTime?          @map("membership_expires_at")
   rating               Decimal?           @db.Decimal(3, 2)
   reviewCount          Int                @default(0) @map("review_count")
+  pushRequests         Boolean            @default(true) @map("push_requests")
+  pushMessages         Boolean            @default(true) @map("push_messages")
+  emailMarketing       Boolean            @default(false) @map("email_marketing")
+  smsAlerts            Boolean            @default(true) @map("sms_alerts")
   createdAt            DateTime           @default(now()) @map("created_at")
   updatedAt            DateTime           @updatedAt @map("updated_at")
 
@@ -468,6 +489,7 @@ model PartnerBusiness {
   documents    PartnerDocument[]
   blockedDates PartnerBlockedDate[]
   bookings     PartnerBooking[]
+  reviews      BusinessReview[]
 
   @@map("partner_businesses")
 }
@@ -553,19 +575,68 @@ model PartnerBooking {
   location     String?
   price        Decimal              @db.Decimal(10, 2)
   status       PartnerBookingStatus @default(pending)
+  servicePhase PartnerServicePhase  @default(not_started) @map("service_phase")
   notes        String?
   isNew        Boolean              @default(true) @map("is_new")
   respondedAt  DateTime?            @map("responded_at")
+  startedAt    DateTime?            @map("started_at")
+  inProgressAt DateTime?            @map("in_progress_at")
+  completedAt  DateTime?            @map("completed_at")
+  progressData Json?                @map("progress_data")
+  completionSummary String?         @map("completion_summary")
+  serviceMedia Json?                @map("service_media")
+  serviceLatitude Decimal?          @map("service_latitude") @db.Decimal(10, 7)
+  serviceLongitude Decimal?         @map("service_longitude") @db.Decimal(10, 7)
+  serviceAddress String?            @map("service_address")
+  lastLocationAt DateTime?          @map("last_location_at")
   createdAt    DateTime             @default(now()) @map("created_at")
   updatedAt    DateTime             @updatedAt @map("updated_at")
 
   business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer User            @relation("PartnerBookingCustomer", fields: [customerId], references: [id], onDelete: Cascade)
   service  PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  review   BusinessReview?
 
   @@index([businessId, status])
   @@index([businessId, bookingDate])
   @@map("partner_bookings")
+}
+
+model SupportTicket {
+  id          String                @id @default(uuid()) @db.Uuid
+  userId      String                @map("user_id") @db.Uuid
+  subject     String
+  category    SupportTicketCategory @default(general)
+  description String
+  status      String                @default("open")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("support_tickets")
+}
+
+model BusinessReview {
+  id           String          @id @default(uuid()) @db.Uuid
+  businessId   String          @map("business_id") @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  bookingId    String          @unique @map("booking_id") @db.Uuid
+  rating       Int
+  comment      String?
+  replyContent String?         @map("reply_content")
+  repliedAt    DateTime?       @map("replied_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking  PartnerBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@map("business_reviews")
 }
 
 model Category {

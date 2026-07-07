@@ -33,6 +33,32 @@ exports.rejectRequest = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Request rejected", data });
 });
 
+exports.startRequest = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.startRequest(req.user.id, req.params.id);
+  res.json({ success: true, message: "Service session started", startTime: data.startTime, data: data.booking });
+});
+
+exports.updateRequestProgress = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.updateRequestProgress(req.user.id, req.params.id, req.body);
+  res.json({ success: true, message: "Service progress updated", data });
+});
+
+exports.addRequestMedia = asyncHandler(async (req, res) => {
+  const files = req.files || (req.file ? [req.file] : []);
+  const data = await vendorAppService.addRequestMedia(req.user.id, req.params.id, files);
+  res.status(201).json({ success: true, message: "Service media uploaded", data });
+});
+
+exports.updateRequestLocation = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.updateRequestLocation(req.user.id, req.params.id, req.body);
+  res.json({ success: true, message: "Service location updated", data });
+});
+
+exports.completeRequest = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.completeRequest(req.user.id, req.params.id, req.body, req.files || {});
+  res.json({ success: true, message: "Service completed", data });
+});
+
 exports.getCalendar = asyncHandler(async (req, res) => {
   const data = await vendorAppService.getCalendar(req.user.id, req.query.date);
   res.json({ success: true, data });
@@ -76,4 +102,14 @@ exports.getChats = asyncHandler(async (req, res) => {
 exports.getUnreadNotifications = asyncHandler(async (req, res) => {
   const data = await vendorAppService.getUnreadNotifications(req.user.id);
   res.json({ success: true, data });
+});
+
+exports.getNotificationPreferences = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.getNotificationPreferences(req.user.id);
+  res.json({ success: true, data });
+});
+
+exports.updateNotificationPreferences = asyncHandler(async (req, res) => {
+  const data = await vendorAppService.updateNotificationPreferences(req.user.id, req.body);
+  res.json({ success: true, message: "Notification preferences updated", data });
 });

@@ -2,7 +2,7 @@
   "info": {
     "name": "Pawffy Vendor API",
     "_postman_id": "pawffy-vendor-2026",
-    "description": "Vendor / Partner app backend — {{baseUrl}}\n\n## Flow\n1. Auth → Register / Login (role: partner)\n2. Onboarding → Business → Services → Availability → Documents → Review → Submit\n3. Admin verifies application\n4. Main app → Home, Requests, Calendar, Chats, Profile\n\n## Auth\nBearer JWT required on all `/api/vendor/*` routes.\nRegister/Login auto-save `token` and `userId`.\n\n## Roles\n- partner — vendor app endpoints\n- admin — review pending applications\n\n## Password policy\nMin 8 chars · uppercase + lowercase + digit\n\n## Auto variables\ntoken · adminToken · userId · businessId · serviceId · documentId · requestId · blockedDateId · conversationId · receiverId",
+    "description": "Vendor / Partner app backend — {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** → Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** → business → services → availability → documents → review → submit\n3. **Admin Verification** → Login Admin (saves `adminToken`) → List Pending → Approve\n4. **Main app** → Home, Requests, Calendar, Messages, Profile\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Password policy\nMin 8 chars · uppercase + lowercase + digit\n\n## Collection variables\ntoken · adminToken · userId · businessId · serviceId · documentId · requestId · blockedDateId · conversationId · receiverId · vendorEmail · vendorPassword · adminEmail · adminPassword",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -17,8 +17,12 @@
     { "key": "blockedDateId", "value": "", "type": "string" },
     { "key": "conversationId", "value": "", "type": "string" },
     { "key": "receiverId", "value": "", "type": "string" },
+    { "key": "reviewId", "value": "", "type": "string" },
+    { "key": "notifId", "value": "", "type": "string" },
     { "key": "vendorEmail", "value": "vendor@pawffy.test", "type": "string" },
-    { "key": "vendorPassword", "value": "Password1", "type": "string" }
+    { "key": "vendorPassword", "value": "Password1", "type": "string" },
+    { "key": "adminEmail", "value": "gunabhsharan.25@gmail.com", "type": "string" },
+    { "key": "adminPassword", "value": "", "type": "string" }
   ],
   "auth": {
     "type": "bearer",
@@ -28,8 +32,26 @@
   },
   "item": [
     {
+      "name": "0. Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "1. Auth",
-      "description": "Vendor register & login. Saves token automatically.",
+      "description": "Vendor register & login. Auto-saves `token` and `userId`.",
       "item": [
         {
           "name": "Register Vendor",
@@ -39,10 +61,10 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.token) {",
+                  "if (r.data?.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('Token & userId saved');",
+                  "  console.log('token & userId saved');",
                   "}"
                 ]
               }
@@ -61,7 +83,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "vendor", "register"]
             },
-            "description": "Create partner account + draft business profile.\nRequires acceptTerms: true."
+            "description": "Creates partner user + draft business profile. Requires `acceptTerms: true`."
           }
         },
         {
@@ -72,10 +94,10 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.token) {",
+                  "if (r.data?.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('Token & userId saved');",
+                  "  console.log('token & userId saved');",
                   "}"
                 ]
               }
@@ -94,7 +116,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "vendor", "login"]
             },
-            "description": "Rejects non-partner accounts with 403."
+            "description": "Partner accounts only. Returns 403 for customer/admin accounts."
           }
         },
         {
@@ -127,6 +149,22 @@
           }
         },
         {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{vendorPassword}}\",\n  \"newPassword\": \"Password2\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          }
+        },
+        {
           "name": "Logout",
           "request": {
             "method": "POST",
@@ -141,8 +179,8 @@
       ]
     },
     {
-      "name": "2. Onboarding",
-      "description": "Multi-step vendor onboarding matching the app UI.",
+      "name": "2. Onboarding (before approval)",
+      "description": "Use only while `verificationStatus` is `incomplete` or `rejected`.\nBlocked once status is `pending` or `verified`.",
       "item": [
         {
           "name": "Get Onboarding State",
@@ -152,15 +190,9 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.business) {",
-                  "  pm.collectionVariables.set('businessId', r.data.business.id);",
-                  "}",
-                  "if (r.data && r.data.services && r.data.services[0]) {",
-                  "  pm.collectionVariables.set('serviceId', r.data.services[0].id);",
-                  "}",
-                  "if (r.data && r.data.documents && r.data.documents[0]) {",
-                  "  pm.collectionVariables.set('documentId', r.data.documents[0].id);",
-                  "}"
+                  "if (r.data?.business?.id) pm.collectionVariables.set('businessId', r.data.business.id);",
+                  "if (r.data?.services?.[0]?.id) pm.collectionVariables.set('serviceId', r.data.services[0].id);",
+                  "if (r.data?.documents?.[0]?.id) pm.collectionVariables.set('documentId', r.data.documents[0].id);"
                 ]
               }
             }
@@ -172,8 +204,7 @@
               "raw": "{{baseUrl}}/api/vendor/onboarding",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding"]
-            },
-            "description": "Full draft: business, services, availability, documents, progress."
+            }
           }
         },
         {
@@ -184,9 +215,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.business) {",
-                  "  pm.collectionVariables.set('businessId', r.data.business.id);",
-                  "}"
+                  "if (r.data?.business?.id) pm.collectionVariables.set('businessId', r.data.business.id);"
                 ]
               }
             }
@@ -202,22 +231,19 @@
               "raw": "{{baseUrl}}/api/vendor/onboarding/business",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "business"]
-            },
-            "description": "Tell us about your business screen."
+            }
           }
         },
         {
-          "name": "Add Service (Fixed Price)",
+          "name": "[Onboarding] Add Service (Fixed)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.services && r.data.services.length) {",
-                  "  const last = r.data.services[r.data.services.length - 1];",
-                  "  pm.collectionVariables.set('serviceId', last.id);",
-                  "}"
+                  "const services = r.data?.services;",
+                  "if (services?.length) pm.collectionVariables.set('serviceId', services[services.length - 1].id);"
                 ]
               }
             }
@@ -234,25 +260,11 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "services"]
             },
-            "description": "serviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper\nserviceLocation: at_my_place | at_client_place"
+            "description": "serviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper"
           }
         },
         {
-          "name": "Add Service (Price Range)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.services && r.data.services.length) {",
-                  "  const last = r.data.services[r.data.services.length - 1];",
-                  "  pm.collectionVariables.set('serviceId', last.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "[Onboarding] Add Service (Range)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -268,7 +280,7 @@
           }
         },
         {
-          "name": "Update Service",
+          "name": "[Onboarding] Update Service",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -284,7 +296,7 @@
           }
         },
         {
-          "name": "Delete Service",
+          "name": "[Onboarding] Delete Service",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -296,7 +308,7 @@
           }
         },
         {
-          "name": "Set Availability",
+          "name": "[Onboarding] Set Availability",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -309,7 +321,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "availability"]
             },
-            "description": "workingDays: Mon–Sun. Times like 09:00 AM or 09:00."
+            "description": "⚠️ Onboarding only. After approval use Calendar → Manage Availability."
           }
         },
         {
@@ -320,9 +332,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.documents && r.data.documents[0]) {",
-                  "  pm.collectionVariables.set('documentId', r.data.documents[0].id);",
-                  "}"
+                  "if (r.data?.documents?.[0]?.id) pm.collectionVariables.set('documentId', r.data.documents[0].id);"
                 ]
               }
             }
@@ -333,25 +343,15 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "document",
-                  "type": "file",
-                  "src": [],
-                  "description": "JPEG, PNG, WebP or PDF · max 5MB"
-                },
-                {
-                  "key": "documentType",
-                  "value": "business_license",
-                  "type": "text"
-                }
+                { "key": "document", "type": "file", "src": [], "description": "JPEG, PNG, WebP or PDF · max 5MB" },
+                { "key": "documentType", "value": "business_license", "type": "text" }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/documents",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "documents"]
-            },
-            "description": "Verify your business — upload business license."
+            }
           }
         },
         {
@@ -375,8 +375,7 @@
               "raw": "{{baseUrl}}/api/vendor/onboarding/review",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "review"]
-            },
-            "description": "Summary for Review Your Business screen."
+            }
           }
         },
         {
@@ -389,7 +388,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "onboarding", "submit"]
             },
-            "description": "Sets verificationStatus to pending (24–48 hours)."
+            "description": "Sets verificationStatus to `pending`."
           }
         },
         {
@@ -402,14 +401,14 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "dashboard"]
             },
-            "description": "Allowed while verification is pending."
+            "description": "Available while verification is pending."
           }
         }
       ]
     },
     {
       "name": "3. Admin Verification",
-      "description": "Requires admin token. Login as admin first, then set adminToken.",
+      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin → saves `adminToken`\n3. List Pending → saves `businessId`\n4. Approve Application",
       "item": [
         {
           "name": "Login Admin",
@@ -419,10 +418,11 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.token) {",
+                  "if (r.data?.token) {",
                   "  pm.collectionVariables.set('adminToken', r.data.token);",
                   "  console.log('adminToken saved');",
-                  "}"
+                  "}",
+                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin — approval will fail');"
                 ]
               }
             }
@@ -433,18 +433,32 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"gunabhsharan.25@gmail.com\",\n  \"password\": \"<admin-password>\"\n}"
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
               "host": ["{{baseUrl}}"],
               "path": ["api", "auth", "login"]
             },
-            "description": "Regular login (not vendor login). User must have role: admin."
+            "description": "Regular login — NOT `/api/auth/vendor/login`."
           }
         },
         {
           "name": "List Pending Applications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.[0]?.id) {",
+                  "  pm.collectionVariables.set('businessId', r.data[0].id);",
+                  "  console.log('businessId saved:', r.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -513,8 +527,7 @@
               "raw": "{{baseUrl}}/api/vendor/home",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "home"]
-            },
-            "description": "Header, application status, banner, today-at-a-glance, upcoming bookings."
+            }
           }
         },
         {
@@ -522,10 +535,7 @@
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"isOnline\": true\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"isOnline\": true\n}" },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/status",
               "host": ["{{baseUrl}}"],
@@ -538,10 +548,7 @@
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"isOnline\": false\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"isOnline\": false\n}" },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/status",
               "host": ["{{baseUrl}}"],
@@ -564,8 +571,78 @@
       ]
     },
     {
+      "name": "4.5 Public Vendors",
+      "description": "Customer-facing discovery and public business reviews.",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors"]
+            }
+          }
+        },
+        {
+          "name": "Search Vendors By Service",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=Ghaziabad&isOnline=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors"],
+              "query": [
+                { "key": "serviceType", "value": "groomer" },
+                { "key": "city", "value": "Ghaziabad" },
+                { "key": "isOnline", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Vendor Reviews",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors", "{{businessId}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Public Vendor Review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{requestId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent service and communication\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors", "{{businessId}}", "reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "5. Requests",
-      "description": "Locked until application is verified. status: pending | upcoming | completed | canceled",
+      "description": "Locked until `verificationStatus` is `verified`.\nstatus: pending | upcoming | completed | canceled",
       "item": [
         {
           "name": "List Pending Requests",
@@ -575,7 +652,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.data && r.data.data[0]) {",
+                  "if (r.data?.data?.[0]?.id) {",
                   "  pm.collectionVariables.set('requestId', r.data.data[0].id);",
                   "  console.log('requestId saved');",
                   "}"
@@ -662,6 +739,95 @@
           }
         },
         {
+          "name": "Start Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "requests", "{{requestId}}", "start"]
+            }
+          }
+        },
+        {
+          "name": "Update Request Progress",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionNotes\": \"Buddy is responding well.\",\n  \"milestones\": {\n    \"bath\": true,\n    \"hairCut\": true,\n    \"nailTrim\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "requests", "{{requestId}}", "progress"]
+            }
+          }
+        },
+        {
+          "name": "Upload Request Media",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "media", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/media",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "requests", "{{requestId}}", "media"]
+            }
+          }
+        },
+        {
+          "name": "Update Request Location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 28.6328,\n  \"longitude\": 77.3649,\n  \"address\": \"Indirapuram, Ghaziabad\",\n  \"timestamp\": \"2026-07-07T12:05:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/location",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "requests", "{{requestId}}", "location"]
+            }
+          }
+        },
+        {
+          "name": "Complete Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "summary", "value": "Service completed successfully", "type": "text" },
+                { "key": "clinicalNotes", "value": "Observed mild dehydration", "type": "text" },
+                { "key": "diagnostics", "value": "Acute gastric", "type": "text" },
+                { "key": "treatments", "value": "ORS recommended", "type": "text" },
+                { "key": "followUpRequired", "value": "true", "type": "text" },
+                { "key": "followUpDate", "value": "2026-07-10", "type": "text" },
+                { "key": "durationMinutes", "value": "60", "type": "text" },
+                { "key": "petMood", "value": "happy", "type": "text" },
+                { "key": "prescriptionFile", "type": "file", "src": [] },
+                { "key": "walkPhotos", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "requests", "{{requestId}}", "complete"]
+            }
+          }
+        },
+        {
           "name": "Reject Request",
           "request": {
             "method": "POST",
@@ -677,6 +843,7 @@
     },
     {
       "name": "6. Calendar",
+      "description": "After approval, use `/api/vendor/availability` (not onboarding route).",
       "item": [
         {
           "name": "Get Calendar (Today)",
@@ -696,11 +863,41 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/vendor/calendar?date=2026-07-05",
+              "raw": "{{baseUrl}}/api/vendor/calendar?date=2026-07-10",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "calendar"],
-              "query": [{ "key": "date", "value": "2026-07-05" }]
+              "query": [{ "key": "date", "value": "2026-07-10" }]
             }
+          }
+        },
+        {
+          "name": "Get Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "availability"]
+            },
+            "description": "✅ Use after vendor is approved."
+          }
+        },
+        {
+          "name": "Manage Availability",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"],\n  \"startTime\": \"10:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "availability"]
+            },
+            "description": "✅ Use after vendor is approved. Do NOT use `/onboarding/availability`."
           }
         },
         {
@@ -711,9 +908,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data[0]) {",
-                  "  pm.collectionVariables.set('blockedDateId', r.data[0].id);",
-                  "}"
+                  "if (r.data?.[0]?.id) pm.collectionVariables.set('blockedDateId', r.data[0].id);"
                 ]
               }
             }
@@ -736,9 +931,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.id) {",
-                  "  pm.collectionVariables.set('blockedDateId', r.data.id);",
-                  "}"
+                  "if (r.data?.id) pm.collectionVariables.set('blockedDateId', r.data.id);"
                 ]
               }
             }
@@ -768,36 +961,6 @@
               "path": ["api", "vendor", "blocked-dates", "{{blockedDateId}}"]
             }
           }
-        },
-        {
-          "name": "Get Availability",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/vendor/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "availability"]
-            },
-            "description": "Works after vendor is approved."
-          }
-        },
-        {
-          "name": "Manage Availability",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"],\n  \"startTime\": \"10:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/vendor/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "availability"]
-            },
-            "description": "Use this after vendor is approved. Onboarding route is only for pre-verification setup."
-          }
         }
       ]
     },
@@ -812,11 +975,9 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data[0]) {",
+                  "if (r.data?.[0]) {",
                   "  pm.collectionVariables.set('conversationId', r.data[0].id);",
-                  "  if (r.data[0].otherUser) {",
-                  "    pm.collectionVariables.set('receiverId', r.data[0].otherUser.id);",
-                  "  }",
+                  "  if (r.data[0].otherUser?.id) pm.collectionVariables.set('receiverId', r.data[0].otherUser.id);",
                   "}"
                 ]
               }
@@ -829,8 +990,7 @@
               "raw": "{{baseUrl}}/api/vendor/chats",
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "chats"]
-            },
-            "description": "Chat list with timeAgo and unread flags."
+            }
           }
         },
         {
@@ -843,6 +1003,41 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "chats"],
               "query": [{ "key": "search", "value": "Pawfection" }]
+            }
+          }
+        },
+        {
+          "name": "Get All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "conversations"]
+            }
+          }
+        },
+        {
+          "name": "Start Conversation With User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.conversationId) pm.collectionVariables.set('conversationId', r.data.conversationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversation/with/{{receiverId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "messages", "conversation", "with", "{{receiverId}}"]
             }
           }
         },
@@ -889,7 +1084,8 @@
       ]
     },
     {
-      "name": "8. Profile",
+      "name": "8. Profile & Services",
+      "description": "After approval, manage services via `/api/vendor/services` (not onboarding).",
       "item": [
         {
           "name": "Get Profile (This Month)",
@@ -935,6 +1131,34 @@
           }
         },
         {
+          "name": "Get Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "preferences", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Update Notification Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pushRequests\": true,\n  \"pushMessages\": true,\n  \"emailMarketing\": false,\n  \"smsAlerts\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "preferences", "notifications"]
+            }
+          }
+        },
+        {
           "name": "List Services",
           "event": [
             {
@@ -942,9 +1166,7 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data[0]) {",
-                  "  pm.collectionVariables.set('serviceId', r.data[0].id);",
-                  "}"
+                  "if (r.data?.[0]?.id) pm.collectionVariables.set('serviceId', r.data[0].id);"
                 ]
               }
             }
@@ -960,7 +1182,19 @@
           }
         },
         {
-          "name": "Add New Service",
+          "name": "Add Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const services = r.data?.services;",
+                  "if (services?.length) pm.collectionVariables.set('serviceId', services[services.length - 1].id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -973,7 +1207,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "vendor", "services"]
             },
-            "description": "Works after vendor is approved. Use onboarding/services only during initial setup."
+            "description": "✅ After approval. Onboarding route blocked once verified."
           }
         },
         {
@@ -1003,14 +1237,116 @@
               "path": ["api", "vendor", "services", "{{serviceId}}"]
             }
           }
+        },
+        {
+          "name": "Get My Reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.reviews?.[0]?.id) pm.collectionVariables.set('reviewId', r.data.reviews[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "reviews"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reply To Review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"replyContent\": \"Thank you so much for trusting Pawffy.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews/{{reviewId}}/reply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendor", "reviews", "{{reviewId}}", "reply"]
+            }
+          }
         }
       ]
     },
     {
-      "name": "9. Notifications",
+      "name": "9. Support & Static",
+      "item": [
+        {
+          "name": "Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"App Crash on Start Walk\",\n  \"category\": \"technical_issue\",\n  \"description\": \"Whenever I click Start Walk on an active booking, the application encounters an error.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/support/tickets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", "tickets"]
+            }
+          }
+        },
+        {
+          "name": "Get Terms",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/static/terms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "static", "terms"]
+            }
+          }
+        },
+        {
+          "name": "Get Privacy",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/static/privacy",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "static", "privacy"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Notifications",
       "item": [
         {
           "name": "List Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const list = r.data || r.data?.notifications;",
+                  "if (Array.isArray(list) && list[0]?.id) pm.collectionVariables.set('notifId', list[0].id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -1018,6 +1354,18 @@
               "raw": "{{baseUrl}}/api/notifications",
               "host": ["{{baseUrl}}"],
               "path": ["api", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notifId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notifId}}", "read"]
             }
           }
         },

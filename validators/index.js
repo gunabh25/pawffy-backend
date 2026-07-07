@@ -408,3 +408,81 @@ exports.vendorProfileUpdateSchema = Joi.object({
   profileTitle: Joi.string().max(150).optional(),
   profileImage: Joi.string().max(1048576).optional(),
 }).min(1);
+
+// ─── Public vendors & business reviews ───────────────────────────────────────
+exports.publicVendorsQuerySchema = Joi.object({
+  serviceType: Joi.string().valid(...SERVICE_TYPES).optional(),
+  city: Joi.string().max(100).optional().allow(""),
+  latitude: Joi.number().optional(),
+  longitude: Joi.number().optional(),
+  isOnline: Joi.boolean().optional(),
+}).custom((value, helpers) => {
+  if ((value.latitude == null) !== (value.longitude == null)) {
+    return helpers.message("latitude and longitude must be provided together");
+  }
+  return value;
+});
+
+exports.businessReviewsQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(20),
+});
+
+exports.createBusinessReviewSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).required(),
+  comment: Joi.string().max(1000).allow("", null).optional(),
+  bookingId: uuid().required(),
+});
+
+exports.replyToBusinessReviewSchema = Joi.object({
+  replyContent: Joi.string().min(1).max(1000).required(),
+});
+
+// ─── Vendor preferences & support ────────────────────────────────────────────
+exports.vendorNotificationPreferencesSchema = Joi.object({
+  pushRequests: Joi.boolean().required(),
+  pushMessages: Joi.boolean().required(),
+  emailMarketing: Joi.boolean().required(),
+  smsAlerts: Joi.boolean().required(),
+});
+
+exports.supportTicketSchema = Joi.object({
+  subject: Joi.string().min(3).max(200).required(),
+  category: Joi.string().valid("technical_issue", "account_issue", "booking_issue", "payment_issue", "general").required(),
+  description: Joi.string().min(10).max(5000).required(),
+});
+
+// ─── Vendor request lifecycle ────────────────────────────────────────────────
+exports.vendorRequestStartSchema = Joi.object({});
+
+exports.vendorRequestProgressSchema = Joi.object({
+  sessionNotes: Joi.string().max(2000).optional(),
+  summary: Joi.string().max(2000).optional(),
+  milestones: Joi.object().pattern(Joi.string(), Joi.boolean()).optional(),
+  focusAreas: Joi.object().pattern(Joi.string(), Joi.boolean()).optional(),
+}).min(1);
+
+exports.vendorRequestLocationSchema = Joi.object({
+  latitude: Joi.number().required(),
+  longitude: Joi.number().required(),
+  address: Joi.string().max(500).optional().allow(""),
+  timestamp: Joi.date().iso().optional(),
+});
+
+exports.vendorRequestCompleteSchema = Joi.object({
+  clinicalNotes: Joi.string().max(3000).optional().allow("", null),
+  diagnostics: Joi.string().max(1000).optional().allow("", null),
+  treatments: Joi.string().max(2000).optional().allow("", null),
+  summary: Joi.string().max(3000).required(),
+  followUpRequired: Joi.boolean().optional(),
+  followUpDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  petMood: Joi.string().valid("happy", "normal", "bad").optional(),
+  durationMinutes: Joi.number().integer().min(1).max(1440).optional(),
+  assignedExercises: Joi.array().items(Joi.string().min(1).max(500)).max(20).optional(),
+  mediaUrls: Joi.array().items(Joi.string().max(1048576)).max(10).optional(),
+}).custom((value, helpers) => {
+  if (value.followUpRequired && !value.followUpDate) {
+    return helpers.message("followUpDate is required when followUpRequired is true");
+  }
+  return value;
+});
