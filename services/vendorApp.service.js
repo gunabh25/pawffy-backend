@@ -96,6 +96,11 @@ function applicationStatus(business) {
   };
 }
 
+function maskPhone(phone) {
+  if (!phone) return null;
+  return `***${phone.slice(-4)}`;
+}
+
 function serializeService(service) {
   const price = service.priceType === "range"
     ? Number(service.minPrice)
@@ -177,6 +182,10 @@ async function getBusinessOrThrow(userId) {
           name: true,
           email: true,
           phone: true,
+          pendingEmail: true,
+          pendingPhone: true,
+          emailVerifiedAt: true,
+          phoneVerifiedAt: true,
           profileImage: true,
           city: true,
           state: true,
@@ -767,7 +776,7 @@ async function getProfile(userId, period = "month") {
       title: business.profileTitle || business.services.map((s) => s.serviceType).slice(0, 2)
         .map((t) => t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
         .join(" & ") || "Pet Care Professional",
-      phone: business.phone || business.user.phone,
+      phone: business.user.phone || business.phone,
       email: business.user.email,
       location: business.location || [business.city || business.user.city, business.state || business.user.state].filter(Boolean).join(", "),
       city: business.city || business.user.city,
@@ -775,6 +784,20 @@ async function getProfile(userId, period = "month") {
       profileImage: business.user.profileImage,
       businessName: business.businessName,
       description: business.description,
+      verification: {
+        email: {
+          address: business.user.email,
+          verified: Boolean(business.user.emailVerifiedAt),
+          verifiedAt: business.user.emailVerifiedAt,
+          pendingEmail: business.user.pendingEmail,
+        },
+        phone: {
+          number: business.user.phone || business.phone,
+          verified: Boolean(business.user.phoneVerifiedAt),
+          verifiedAt: business.user.phoneVerifiedAt,
+          pendingPhone: maskPhone(business.user.pendingPhone),
+        },
+      },
     },
     applicationStatus: applicationStatus(business),
     membership: {
@@ -819,7 +842,6 @@ async function updateProfile(userId, data) {
       data: {
         ...(data.contactName !== undefined && { contactName: data.contactName }),
         ...(data.businessName !== undefined && { businessName: data.businessName }),
-        ...(data.phone !== undefined && { phone: data.phone }),
         ...(data.location !== undefined && { location: data.location }),
         ...(data.city !== undefined && { city: data.city }),
         ...(data.state !== undefined && { state: data.state }),
@@ -831,7 +853,6 @@ async function updateProfile(userId, data) {
       where: { id: userId },
       data: {
         ...(data.contactName !== undefined && { name: data.contactName }),
-        ...(data.phone !== undefined && { phone: data.phone }),
         ...(data.location !== undefined && { address: data.location }),
         ...(data.city !== undefined && { city: data.city }),
         ...(data.state !== undefined && { state: data.state }),

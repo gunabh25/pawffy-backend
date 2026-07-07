@@ -2,32 +2,124 @@
   "info": {
     "name": "Pawffy Vendor API",
     "_postman_id": "pawffy-vendor-2026",
-    "description": "Vendor / Partner app backend — {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** → Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** → business → services → availability → documents → review → submit\n3. **Admin Verification** → Login Admin (saves `adminToken`) → List Pending → Approve\n4. **Main app** → Home, Requests, Calendar, Messages, Profile\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Password policy\nMin 8 chars · uppercase + lowercase + digit\n\n## Collection variables\ntoken · adminToken · userId · businessId · serviceId · documentId · requestId · blockedDateId · conversationId · receiverId · vendorEmail · vendorPassword · adminEmail · adminPassword",
+    "description": "Vendor / Partner app backend \u2014 {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** \u2192 Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** \u2192 business \u2192 services \u2192 availability \u2192 documents \u2192 review \u2192 submit\n3. **Admin Verification** \u2192 Login Admin (saves `adminToken`) \u2192 List Pending \u2192 Approve\n4. **Main app** \u2192 Home, Requests, Calendar, Messages, Profile\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Password policy\nMin 8 chars \u00b7 uppercase + lowercase + digit\n\n## Collection variables\ntoken \u00b7 adminToken \u00b7 userId \u00b7 businessId \u00b7 serviceId \u00b7 documentId \u00b7 requestId \u00b7 blockedDateId \u00b7 conversationId \u00b7 receiverId \u00b7 vendorEmail \u00b7 vendorPassword \u00b7 adminEmail \u00b7 adminPassword",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5001", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "adminToken", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "businessId", "value": "", "type": "string" },
-    { "key": "serviceId", "value": "", "type": "string" },
-    { "key": "documentId", "value": "", "type": "string" },
-    { "key": "requestId", "value": "", "type": "string" },
-    { "key": "blockedDateId", "value": "", "type": "string" },
-    { "key": "conversationId", "value": "", "type": "string" },
-    { "key": "receiverId", "value": "", "type": "string" },
-    { "key": "reviewId", "value": "", "type": "string" },
-    { "key": "notifId", "value": "", "type": "string" },
-    { "key": "vendorEmail", "value": "vendor@pawffy.test", "type": "string" },
-    { "key": "vendorPassword", "value": "Password1", "type": "string" },
-    { "key": "adminEmail", "value": "gunabhsharan.25@gmail.com", "type": "string" },
-    { "key": "adminPassword", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blockedDateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "receiverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notifId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorEmail",
+      "value": "vendor@pawffy.test",
+      "type": "string"
+    },
+    {
+      "key": "vendorPassword",
+      "value": "Password1",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "gunabhsharan.25@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newVendorEmail",
+      "value": "vendor.phase2.new@example.com",
+      "type": "string"
+    },
+    {
+      "key": "newVendorPhone",
+      "value": "+15551234567",
+      "type": "string"
+    },
+    {
+      "key": "emailVerificationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "phoneOtp",
+      "value": "",
+      "type": "string"
+    }
   ],
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{token}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
     ]
   },
   "item": [
@@ -37,13 +129,19 @@
         {
           "name": "Health Check",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
             }
           }
         }
@@ -71,17 +169,31 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/vendor/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "vendor", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "vendor",
+                "register"
+              ]
             },
             "description": "Creates partner user + draft business profile. Requires `acceptTerms: true`."
           }
@@ -104,17 +216,31 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/vendor/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "vendor", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "vendor",
+                "login"
+              ]
             },
             "description": "Partner accounts only. Returns 403 for customer/admin accounts."
           }
@@ -126,25 +252,44 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
             }
           }
         },
         {
           "name": "Forgot Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{vendorEmail}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
             }
           }
         },
@@ -152,15 +297,26 @@
           "name": "Change Password",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"currentPassword\": \"{{vendorPassword}}\",\n  \"newPassword\": \"Password2\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "change-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
             }
           }
         },
@@ -171,8 +327,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
             }
           }
         }
@@ -202,8 +364,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding"
+              ]
             }
           }
         },
@@ -222,15 +390,27 @@
           ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"businessName\": \"Max Pet Care\",\n  \"contactName\": \"Amit Patel\",\n  \"phone\": \"+919652949690\",\n  \"location\": \"Ghaziabad, UP\",\n  \"description\": \"Trusted pet grooming and care services\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/business",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "business"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "business"
+              ]
             }
           }
         },
@@ -250,15 +430,27 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"serviceType\": \"groomer\",\n  \"name\": \"Full Grooming\",\n  \"description\": \"Complete grooming package\",\n  \"inclusions\": [\"Bath\", \"Haircut\", \"Nail Trim\", \"Blow dry\", \"Ear Cleaning\"],\n  \"durationMinutes\": 60,\n  \"priceType\": \"fixed\",\n  \"price\": 40,\n  \"serviceLocation\": \"at_my_place\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services"
+              ]
             },
             "description": "serviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper"
           }
@@ -267,15 +459,27 @@
           "name": "[Onboarding] Add Service (Range)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"serviceType\": \"groomer\",\n  \"name\": \"Bath & Brushing\",\n  \"description\": \"Bath and brushing service\",\n  \"inclusions\": [\"Bath\", \"Brushing\"],\n  \"durationMinutes\": 30,\n  \"priceType\": \"range\",\n  \"minPrice\": 20,\n  \"maxPrice\": 30,\n  \"serviceLocation\": \"at_client_place\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services"
+              ]
             }
           }
         },
@@ -283,15 +487,28 @@
           "name": "[Onboarding] Update Service",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Full Grooming\",\n  \"priceType\": \"fixed\",\n  \"price\": 70,\n  \"durationMinutes\": 60\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services",
+                "{{serviceId}}"
+              ]
             }
           }
         },
@@ -302,8 +519,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services",
+                "{{serviceId}}"
+              ]
             }
           }
         },
@@ -311,17 +536,29 @@
           "name": "[Onboarding] Set Availability",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\", \"Sat\"],\n  \"startTime\": \"09:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "availability"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "availability"
+              ]
             },
-            "description": "⚠️ Onboarding only. After approval use Calendar → Manage Availability."
+            "description": "\u26a0\ufe0f Onboarding only. After approval use Calendar \u2192 Manage Availability."
           }
         },
         {
@@ -343,14 +580,30 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "document", "type": "file", "src": [], "description": "JPEG, PNG, WebP or PDF · max 5MB" },
-                { "key": "documentType", "value": "business_license", "type": "text" }
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPEG, PNG, WebP or PDF \u00b7 max 5MB"
+                },
+                {
+                  "key": "documentType",
+                  "value": "business_license",
+                  "type": "text"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/documents",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "documents"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "documents"
+              ]
             }
           }
         },
@@ -361,8 +614,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/documents/{{documentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "documents", "{{documentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "documents",
+                "{{documentId}}"
+              ]
             }
           }
         },
@@ -373,8 +634,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/review",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "review"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "review"
+              ]
             }
           }
         },
@@ -385,8 +653,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/onboarding/submit",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "onboarding", "submit"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "submit"
+              ]
             },
             "description": "Sets verificationStatus to `pending`."
           }
@@ -398,8 +673,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/dashboard",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "dashboard"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "dashboard"
+              ]
             },
             "description": "Available while verification is pending."
           }
@@ -408,7 +689,7 @@
     },
     {
       "name": "3. Admin Verification",
-      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin → saves `adminToken`\n3. List Pending → saves `businessId`\n4. Approve Application",
+      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin \u2192 saves `adminToken`\n3. List Pending \u2192 saves `businessId`\n4. Approve Application",
       "item": [
         {
           "name": "Login Admin",
@@ -422,25 +703,38 @@
                   "  pm.collectionVariables.set('adminToken', r.data.token);",
                   "  console.log('adminToken saved');",
                   "}",
-                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin — approval will fail');"
+                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin \u2014 approval will fail');"
                 ]
               }
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             },
-            "description": "Regular login — NOT `/api/auth/vendor/login`."
+            "description": "Regular login \u2014 NOT `/api/auth/vendor/login`."
           }
         },
         {
@@ -462,14 +756,27 @@
           "request": {
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/admin/pending",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "admin", "pending"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "pending"
+              ]
             }
           }
         },
@@ -478,18 +785,37 @@
           "request": {
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"verified\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/admin/{{businessId}}/review",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "admin", "{{businessId}}", "review"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "{{businessId}}",
+                "review"
+              ]
             }
           }
         },
@@ -498,18 +824,37 @@
           "request": {
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"rejected\",\n  \"rejectionReason\": \"Business license is unclear. Please re-upload.\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/admin/{{businessId}}/review",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "admin", "{{businessId}}", "review"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "{{businessId}}",
+                "review"
+              ]
             }
           }
         }
@@ -525,8 +870,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/home",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "home"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "home"
+              ]
             }
           }
         },
@@ -534,12 +885,26 @@
           "name": "Go Online",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"isOnline\": true\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isOnline\": true\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "status"
+              ]
             }
           }
         },
@@ -547,12 +912,26 @@
           "name": "Go Offline",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"isOnline\": false\n}" },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isOnline\": false\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "status"
+              ]
             }
           }
         },
@@ -563,8 +942,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/notifications/unread-count",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "notifications", "unread-count"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "notifications",
+                "unread-count"
+              ]
             }
           }
         }
@@ -577,30 +963,53 @@
         {
           "name": "List Vendors",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ]
             }
           }
         },
         {
           "name": "Search Vendors By Service",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=Ghaziabad&isOnline=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ],
               "query": [
-                { "key": "serviceType", "value": "groomer" },
-                { "key": "city", "value": "Ghaziabad" },
-                { "key": "isOnline", "value": "true" }
+                {
+                  "key": "serviceType",
+                  "value": "groomer"
+                },
+                {
+                  "key": "city",
+                  "value": "Ghaziabad"
+                },
+                {
+                  "key": "isOnline",
+                  "value": "true"
+                }
               ]
             }
           }
@@ -608,16 +1017,31 @@
         {
           "name": "Get Public Vendor Reviews",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors", "{{businessId}}", "reviews"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "reviews"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -626,15 +1050,27 @@
           "name": "Create Public Vendor Review",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"bookingId\": \"{{requestId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent service and communication\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors", "{{businessId}}", "reviews"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "reviews"
+              ]
             }
           }
         }
@@ -665,9 +1101,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests?status=pending",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests"],
-              "query": [{ "key": "status", "value": "pending" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
             }
           }
         },
@@ -678,9 +1125,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests?status=upcoming",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests"],
-              "query": [{ "key": "status", "value": "upcoming" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "upcoming"
+                }
+              ]
             }
           }
         },
@@ -691,9 +1149,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests?status=completed",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests"],
-              "query": [{ "key": "status", "value": "completed" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                }
+              ]
             }
           }
         },
@@ -704,9 +1173,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests?status=canceled",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests"],
-              "query": [{ "key": "status", "value": "canceled" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "canceled"
+                }
+              ]
             }
           }
         },
@@ -717,11 +1197,23 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests?status=pending&search=Milo",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
               "query": [
-                { "key": "status", "value": "pending" },
-                { "key": "search", "value": "Milo" }
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "search",
+                  "value": "Milo"
+                }
               ]
             }
           }
@@ -733,8 +1225,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/accept",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "accept"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "accept"
+              ]
             }
           }
         },
@@ -745,8 +1245,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "start"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "start"
+              ]
             }
           }
         },
@@ -754,15 +1262,28 @@
           "name": "Update Request Progress",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"sessionNotes\": \"Buddy is responding well.\",\n  \"milestones\": {\n    \"bath\": true,\n    \"hairCut\": true,\n    \"nailTrim\": false\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/progress",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "progress"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "progress"
+              ]
             }
           }
         },
@@ -774,13 +1295,25 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "media", "type": "file", "src": [] }
+                {
+                  "key": "media",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/media",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "media"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "media"
+              ]
             }
           }
         },
@@ -788,15 +1321,28 @@
           "name": "Update Request Location",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"latitude\": 28.6328,\n  \"longitude\": 77.3649,\n  \"address\": \"Indirapuram, Ghaziabad\",\n  \"timestamp\": \"2026-07-07T12:05:00Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/location",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "location"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "location"
+              ]
             }
           }
         },
@@ -808,22 +1354,70 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "summary", "value": "Service completed successfully", "type": "text" },
-                { "key": "clinicalNotes", "value": "Observed mild dehydration", "type": "text" },
-                { "key": "diagnostics", "value": "Acute gastric", "type": "text" },
-                { "key": "treatments", "value": "ORS recommended", "type": "text" },
-                { "key": "followUpRequired", "value": "true", "type": "text" },
-                { "key": "followUpDate", "value": "2026-07-10", "type": "text" },
-                { "key": "durationMinutes", "value": "60", "type": "text" },
-                { "key": "petMood", "value": "happy", "type": "text" },
-                { "key": "prescriptionFile", "type": "file", "src": [] },
-                { "key": "walkPhotos", "type": "file", "src": [] }
+                {
+                  "key": "summary",
+                  "value": "Service completed successfully",
+                  "type": "text"
+                },
+                {
+                  "key": "clinicalNotes",
+                  "value": "Observed mild dehydration",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostics",
+                  "value": "Acute gastric",
+                  "type": "text"
+                },
+                {
+                  "key": "treatments",
+                  "value": "ORS recommended",
+                  "type": "text"
+                },
+                {
+                  "key": "followUpRequired",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "followUpDate",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "durationMinutes",
+                  "value": "60",
+                  "type": "text"
+                },
+                {
+                  "key": "petMood",
+                  "value": "happy",
+                  "type": "text"
+                },
+                {
+                  "key": "prescriptionFile",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "walkPhotos",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/complete",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "complete"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "complete"
+              ]
             }
           }
         },
@@ -834,8 +1428,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/reject",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "requests", "{{requestId}}", "reject"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "reject"
+              ]
             }
           }
         }
@@ -852,8 +1454,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/calendar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "calendar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "calendar"
+              ]
             }
           }
         },
@@ -864,9 +1472,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/calendar?date=2026-07-10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "calendar"],
-              "query": [{ "key": "date", "value": "2026-07-10" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-07-10"
+                }
+              ]
             }
           }
         },
@@ -877,27 +1496,44 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "availability"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "availability"
+              ]
             },
-            "description": "✅ Use after vendor is approved."
+            "description": "\u2705 Use after vendor is approved."
           }
         },
         {
           "name": "Manage Availability",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"],\n  \"startTime\": \"10:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": false\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/availability",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "availability"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "availability"
+              ]
             },
-            "description": "✅ Use after vendor is approved. Do NOT use `/onboarding/availability`."
+            "description": "\u2705 Use after vendor is approved. Do NOT use `/onboarding/availability`."
           }
         },
         {
@@ -918,8 +1554,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/blocked-dates",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "blocked-dates"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates"
+              ]
             }
           }
         },
@@ -938,15 +1580,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"date\": \"2026-07-10\",\n  \"reason\": \"Holiday\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/blocked-dates",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "blocked-dates"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates"
+              ]
             }
           }
         },
@@ -957,8 +1610,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/blocked-dates/{{blockedDateId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "blocked-dates", "{{blockedDateId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates",
+                "{{blockedDateId}}"
+              ]
             }
           }
         }
@@ -988,8 +1648,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/chats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "chats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "chats"
+              ]
             }
           }
         },
@@ -1000,9 +1666,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/chats?search=Pawfection",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "chats"],
-              "query": [{ "key": "search", "value": "Pawfection" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "chats"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Pawfection"
+                }
+              ]
             }
           }
         },
@@ -1013,8 +1690,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/messages/conversations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", "conversations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations"
+              ]
             }
           }
         },
@@ -1036,8 +1719,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/messages/conversation/with/{{receiverId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", "conversation", "with", "{{receiverId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversation",
+                "with",
+                "{{receiverId}}"
+              ]
             }
           }
         },
@@ -1048,8 +1739,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/messages/{{conversationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", "{{conversationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}"
+              ]
             }
           }
         },
@@ -1057,15 +1754,26 @@
           "name": "Send Message",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hi!!! How can I help you today?\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/messages/",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", ""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                ""
+              ]
             }
           }
         },
@@ -1076,8 +1784,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/messages/{{conversationId}}/read",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "messages", "{{conversationId}}", "read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}",
+                "read"
+              ]
             }
           }
         }
@@ -1094,9 +1809,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/profile?period=month",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "profile"],
-              "query": [{ "key": "period", "value": "month" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month"
+                }
+              ]
             },
             "description": "period: week | month | year"
           }
@@ -1108,9 +1834,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/profile?period=week",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "profile"],
-              "query": [{ "key": "period", "value": "week" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "week"
+                }
+              ]
             }
           }
         },
@@ -1118,15 +1855,26 @@
           "name": "Update Profile",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"contactName\": \"Aman Patel\",\n  \"businessName\": \"Max Pet Care\",\n  \"phone\": \"+919652949690\",\n  \"location\": \"Delhi, India\",\n  \"city\": \"Delhi\",\n  \"state\": \"India\",\n  \"profileTitle\": \"Pet Groomer & Vet\",\n  \"description\": \"Professional pet care services\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ]
             }
           }
         },
@@ -1137,8 +1885,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "preferences", "notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "preferences",
+                "notifications"
+              ]
             }
           }
         },
@@ -1146,15 +1901,27 @@
           "name": "Update Notification Preferences",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pushRequests\": true,\n  \"pushMessages\": true,\n  \"emailMarketing\": false,\n  \"smsAlerts\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "preferences", "notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "preferences",
+                "notifications"
+              ]
             }
           }
         },
@@ -1176,8 +1943,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services"
+              ]
             }
           }
         },
@@ -1197,32 +1970,55 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"serviceType\": \"sitter\",\n  \"name\": \"Pet Sitting\",\n  \"description\": \"In-home pet sitting\",\n  \"inclusions\": [\"Feeding\", \"Walks\", \"Playtime\"],\n  \"durationMinutes\": 120,\n  \"priceType\": \"fixed\",\n  \"price\": 40,\n  \"serviceLocation\": \"at_client_place\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/services",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "services"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services"
+              ]
             },
-            "description": "✅ After approval. Onboarding route blocked once verified."
+            "description": "\u2705 After approval. Onboarding route blocked once verified."
           }
         },
         {
           "name": "Update Service",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Full Grooming\",\n  \"priceType\": \"fixed\",\n  \"price\": 70\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services",
+                "{{serviceId}}"
+              ]
             }
           }
         },
@@ -1233,8 +2029,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "services", "{{serviceId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services",
+                "{{serviceId}}"
+              ]
             }
           }
         },
@@ -1256,11 +2059,23 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendor/reviews?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "reviews"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -1269,15 +2084,212 @@
           "name": "Reply To Review",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"replyContent\": \"Thank you so much for trusting Pawffy.\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/reviews/{{reviewId}}/reply",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendor", "reviews", "{{reviewId}}", "reply"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews",
+                "{{reviewId}}",
+                "reply"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8.5 Account & Security",
+      "description": "Phase 2 vendor account-security flows. In non-production, the API returns the OTP/token for local testing.",
+      "item": [
+        {
+          "name": "Get Vendor Profile (Verification State)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Phone Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.otp) pm.collectionVariables.set('phoneOtp', r.data.otp);",
+                  "if (r.data?.otp) console.log('phoneOtp saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPhone\": \"{{newVendorPhone}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/phone/request-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "phone",
+                "request-update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Phone Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) pm.collectionVariables.set('token', r.data.token);",
+                  "if (r.data?.user?.id) pm.collectionVariables.set('userId', r.data.user.id);",
+                  "if (r.data?.token) console.log('token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPhone\": \"{{newVendorPhone}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/phone/verify-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "phone",
+                "verify-update"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Email Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.verificationToken) pm.collectionVariables.set('emailVerificationToken', r.data.verificationToken);",
+                  "if (r.data?.verificationToken) console.log('emailVerificationToken saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newEmail\": \"{{newVendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "email"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Email Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) pm.collectionVariables.set('token', r.data.token);",
+                  "if (r.data?.user?.id) pm.collectionVariables.set('userId', r.data.user.id);",
+                  "if (r.data?.token) console.log('token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verificationToken\": \"{{emailVerificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "email"
+              ]
             }
           }
         }
@@ -1290,41 +2302,68 @@
           "name": "Create Support Ticket",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"subject\": \"App Crash on Start Walk\",\n  \"category\": \"technical_issue\",\n  \"description\": \"Whenever I click Start Walk on an active booking, the application encounters an error.\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/support/tickets",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "support", "tickets"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "support",
+                "tickets"
+              ]
             }
           }
         },
         {
           "name": "Get Terms",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/static/terms",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "static", "terms"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "static",
+                "terms"
+              ]
             }
           }
         },
         {
           "name": "Get Privacy",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/static/privacy",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "static", "privacy"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "static",
+                "privacy"
+              ]
             }
           }
         }
@@ -1352,8 +2391,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
             }
           }
         },
@@ -1364,8 +2408,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications/{{notifId}}/read",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "{{notifId}}", "read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notifId}}",
+                "read"
+              ]
             }
           }
         },
@@ -1376,8 +2427,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications/read-all",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "read-all"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
             }
           }
         }

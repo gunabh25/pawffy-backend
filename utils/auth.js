@@ -26,7 +26,14 @@ function signToken(user) {
  * Strip all sensitive fields before sending user data to client.
  */
 function sanitizeUser(user) {
-  const { passwordHash, tokenVersion, clerkId, ...safeUser } = user;
+  const {
+    passwordHash,
+    tokenVersion,
+    clerkId,
+    pendingEmail,
+    pendingPhone,
+    ...safeUser
+  } = user;
   return safeUser;
 }
 

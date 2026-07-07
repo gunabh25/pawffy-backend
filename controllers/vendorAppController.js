@@ -1,5 +1,6 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const vendorAppService = require("../services/vendorApp.service");
+const authService = require("../services/auth.service");
 
 exports.getHome = asyncHandler(async (req, res) => {
   const data = await vendorAppService.getHome(req.user.id);
@@ -87,6 +88,26 @@ exports.getProfile = asyncHandler(async (req, res) => {
 exports.updateProfile = asyncHandler(async (req, res) => {
   const data = await vendorAppService.updateProfile(req.user.id, req.body);
   res.json({ success: true, message: "Profile updated", data });
+});
+
+exports.updateEmail = asyncHandler(async (req, res) => {
+  if (req.body.verificationToken) {
+    const data = await authService.verifyVendorEmailChange(req.user.id, req.body.verificationToken);
+    return res.json({ success: true, message: "Email updated successfully", data });
+  }
+
+  const data = await authService.requestVendorEmailChange(req.user, req.body, req.ip);
+  return res.json({ success: true, message: data.message, data });
+});
+
+exports.requestPhoneUpdate = asyncHandler(async (req, res) => {
+  const data = await authService.requestVendorPhoneUpdate(req.user, req.body);
+  res.json({ success: true, message: data.message, data });
+});
+
+exports.verifyPhoneUpdate = asyncHandler(async (req, res) => {
+  const data = await authService.verifyVendorPhoneUpdate(req.user.id, req.body);
+  res.json({ success: true, message: "Phone number updated successfully", data });
 });
 
 exports.listServices = asyncHandler(async (req, res) => {

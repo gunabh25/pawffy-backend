@@ -400,7 +400,6 @@ exports.vendorProfileQuerySchema = Joi.object({
 exports.vendorProfileUpdateSchema = Joi.object({
   contactName:  Joi.string().min(2).max(100).optional(),
   businessName: Joi.string().min(2).max(200).optional(),
-  phone:        Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional(),
   location:     Joi.string().max(500).optional(),
   city:         Joi.string().max(100).optional(),
   state:        Joi.string().max(100).optional(),
@@ -408,6 +407,25 @@ exports.vendorProfileUpdateSchema = Joi.object({
   profileTitle: Joi.string().max(150).optional(),
   profileImage: Joi.string().max(1048576).optional(),
 }).min(1);
+
+exports.vendorEmailUpdateSchema = Joi.alternatives().try(
+  Joi.object({
+    newEmail: Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+  }),
+  Joi.object({
+    verificationToken: Joi.string().min(32).required(),
+  })
+);
+
+exports.vendorPhoneRequestUpdateSchema = Joi.object({
+  newPhone: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required(),
+});
+
+exports.vendorPhoneVerifyUpdateSchema = Joi.object({
+  newPhone: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required(),
+  otp: Joi.string().pattern(/^\d{6}$/).required(),
+});
 
 // ─── Public vendors & business reviews ───────────────────────────────────────
 exports.publicVendorsQuerySchema = Joi.object({

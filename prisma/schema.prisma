@@ -117,12 +117,21 @@ enum SupportTicketCategory {
   general
 }
 
+enum ContactVerificationType {
+  email_change
+  phone_update
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
   name         String?
   email        String?  @unique
   phone        String?  @unique
+  pendingEmail  String?  @unique @map("pending_email")
+  pendingPhone  String?  @unique @map("pending_phone")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
   passwordHash  String   @map("password_hash")
   tokenVersion  Int      @default(0) @map("token_version")
   role          Role     @default(customer)
@@ -150,8 +159,27 @@ model User {
   partnerBookings     PartnerBooking[]     @relation("PartnerBookingCustomer")
   businessReviews     BusinessReview[]
   supportTickets      SupportTicket[]
+  contactVerificationTokens ContactVerificationToken[]
 
   @@map("users")
+}
+
+model ContactVerificationToken {
+  id           String                  @id @default(uuid()) @db.Uuid
+  userId       String                  @map("user_id") @db.Uuid
+  type         ContactVerificationType
+  targetValue  String                  @map("target_value")
+  tokenHash    String                  @map("token_hash")
+  expiresAt    DateTime                @map("expires_at")
+  usedAt       DateTime?               @map("used_at")
+  attemptCount Int                     @default(0) @map("attempt_count")
+  createdAt    DateTime                @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+  @@index([targetValue, type])
+  @@map("contact_verification_tokens")
 }
 
 model PasswordResetToken {
