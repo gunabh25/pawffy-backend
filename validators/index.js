@@ -427,6 +427,72 @@ exports.vendorPhoneVerifyUpdateSchema = Joi.object({
   otp: Joi.string().pattern(/^\d{6}$/).required(),
 });
 
+const ADOPTION_STATUSES = [
+  "pending_review",
+  "info_requested",
+  "rejected",
+  "meet_approved",
+  "meet_scheduled",
+  "not_ready_yet",
+  "approved",
+  "declined",
+  "documents_pending",
+  "payment_pending",
+  "completed",
+];
+
+exports.vendorAdoptionListQuerySchema = Joi.object({
+  status: Joi.string().valid(...ADOPTION_STATUSES).optional(),
+  search: Joi.string().max(100).optional().allow(""),
+});
+
+exports.vendorAdoptionReviewSchema = Joi.object({
+  decision: Joi.string().valid("approve_to_meet", "request_info", "reject").required(),
+  notes: Joi.string().max(2000).optional().allow("", null),
+  rejectionReason: Joi.string().max(500).when("decision", {
+    is: "reject",
+    then: Joi.string().min(1).required(),
+    otherwise: Joi.optional().allow("", null),
+  }),
+});
+
+exports.vendorAdoptionScheduleMeetSchema = Joi.object({
+  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "string.pattern.base": "date must be in YYYY-MM-DD format",
+  }),
+  timeSlot: Joi.string().min(2).max(100).required(),
+  meetingType: Joi.string().valid("in_person", "virtual", "phone_call").required(),
+  notes: Joi.string().max(1000).optional().allow("", null),
+});
+
+exports.vendorAdoptionMeetOutcomeSchema = Joi.object({
+  outcome: Joi.string().valid("approve_adoption", "decline", "not_ready_yet").required(),
+  notes: Joi.string().max(2000).optional().allow("", null),
+});
+
+exports.vendorAdoptionDocumentSchema = Joi.object({
+  documentType: Joi.string().valid(
+    "adoption_agreement",
+    "vaccination_record",
+    "transfer_certificate",
+    "identity_proof",
+    "address_proof",
+    "other"
+  ).default("other"),
+});
+
+exports.vendorAdoptionCollectPaymentSchema = Joi.alternatives().try(
+  Joi.object({
+    paymentMethod: Joi.string().valid("card", "net_banking", "wallet").required(),
+    couponCode: Joi.string().max(50).optional().allow(""),
+  }),
+  Joi.object({
+    paymentIntentId: Joi.string().pattern(/^pi_/).required().messages({
+      "string.pattern.base": "Invalid Stripe PaymentIntent ID",
+    }),
+  })
+);
+
 // ─── Public vendors & business reviews ───────────────────────────────────────
 exports.publicVendorsQuerySchema = Joi.object({
   serviceType: Joi.string().valid(...SERVICE_TYPES).optional(),

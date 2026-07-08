@@ -110,6 +110,16 @@
       "key": "phoneOtp",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "adoptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adoptionPaymentIntentId",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -2295,6 +2305,291 @@
               ]
             },
             "description": "Completes the email swap using the real verification token. In production, paste the token from the email link into `emailVerificationToken` first."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8.6 Adoptions",
+      "description": "Vendor adoption workflow for pet-based applications. Use the wallet payment request only when wallet payments are enabled in the backend; otherwise use the Stripe intent + verify sequence.",
+      "item": [
+        {
+          "name": "List Adoptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.items?.[0]?.id) pm.collectionVariables.set('adoptionId', r.data.items[0].id);",
+                  "if (r.data?.items?.[0]?.id) console.log('adoptionId saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions?status=pending_review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending_review"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Adoption Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review Adoption",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approve_to_meet\",\n  \"notes\": \"Looks good for meet and greet.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Schedule Meet & Greet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-07-15\",\n  \"timeSlot\": \"11:00 AM - 12:00 PM\",\n  \"meetingType\": \"in_person\",\n  \"notes\": \"Bring adoption paperwork.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/schedule-meet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "schedule-meet"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Meet Outcome",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"approve_adoption\",\n  \"notes\": \"Approved after successful meet and greet.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/meet-outcome",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "meet-outcome"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Adoption Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "documentType",
+                  "value": "adoption_agreement",
+                  "type": "text"
+                },
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "documents"
+              ]
+            },
+            "description": "Upload one document at a time using field name `document`. Supported types mirror other vendor document uploads."
+          }
+        },
+        {
+          "name": "Collect Adoption Payment (Wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"wallet\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            },
+            "description": "Use only when `WALLET_PAYMENTS_ENABLED=true` in the backend environment."
+          }
+        },
+        {
+          "name": "Create Adoption Payment Intent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.paymentIntentId) pm.collectionVariables.set('adoptionPaymentIntentId', r.data.paymentIntentId);",
+                  "if (r.data?.paymentIntentId) console.log('adoptionPaymentIntentId saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"card\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Adoption Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{adoptionPaymentIntentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            },
+            "description": "Run after Stripe confirms the intent succeeded; this finalizes the adoption status in the backend."
           }
         }
       ]

@@ -11,6 +11,7 @@ const v = require("../validators");
 const ctrl = require("../controllers/vendorOnboardingController");
 const appCtrl = require("../controllers/vendorAppController");
 const businessReviewCtrl = require("../controllers/businessReviewController");
+const adoptionCtrl = require("../controllers/vendorAdoptionController");
 
 const partnerOnly = [verifyToken, requireRole("partner")];
 const adminOnly = [verifyToken, requireRole("admin")];
@@ -81,6 +82,49 @@ router.put(
   writeLimiter,
   validate(v.vendorNotificationPreferencesSchema),
   appCtrl.updateNotificationPreferences
+);
+router.get("/adoptions", ...partnerOnly, validate(v.vendorAdoptionListQuerySchema, "query"), adoptionCtrl.listAdoptions);
+router.get("/adoptions/:adoptionId", ...partnerOnly, validateUuidParams("adoptionId"), adoptionCtrl.getAdoption);
+router.post(
+  "/adoptions/:adoptionId/review",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("adoptionId"),
+  validate(v.vendorAdoptionReviewSchema),
+  adoptionCtrl.reviewAdoption
+);
+router.post(
+  "/adoptions/:adoptionId/schedule-meet",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("adoptionId"),
+  validate(v.vendorAdoptionScheduleMeetSchema),
+  adoptionCtrl.scheduleMeet
+);
+router.post(
+  "/adoptions/:adoptionId/meet-outcome",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("adoptionId"),
+  validate(v.vendorAdoptionMeetOutcomeSchema),
+  adoptionCtrl.recordMeetOutcome
+);
+router.post(
+  "/adoptions/:adoptionId/documents",
+  ...partnerOnly,
+  uploadLimiter,
+  validateUuidParams("adoptionId"),
+  documentUpload.array("document", 10),
+  validate(v.vendorAdoptionDocumentSchema),
+  adoptionCtrl.uploadDocuments
+);
+router.post(
+  "/adoptions/:adoptionId/collect-payment",
+  ...partnerOnly,
+  writeLimiter,
+  validateUuidParams("adoptionId"),
+  validate(v.vendorAdoptionCollectPaymentSchema),
+  adoptionCtrl.collectPayment
 );
 
 // ─── Onboarding (matches vendor app UI flow) ─────────────────────────────────

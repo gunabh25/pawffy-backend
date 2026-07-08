@@ -122,6 +122,47 @@ enum ContactVerificationType {
   phone_update
 }
 
+enum AdoptionStatus {
+  pending_review
+  info_requested
+  rejected
+  meet_approved
+  meet_scheduled
+  not_ready_yet
+  approved
+  declined
+  documents_pending
+  payment_pending
+  completed
+}
+
+enum AdoptionReviewDecision {
+  approve_to_meet
+  request_info
+  reject
+}
+
+enum AdoptionMeetingType {
+  in_person
+  virtual
+  phone_call
+}
+
+enum AdoptionMeetOutcome {
+  approve_adoption
+  decline
+  not_ready_yet
+}
+
+enum AdoptionDocumentType {
+  adoption_agreement
+  vaccination_record
+  transfer_certificate
+  identity_proof
+  address_proof
+  other
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
@@ -160,6 +201,7 @@ model User {
   businessReviews     BusinessReview[]
   supportTickets      SupportTicket[]
   contactVerificationTokens ContactVerificationToken[]
+  adoptionApplications AdoptionApplication[] @relation("AdoptionApplicant")
 
   @@map("users")
 }
@@ -215,6 +257,7 @@ model Pet {
   bookings       Booking[]
   medicalRecords MedicalRecord[]
   vaccinations   Vaccination[]
+  adoptionApplications AdoptionApplication[]
 
   @@map("pets")
 }
@@ -518,6 +561,7 @@ model PartnerBusiness {
   blockedDates PartnerBlockedDate[]
   bookings     PartnerBooking[]
   reviews      BusinessReview[]
+  adoptionApplications AdoptionApplication[]
 
   @@map("partner_businesses")
 }
@@ -644,6 +688,83 @@ model SupportTicket {
 
   @@index([userId, createdAt])
   @@map("support_tickets")
+}
+
+model AdoptionApplication {
+  id                String               @id @default(uuid()) @db.Uuid
+  businessId        String               @map("business_id") @db.Uuid
+  petId             String               @map("pet_id") @db.Uuid
+  applicantId       String               @map("applicant_id") @db.Uuid
+  status            AdoptionStatus       @default(pending_review)
+  reviewDecision    AdoptionReviewDecision? @map("review_decision")
+  reviewNotes       String?              @map("review_notes")
+  rejectionReason   String?              @map("rejection_reason")
+  applicationData   Json?                @map("application_data")
+  applicantProfile  Json?                @map("applicant_profile")
+  meetApprovedAt    DateTime?            @map("meet_approved_at")
+  meetScheduledFor  DateTime?            @map("meet_scheduled_for")
+  meetTimeSlot      String?              @map("meet_time_slot")
+  meetingType       AdoptionMeetingType? @map("meeting_type")
+  meetingNotes      String?              @map("meeting_notes")
+  meetOutcome       AdoptionMeetOutcome? @map("meet_outcome")
+  meetOutcomeNotes  String?              @map("meet_outcome_notes")
+  meetOutcomeAt     DateTime?            @map("meet_outcome_at")
+  approvedAt        DateTime?            @map("approved_at")
+  declinedAt        DateTime?            @map("declined_at")
+  completedAt       DateTime?            @map("completed_at")
+  requestedInfoAt   DateTime?            @map("requested_info_at")
+  feeAmount         Decimal              @default(150) @map("fee_amount") @db.Decimal(10, 2)
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  business   PartnerBusiness   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  pet        Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
+  applicant  User              @relation("AdoptionApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  documents  AdoptionDocument[]
+  payment    AdoptionPayment?
+
+  @@index([businessId, status])
+  @@index([applicantId, status])
+  @@index([petId])
+  @@map("adoption_applications")
+}
+
+model AdoptionDocument {
+  id           String              @id @default(uuid()) @db.Uuid
+  adoptionId   String              @map("adoption_id") @db.Uuid
+  documentType AdoptionDocumentType @default(other) @map("document_type")
+  fileName     String              @map("file_name")
+  mimeType     String              @map("mime_type")
+  fileData     String              @map("file_data")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  adoption AdoptionApplication @relation(fields: [adoptionId], references: [id], onDelete: Cascade)
+
+  @@index([adoptionId, createdAt])
+  @@map("adoption_documents")
+}
+
+model AdoptionPayment {
+  id            String        @id @default(uuid()) @db.Uuid
+  adoptionId    String        @unique @map("adoption_id") @db.Uuid
+  subtotal      Decimal       @default(150) @db.Decimal(10, 2)
+  platformFee   Decimal       @default(0) @map("platform_fee") @db.Decimal(10, 2)
+  taxAmount     Decimal       @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  discount      Decimal       @default(0) @db.Decimal(10, 2)
+  couponCode    String?       @map("coupon_code")
+  amount        Decimal       @db.Decimal(10, 2)
+  pawPoints     Int           @default(0) @map("paw_points")
+  paymentMethod String?       @map("payment_method")
+  paymentStatus PaymentStatus @default(pending) @map("payment_status")
+  transactionId String?       @map("transaction_id")
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  adoption AdoptionApplication @relation(fields: [adoptionId], references: [id], onDelete: Cascade)
+
+  @@index([paymentStatus, createdAt])
+  @@map("adoption_payments")
 }
 
 model BusinessReview {
