@@ -23,6 +23,16 @@ exports.loginSchema = Joi.object({
   password:    Joi.string().required(),
 }).or("email", "phoneNumber");
 
+exports.login2faVerifySchema = Joi.object({
+  email: Joi.string().email().lowercase().optional(),
+  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional().messages({
+    "string.pattern.base": "Invalid phone number format",
+  }),
+  otp: Joi.string().pattern(/^\d{6}$/).required().messages({
+    "string.pattern.base": "OTP must be a 6-digit number",
+  }),
+}).or("email", "phoneNumber");
+
 exports.forgotPasswordSchema = Joi.object({
   email: Joi.string().email().lowercase().required(),
 });

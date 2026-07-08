@@ -5,6 +5,7 @@ const AppError = require("../middleware/errors");
 const { signToken, sanitizeUser } = require("../utils/auth");
 const logger = require("../utils/logger");
 const { sendEmailOtp, generateOtp } = require("../utils/emailOtp");
+const { sendSmsOtp } = require("../utils/smsOtp");
 
 const SALT_ROUNDS = 12;
 const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
@@ -177,7 +178,120 @@ async function login({ email, phoneNumber, password }, ip) {
     throw new AppError("Invalid email/phone or password", 401);
   }
 
-  return { user: sanitizeUser(user), token: signToken(user) };
+  // Mandatory 2FA for all logins:
+  // - If user has an email, we send email OTP.
+  // - Otherwise, we fallback to phone OTP (SMS) if phone exists.
+  const method = user.email ? "email" : "phone";
+  const otp = generateOtp();
+
+  const type = method === "email" ? "login_email_2fa" : "login_phone_2fa";
+  const targetValue = method === "email" ? user.email : user.phone;
+  const expiresInMs = method === "email" ? EMAIL_OTP_TTL_MS : PHONE_OTP_TTL_MS;
+
+  if (!targetValue) {
+    throw new AppError("No email/phone available for OTP verification", 400);
+  }
+
+  const { expiresAt } = await createContactVerificationToken(user.id, type, targetValue, otp, expiresInMs);
+
+  let delivered = false;
+  let provider = null;
+
+  if (method === "email") {
+    const emailRes = await sendEmailOtp({ to: targetValue, otp, purpose: "login_2fa" });
+    delivered = !!emailRes.delivered;
+    provider = emailRes.provider || null;
+  } else {
+    const smsRes = await sendSmsOtp({ to: targetValue, otp, purpose: "login_2fa" });
+    delivered = !!smsRes.delivered;
+    provider = smsRes.provider || null;
+  }
+
+  // For local/dev usage, we optionally expose OTP if delivery is not configured.
+  const response = {
+    user: sanitizeUser(user),
+    requires2fa: true,
+    method,
+    delivered,
+    provider,
+    expiresAt,
+  };
+
+  if (process.env.NODE_ENV !== "production" && (!delivered || process.env.EXPOSE_OTP_IN_DEV === "true")) {
+    response.otp = otp;
+  }
+
+  return response;
+}
+
+async function verifyLogin2fa({ email, phoneNumber, otp }, ip) {
+  const normalizedEmail = email ? email.toLowerCase() : null;
+
+  const user = await prisma.user.findFirst({
+    where: normalizedEmail ? { email: normalizedEmail } : { phone: phoneNumber },
+  });
+
+  if (!user) throw new AppError("Invalid OTP", 400);
+
+  const method = normalizedEmail ? "email" : "phone";
+  const type = method === "email" ? "login_email_2fa" : "login_phone_2fa";
+  const targetValue = method === "email" ? normalizedEmail : phoneNumber;
+
+  if (!targetValue) throw new AppError("Invalid OTP", 400);
+
+  const tokenHash = hashVerificationValue(otp);
+
+  const record = await prisma.contactVerificationToken.findFirst({
+    where: {
+      userId: user.id,
+      type,
+      targetValue,
+      usedAt: null,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!record || record.expiresAt < new Date()) {
+    throw new AppError("Invalid or expired OTP", 400);
+  }
+
+  if (record.attemptCount >= MAX_VERIFICATION_ATTEMPTS) {
+    throw new AppError("Too many invalid OTP attempts. Request a new OTP.", 429);
+  }
+
+  if (record.tokenHash !== tokenHash) {
+    const nextAttempts = record.attemptCount + 1;
+    await prisma.contactVerificationToken.update({
+      where: { id: record.id },
+      data: {
+        attemptCount: nextAttempts,
+        ...(nextAttempts >= MAX_VERIFICATION_ATTEMPTS ? { usedAt: new Date() } : {}),
+      },
+    });
+    logger.authFail("INVALID_OTP", { identifier: targetValue, ip });
+    throw new AppError("Invalid OTP", 400);
+  }
+
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const freshUser = await tx.user.findUnique({ where: { id: user.id } });
+    if (!freshUser) throw new AppError("Invalid OTP", 400);
+
+    if (method === "email" && freshUser.email !== normalizedEmail) {
+      throw new AppError("Invalid OTP", 400);
+    }
+    if (method === "phone" && freshUser.phone !== phoneNumber) {
+      throw new AppError("Invalid OTP", 400);
+    }
+
+    await tx.contactVerificationToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+
+    return freshUser;
+  });
+
+  return { user: sanitizeUser(updatedUser), token: signToken(updatedUser) };
 }
 
 async function logout(userId) {
@@ -435,6 +549,7 @@ module.exports = {
   registerVendor,
   login,
   loginVendor,
+  verifyLogin2fa,
   logout,
   forgotPassword,
   resetPassword,

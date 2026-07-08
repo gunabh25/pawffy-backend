@@ -120,6 +120,8 @@ enum SupportTicketCategory {
 enum ContactVerificationType {
   email_change
   phone_update
+  login_email_2fa
+  login_phone_2fa
 }
 
 enum AdoptionStatus {

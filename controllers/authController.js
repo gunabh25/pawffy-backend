@@ -18,12 +18,25 @@ exports.registerVendor = asyncHandler(async (req, res) => {
 
 exports.login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body, req.ip);
-  res.status(200).json({ success: true, message: "Login successful", data: result });
+  res.status(200).json({
+    success: true,
+    message: result.requires2fa ? "OTP required to complete login" : "Login successful",
+    data: result,
+  });
 });
 
 exports.loginVendor = asyncHandler(async (req, res) => {
   const result = await authService.loginVendor(req.body, req.ip);
-  res.status(200).json({ success: true, message: "Login successful", data: result });
+  res.status(200).json({
+    success: true,
+    message: result.requires2fa ? "OTP required to complete login" : "Login successful",
+    data: result,
+  });
+});
+
+exports.verifyLogin2fa = asyncHandler(async (req, res) => {
+  const result = await authService.verifyLogin2fa(req.body, req.ip);
+  res.status(200).json({ success: true, message: "OTP verified successfully", data: result });
 });
 
 exports.getMe = asyncHandler(async (req, res) => {
