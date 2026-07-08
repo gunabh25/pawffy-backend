@@ -393,6 +393,28 @@ exports.vendorBlockedDateSchema = Joi.object({
   reason: Joi.string().max(200).optional().allow("", null),
 });
 
+exports.vendorSlotsQuerySchema = Joi.object({
+  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "string.pattern.base": "date must be in YYYY-MM-DD format",
+  }),
+  // Optional: compute slot grid using the selected service duration.
+  serviceId: uuid().optional(),
+  slotDurationMinutes: Joi.number().integer().min(10).max(240).optional().default(30),
+});
+
+exports.vendorCreateRequestSchema = Joi.object({
+  serviceId: uuid().required(),
+  petId: uuid().required(),
+  bookingDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    "string.pattern.base": "bookingDate must be in YYYY-MM-DD format",
+  }),
+  bookingTime: Joi.string().pattern(TIME_PATTERN).required().messages({
+    "string.pattern.base": "bookingTime must be in HH:MM or HH:MM AM/PM format",
+  }),
+  location: Joi.string().max(500).optional().allow("", null),
+  notes: Joi.string().max(2000).optional().allow("", null),
+}).min(1);
+
 exports.vendorProfileQuerySchema = Joi.object({
   period: Joi.string().valid("week", "month", "year").default("month"),
 });
@@ -501,6 +523,16 @@ exports.publicVendorsQuerySchema = Joi.object({
   latitude: Joi.number().optional(),
   longitude: Joi.number().optional(),
   isOnline: Joi.boolean().optional(),
+}).custom((value, helpers) => {
+  if ((value.latitude == null) !== (value.longitude == null)) {
+    return helpers.message("latitude and longitude must be provided together");
+  }
+  return value;
+});
+
+exports.vendorDetailQuerySchema = Joi.object({
+  latitude: Joi.number().optional(),
+  longitude: Joi.number().optional(),
 }).custom((value, helpers) => {
   if ((value.latitude == null) !== (value.longitude == null)) {
     return helpers.message("latitude and longitude must be provided together");

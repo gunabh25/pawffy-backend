@@ -5,3 +5,8 @@ exports.listVendors = asyncHandler(async (req, res) => {
   const data = await vendorDiscoveryService.listVendors(req.query);
   res.json({ success: true, data });
 });
+
+exports.getVendorById = asyncHandler(async (req, res) => {
+  const data = await vendorDiscoveryService.getVendorById(req.params.vendorId, req.query);
+  res.json({ success: true, data });
+});

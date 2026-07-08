@@ -185,6 +185,16 @@
       "key": "localBaseUrl",
       "value": "http://localhost:5001",
       "type": "string"
+    },
+    {
+      "key": "vendorSlotDate",
+      "value": "2026-07-15",
+      "type": "string"
+    },
+    {
+      "key": "vendorSlotTime",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -4085,6 +4095,94 @@
               ]
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "Vendor Booking (User)",
+      "description": "User-side booking flow: fetch vendor slots for a date, then create a pending vendor request (appears in vendor inbox as a pending PartnerBooking).",
+      "item": [
+        {
+          "name": "Get Vendor Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/slots?date={{vendorSlotDate}}&serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "slots"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{vendorSlotDate}}"
+                },
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const slot = r.data?.slots?.find(s => s.available);",
+                  "if (slot) pm.collectionVariables.set('vendorSlotTime', slot.time);",
+                  "if (slot) console.log('vendorSlotTime saved:', slot.time);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Vendor Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"petId\": \"{{petId}}\",\n  \"bookingDate\": \"{{vendorSlotDate}}\",\n  \"bookingTime\": \"{{vendorSlotTime}}\",\n  \"location\": \"Customer address\",\n  \"notes\": \"No notes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "requests"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('requestId', r.data.id);",
+                  "if (r.data?.id) console.log('requestId saved:', r.data.id);"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

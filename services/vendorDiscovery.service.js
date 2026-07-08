@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const AppError = require("../middleware/errors");
 const { getDistanceFromLatLonInKm } = require("../utils/geo");
 
 const SEARCH_RADIUS_KM = 25;
@@ -109,6 +110,47 @@ async function listVendors(filters) {
     });
 }
 
+async function getVendorById(vendorId, { latitude, longitude } = {}) {
+  const hasGeo = latitude != null && longitude != null;
+
+  const business = await prisma.partnerBusiness.findFirst({
+    where: {
+      id: vendorId,
+      verificationStatus: "verified",
+    },
+    include: {
+      user: {
+        select: {
+          profileImage: true,
+          latitude: true,
+          longitude: true,
+        },
+      },
+      services: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+
+  if (!business) {
+    throw new AppError("Vendor not found", 404);
+  }
+
+  let distanceKm = null;
+  if (hasGeo && business.user.latitude != null && business.user.longitude != null) {
+    distanceKm = Number(getDistanceFromLatLonInKm(
+      latitude,
+      longitude,
+      Number(business.user.latitude),
+      Number(business.user.longitude)
+    ).toFixed(2));
+  }
+
+  return serializeVendor(business, distanceKm);
+}
+
 module.exports = {
   listVendors,
+  getVendorById,
 };
