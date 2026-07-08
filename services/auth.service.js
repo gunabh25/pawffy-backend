@@ -4,9 +4,10 @@ const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
 const { signToken, sanitizeUser } = require("../utils/auth");
 const logger = require("../utils/logger");
+const { sendEmailOtp, generateOtp } = require("../utils/emailOtp");
 
 const SALT_ROUNDS = 12;
-const CONTACT_TOKEN_TTL_MS = 60 * 60 * 1000;
+const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
 const PHONE_OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_VERIFICATION_ATTEMPTS = 5;
 
@@ -257,51 +258,77 @@ async function requestVendorEmailChange(user, { newEmail, password }, ip) {
   await verifyPasswordOrThrow(user, password, ip);
   await ensureUniqueEmail(normalizedEmail, user.id);
 
-  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const otp = generateOtp();
   await prisma.user.update({
     where: { id: user.id },
     data: { pendingEmail: normalizedEmail },
   });
-  await createContactVerificationToken(user.id, "email_change", normalizedEmail, verificationToken, CONTACT_TOKEN_TTL_MS);
+  await createContactVerificationToken(user.id, "email_change", normalizedEmail, otp, EMAIL_OTP_TTL_MS);
 
-  const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/vendor/verify-email-change?token=${verificationToken}`;
-  await sendEmail({
+  const { delivered, provider } = await sendEmailOtp({
     to: normalizedEmail,
-    subject: "Verify your new Pawffy vendor email",
-    html: `<p>Click the link below to confirm your new email address. It expires in 1 hour.</p><a href="${verifyUrl}">${verifyUrl}</a>`,
+    otp,
+    purpose: "email_change",
   });
 
-  return {
-    message: "Verification sent to your new email address.",
-    ...(process.env.NODE_ENV !== "production" ? { verificationToken } : {}),
+  const response = {
+    message: delivered
+      ? "OTP sent to your new email address."
+      : "OTP generated. Configure SENDGRID_API_KEY or SMTP to deliver email OTPs.",
+    provider: provider || null,
+    delivered,
   };
+
+  if (process.env.NODE_ENV !== "production" && (!delivered || process.env.EXPOSE_OTP_IN_DEV === "true")) {
+    response.otp = otp;
+  }
+
+  return response;
 }
 
-async function verifyVendorEmailChange(userId, verificationToken) {
-  const tokenHash = hashVerificationValue(verificationToken);
+async function verifyVendorEmailChange(userId, { otp, newEmail }) {
+  const normalizedEmail = newEmail.toLowerCase();
+  const tokenHash = hashVerificationValue(otp);
   const record = await prisma.contactVerificationToken.findFirst({
     where: {
       userId,
       type: "email_change",
-      tokenHash,
+      targetValue: normalizedEmail,
       usedAt: null,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   if (!record || record.expiresAt < new Date()) {
-    throw new AppError("Invalid or expired verification token", 400);
+    throw new AppError("Invalid or expired OTP", 400);
+  }
+
+  if (record.attemptCount >= MAX_VERIFICATION_ATTEMPTS) {
+    throw new AppError("Too many invalid OTP attempts. Request a new OTP.", 429);
+  }
+
+  if (record.tokenHash !== tokenHash) {
+    const nextAttempts = record.attemptCount + 1;
+    await prisma.contactVerificationToken.update({
+      where: { id: record.id },
+      data: {
+        attemptCount: nextAttempts,
+        ...(nextAttempts >= MAX_VERIFICATION_ATTEMPTS ? { usedAt: new Date() } : {}),
+      },
+    });
+    throw new AppError("Invalid OTP", 400);
   }
 
   const updatedUser = await prisma.$transaction(async (tx) => {
     const freshUser = await tx.user.findUnique({ where: { id: userId } });
-    if (!freshUser || freshUser.pendingEmail !== record.targetValue) {
+    if (!freshUser || freshUser.pendingEmail !== normalizedEmail) {
       throw new AppError("Pending email change not found", 400);
     }
 
     const committed = await tx.user.update({
       where: { id: userId },
       data: {
-        email: record.targetValue,
+        email: normalizedEmail,
         pendingEmail: null,
         emailVerifiedAt: new Date(),
         tokenVersion: { increment: 1 },

@@ -1,0 +1,5745 @@
+{
+  "info": {
+    "name": "Pawffy API \u2014 Unified",
+    "_postman_id": "pawffy-all-2026",
+    "description": "Complete Pawffy backend API collection \u2014 `{{baseUrl}}`\n\n## What this collection includes\n- Customer / core backend APIs\n- Admin-protected endpoints\n- Vendor onboarding, live vendor app, account/security, and adoption flows\n- Public discovery, support, and static-content endpoints\n\n## Recommended usage\n1. Use `baseUrl` for your current environment. Default is local: `{{localBaseUrl}}`.\n2. Start with `\ud83d\udd10 Auth` for customer/general flows or `Vendor Auth` for partner flows.\n3. Use the saved variables (`token`, `adminToken`, IDs, OTP/token helpers) as requests populate them.\n4. For production testing, switch `baseUrl` to `{{productionBaseUrl}}` and follow the production notes in the vendor account/security requests.\n\n## Folder layout\n- Core app folders come from the general backend collection.\n- Vendor-specific folders are appended after the core folders so all APIs live in one importable file.\n\n## Security and behavior notes\n- Protected routes require `Authorization: Bearer {{token}}` unless they specifically use `adminToken`.\n- JWT sessions use `tokenVersion`, so logout/password change/contact verification can invalidate older tokens.\n- Wallet payment routes only work when `WALLET_PAYMENTS_ENABLED=true`.\n- In non-production, some vendor verification flows may return OTP/token helpers for local testing; production does not return those secrets.\n\n## Important variables\nbaseUrl \u00b7 localBaseUrl \u00b7 productionBaseUrl \u00b7 token \u00b7 adminToken \u00b7 userId \u00b7 petId \u00b7 vetId \u00b7 serviceId \u00b7 bookingId \u00b7 businessId \u00b7 requestId \u00b7 adoptionId \u00b7 conversationId \u00b7 receiverId \u00b7 emailOtp \u00b7 phoneOtp \u00b7 adoptionPaymentIntentId\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "petId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vetId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "walkingBookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "partnerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recordId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vaccId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notifId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "receiverId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lostReportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "foundReportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "couponCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blockedDateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorEmail",
+      "value": "vendor@pawffy.test",
+      "type": "string"
+    },
+    {
+      "key": "vendorPassword",
+      "value": "Password1",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "gunabhsharan.25@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newVendorEmail",
+      "value": "vendor.phase2.new@example.com",
+      "type": "string"
+    },
+    {
+      "key": "newVendorPhone",
+      "value": "+15551234567",
+      "type": "string"
+    },
+    {
+      "key": "emailOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "phoneOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adoptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adoptionPaymentIntentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productionBaseUrl",
+      "value": "https://pawffy-backend.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "localBaseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "\ud83c\udfe5 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udd10 Auth",
+      "description": "Rate limit: 10 req / 15 min on register & login \u00b7 5 req / hour on forgot-password\nLogout increments tokenVersion \u2192 all issued tokens become invalid instantly",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('\u2705 Token & userId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\n\nPassword policy: min 8 chars, must contain uppercase + lowercase + digit\nExample valid: Password123",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('\u2705 Token & userId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Me (current user)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('token', '');",
+                  "console.log('Token cleared. All sessions on all devices are now invalid.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Increments tokenVersion in DB \u2192 every JWT issued before this call is instantly rejected.\nAll devices are logged out simultaneously.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.resetToken) {",
+                  "  pm.collectionVariables.set('resetToken', r.data.resetToken);",
+                  "  console.log('\u2705 resetToken saved (dev mode)');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\u26a0\ufe0f Rate limited: 5 req / hour\n\nDev mode: resetToken returned in response.data.resetToken\nProduction with SMTP: email sent only, token NOT in response.\n\nAlways returns 200 (prevents email enumeration).",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Token expires in 1 hour. Single use only.\nAlso increments tokenVersion \u2192 logs out all devices.\n\nRate limit: 5 requests/hour per IP (same as forgot-password).",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  console.log('\u2705 New token saved \u2014 other sessions logged out');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Logs out all other devices. Returns a fresh token for the current session.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udc64 Users",
+      "description": "\ud83d\udd12 GET / and DELETE /:id require admin role",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"address\": \"123 Pet Street\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                }
+              ]
+            },
+            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: avatar\nStored as base64 data URL in DB.",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "avatar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Users \ud83d\udd12 Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "\ud83d\udd12 Requires role: admin",
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ]
+            },
+            "description": "\ud83d\udd12 Requires auth. Own profile or admin role only."
+          }
+        },
+        {
+          "name": "Change User Role \ud83d\udd12 Admin",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}",
+                "role"
+              ]
+            },
+            "description": "\ud83d\udd12 Admin only. Valid roles: customer | admin | partner | vet"
+          }
+        },
+        {
+          "name": "Delete User \ud83d\udd12 Admin",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "\ud83d\udd12 Requires role: admin",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udc3e Pets",
+      "item": [
+        {
+          "name": "Create Pet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('petId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buddy\",\n  \"species\": \"dog\",\n  \"breed\": \"Golden Retriever\",\n  \"gender\": \"male\",\n  \"age\": 3,\n  \"weight\": 28.5,\n  \"color\": \"golden\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "gender: male | female | unknown",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Pets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pet By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"age\": 4,\n  \"weight\": 30.0,\n  \"medicalNotes\": \"Allergic to peanuts\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Pet Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": "",
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                }
+              ]
+            },
+            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: image",
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}/image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}",
+                "image"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Pet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets",
+                "{{petId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83e\ude7a Vets",
+      "description": "Public: GET /vets, GET /vets/:id, /slots, /services, /reviews\n\ud83d\udd12 Admin/Partner: POST/PUT/DELETE vets, services, availability\n\ud83d\udd12 Any auth user: POST reviews",
+      "item": [
+        {
+          "name": "Create Vet \ud83d\udd12 Admin/Partner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('vetId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Priya Sharma\",\n  \"email\": \"priya@pawcare.com\",\n  \"serviceType\": \"vet\",\n  \"specialization\": \"Small Animals\",\n  \"experienceYears\": 8,\n  \"clinicName\": \"PawCare Clinic\",\n  \"clinicAddress\": \"45, Pet Care, Koramangala\",\n  \"clinicCity\": \"Bangalore - 560034\",\n  \"phone\": \"+919876543210\",\n  \"consultationFee\": 500,\n  \"city\": \"Bangalore\",\n  \"state\": \"Karnataka\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only create a vet profile using their own account email.\n\nserviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Vets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vets \u2014 Filter by serviceType",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?serviceType=groomer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ],
+              "query": [
+                {
+                  "key": "serviceType",
+                  "value": "groomer",
+                  "description": "vet|groomer|walker|trainer|sitter|boarding|transport|poop_scooper"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vets \u2014 Search by name / clinic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?search=PawCare",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "PawCare"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vets \u2014 Filter by city",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?city=Mumbai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vets \u2014 Combined filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets?serviceType=groomer&city=Mumbai&available=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets"
+              ],
+              "query": [
+                {
+                  "key": "serviceType",
+                  "value": "groomer"
+                },
+                {
+                  "key": "city",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "available",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vet By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Vet \ud83d\udd12 Admin/Partner",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultationFee\": 600,\n  \"availableStatus\": true,\n  \"serviceType\": \"groomer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only update the vet profile linked to their account email.\nRating cannot be set here \u2014 it is computed from verified reviews only.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Availability \ud83d\udd12 Admin/Partner",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slots\": [\n    { \"dayOfWeek\": \"Monday\",    \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Wednesday\", \"startTime\": \"09:00\", \"endTime\": \"17:00\", \"slotDuration\": 30 },\n    { \"dayOfWeek\": \"Friday\",    \"startTime\": \"09:00\", \"endTime\": \"13:00\", \"slotDuration\": 30 }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "availability"
+              ]
+            },
+            "description": "Partners may only manage availability for their own vet profile (email match)."
+          }
+        },
+        {
+          "name": "Get Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "availability"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Available Slots [Screen 2 \u2014 Schedule]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/slots?date=2026-07-15",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "slots"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-07-15",
+                  "description": "YYYY-MM-DD"
+                }
+              ]
+            },
+            "description": "Returns all time slots with available:true/false.\nSlots already booked (pending/confirmed) are marked available:false."
+          }
+        },
+        {
+          "name": "Get Vet Services [Screen 1 \u2014 Select Service]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.length > 0) {",
+                  "  pm.collectionVariables.set('serviceId', r.data[0].id);",
+                  "  console.log('serviceId saved:', r.data[0].name, '$' + r.data[0].price);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "services"
+              ]
+            },
+            "description": "Returns name, description, price, duration for each active service."
+          }
+        },
+        {
+          "name": "Create Vet Service \ud83d\udd12 Admin/Partner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General Consultancy\",\n  \"description\": \"Health checkup and basic consultancy\",\n  \"price\": 40,\n  \"duration\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83d\udd12 Admin/Partner only. Create one service per request.\nCommon services to seed:\n\u2022 General Consultancy $40\n\u2022 Vaccination $60\n\u2022 Emergency Care $100\n\u2022 Dental Care $70\n\u2022 Others $70\n\nPartners may only manage services for their own vet profile (email match).",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "services"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Post Vet Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent service! Very caring.\",\n  \"bookingId\": \"{{bookingId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "rating: 1\u20135 (integer). bookingId is required.\nUser must have a completed booking with this vet.\nOne review per user per vet.\nAverage rating on Vet is auto-recalculated.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "reviews"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vet Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vets",
+                "{{vetId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udcc5 Bookings \u2014 Full Flow",
+      "description": "Complete booking flow:\n1. GET /vets/:vetId/services  \u2192 select service + price\n2. GET /vets/:vetId/slots?date \u2192 pick time slot\n3. GET /pets                    \u2192 pick pet\n4. Client collects symptoms/reason\n5. POST /bookings               \u2192 create booking\n6. GET /payments/summary/:id   \u2192 price breakdown\n7. POST /payments/apply-coupon \u2192 optional coupon\n8a. POST /payments/create-intent \u2192 card/net_banking (Stripe)\n8b. POST /payments/confirm       \u2192 wallet (disabled unless WALLET_PAYMENTS_ENABLED=true)\n8c. POST /payments/verify        \u2192 sync Stripe after payment sheet\n9. GET /bookings/:id            \u2192 confirmation screen\n\nStatus: customers can PATCH cancelled only; admins can set any status.",
+      "item": [
+        {
+          "name": "STEP 5 \u2014 Create Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('bookingId', r.data.id);",
+                  "  console.log('\u2705 bookingId saved:', r.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vetId\": \"{{vetId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"bookingType\": \"veterinarian\",\n  \"bookingDate\": \"2026-07-15\",\n  \"bookingTime\": \"11:00\",\n  \"reasonForVisit\": \"My dog has been lethargic for 2 days\",\n  \"symptoms\": \"Vomiting,Lethargy,Loss of appetite\",\n  \"symptomsDuration\": \"2 Days ago\",\n  \"notes\": \"Please check ears as well\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "bookingType: veterinarian | grooming | walking | training | boarding | sitting | sitter | poop_scooper | transport\n\nsymptomsDuration: Today | 2 Days ago | A week ago | More than a week\n\nConflict check: returns 409 if that slot is already booked.",
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 6 \u2014 Price Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "summary",
+                "{{bookingId}}"
+              ],
+              "query": [
+                {
+                  "key": "coupon",
+                  "value": "SAVE10",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Returns: servicePrice + platformFee($5) + tax(5%) - discount = total\nAlso returns pawPoints earned."
+          }
+        },
+        {
+          "name": "STEP 7 \u2014 Apply Coupon (optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"code\": \"SAVE10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/apply-coupon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "apply-coupon"
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 8a \u2014 Create Stripe PaymentIntent (Card / Net Banking)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"card\",\n  \"couponCode\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "paymentMethod: card | net_banking\n\nReturns clientSecret \u2192 pass to flutter_stripe:\n  Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  Stripe.instance.presentPaymentSheet()\n\nBooking confirmed automatically via Stripe webhook.",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/create-intent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "create-intent"
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 8b \u2014 Confirm Wallet Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"couponCode\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Wallet payment \u2014 no Stripe.\n\n\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true and wallet balance logic is implemented.\nUse STEP 8a (Stripe) for production payments.",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "confirm"
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 8c \u2014 Verify Stripe Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Call after flutter_stripe payment sheet closes.\nSyncs Stripe status with DB if webhook hasn't fired yet.\nReturns: stripeStatus, paymentStatus, bookingStatus, appointmentId",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "verify"
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 9 \u2014 Get Booking Confirmation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            },
+            "description": "Returns: appointmentId, vet, pet, dateTimeFormatted, totalPaid, paymentStatus"
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "veterinarian",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Bookings \ud83d\udd12 Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "\ud83d\udd12 Requires role: admin",
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Booking Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Customers (booking owner) may only set status to \"cancelled\".\nAdmins may set: pending | confirmed | completed | cancelled.\nConfirmation/completion for customers happens via payment flow or admin action.",
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Booking Status \ud83d\udd12 Admin (confirm)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83d\udd12 Requires role: admin\n\nAdmins may set: pending | confirmed | completed | cancelled.\nCustomers can only cancel via \"Update Booking Status\".",
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udcac Messages",
+      "item": [
+        {
+          "name": "Get My Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Pawfection",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Returns: otherUser, lastMessage, updatedAt, unreadCount (orange dot)\nOptional: ?search=name filters by other user's name"
+          }
+        },
+        {
+          "name": "Open / Start Chat with User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.conversationId) {",
+                  "  pm.collectionVariables.set('conversationId', r.data.conversationId);",
+                  "  console.log('\u2705 conversationId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversation/with/{{receiverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversation",
+                "with",
+                "{{receiverId}}"
+              ]
+            },
+            "description": "Tap a vet profile \u2192 call this to get or create a conversation.\nReturns conversationId + otherUser info."
+          }
+        },
+        {
+          "name": "Get Messages in Conversation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}?page=1&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Returns items with date separators:\n{ type:'date_separator', label:'Today' }\n{ type:'message', content, isMine, isRead, time, sender }\n\nAlso marks incoming messages as read."
+          }
+        },
+        {
+          "name": "Send Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.conversationId) pm.collectionVariables.set('conversationId', r.data.conversationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hi! I wanted to confirm the availability for tomorrow.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Set {{receiverId}} to the other user's ID. Creates conversation if first message.",
+            "url": {
+              "raw": "{{baseUrl}}/api/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Conversation as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}",
+                "read"
+              ]
+            },
+            "description": "Call when user opens a conversation \u2014 clears the unread (orange dot) count."
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udcb3 Payments",
+      "description": "\u26a0\ufe0f Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) \u00b7 wallet (direct)",
+      "item": [
+        {
+          "name": "Get Price Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "summary",
+                "{{bookingId}}"
+              ],
+              "query": [
+                {
+                  "key": "coupon",
+                  "value": "SAVE10",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Returns: serviceName, servicePrice, platformFee($5), tax(5%), discount, total, pawPoints"
+          }
+        },
+        {
+          "name": "Apply Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"code\": \"SAVE10\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/apply-coupon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "apply-coupon"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Stripe PaymentIntent (Card / Net Banking)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"card\",\n  \"couponCode\": \"\"\n}"
+            },
+            "description": "paymentMethod: card | net_banking\nReturns clientSecret for flutter_stripe",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/create-intent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "create-intent"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm Wallet Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"couponCode\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "confirm"
+              ]
+            },
+            "description": "\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true.\nUse Stripe create-intent + verify for production card/net banking payments."
+          }
+        },
+        {
+          "name": "Verify Stripe Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}"
+            },
+            "description": "\ud83d\udd12 Must own the booking linked to the payment intent.",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "verify"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Payment By Booking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/booking/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "booking",
+                "{{bookingId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83c\udfe5 Medical Records",
+      "item": [
+        {
+          "name": "Create Medical Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('recordId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"diagnosis\": \"Mild ear infection\",\n  \"prescription\": \"Ear drops twice daily for 7 days\",\n  \"symptoms\": \"Head shaking, scratching ear\",\n  \"reportUrl\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical-records"
+              ]
+            },
+            "description": "\ud83d\udd12 Pet owner or admin only.\ncreatedByVet is resolved from the authenticated user's email when they manage a linked vet profile."
+          }
+        },
+        {
+          "name": "Get Records By Pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records/pet/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical-records",
+                "pet",
+                "{{petId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Record By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records/{{recordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical-records",
+                "{{recordId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Medical Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prescription\": \"Ear drops three times daily for 5 days\",\n  \"allergies\": \"None known\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records/{{recordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical-records",
+                "{{recordId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Medical Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records/{{recordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "medical-records",
+                "{{recordId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udc89 Vaccinations",
+      "item": [
+        {
+          "name": "Add Vaccination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('vaccId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petId\": \"{{petId}}\",\n  \"vaccineName\": \"Rabies\",\n  \"vaccinationDate\": \"2026-06-01\",\n  \"nextDueDate\": \"2027-06-01\",\n  \"notes\": \"No adverse reactions\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vaccinations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vaccinations"
+              ]
+            },
+            "description": "\ud83d\udd12 Pet owner or admin only.\nOptional vetId; otherwise resolved from authenticated user's linked vet profile by email."
+          }
+        },
+        {
+          "name": "Get Vaccinations By Pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vaccinations/pet/{{petId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vaccinations",
+                "pet",
+                "{{petId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Vaccination",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Booster shot administered\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vaccinations/{{vaccId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vaccinations",
+                "{{vaccId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Vaccination",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vaccinations/{{vaccId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vaccinations",
+                "{{vaccId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udd14 Notifications",
+      "description": "GET/PATCH/DELETE: authenticated user (own notifications only).\nPOST: admin only.",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "unread",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Notification \ud83d\udd12 Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('notifId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Appointment Reminder\",\n  \"message\": \"Your pet's appointment is tomorrow at 10:00 AM.\",\n  \"type\": \"booking\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83d\udd12 Requires role: admin\n\ntype: booking | payment | health | general\nNotification is created for the authenticated admin user. Use server-side jobs for user-targeted notifications.",
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification As Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notifId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notifId}}",
+                "read"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark All As Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notifId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notifId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83c\udfe0 Dashboard",
+      "description": "Optional Bearer on POST /dashboard for personalized data. User/notifications endpoints require self or admin.",
+      "item": [
+        {
+          "name": "Get Dashboard (optional auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.877,\n  \"platform\": \"app\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Send Bearer token for user profile + notifications. Without token: public data only (categories, partners, banner, quote). Do NOT send userId in body.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "dashboard"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID \ud83d\udd12 Self/Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "\ud83d\udd12 Requires auth. Returns private profile only for self or admin.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Partners Nearby \ud83c\udf10",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.877\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\ud83c\udf10 Public. Returns partners within 25km (no email/phone exposed).",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/partners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "partners"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notifications By User \ud83d\udd12 Self/Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "\ud83d\udd12 Requires auth. Own notifications or admin only.",
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/notifications/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "notifications",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active Categories \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Banner \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/banner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "banner"
+              ],
+              "query": [
+                {
+                  "key": "platform",
+                  "value": "app",
+                  "description": "web | app"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udea8 Lost Pets",
+      "description": "Public read \u00b7 Auth required for create/update/delete \u00b7 userId from token",
+      "item": [
+        {
+          "name": "Create Lost Pet Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('lostReportId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://example.com/pet1.jpg\"],\n  \"name\": \"Bruno\",\n  \"age\": 3,\n  \"color\": \"Brown\",\n  \"height\": \"45 cm\",\n  \"weight\": \"12 kg\",\n  \"breed\": \"Labrador\",\n  \"gender\": \"Male\",\n  \"description\": \"Last seen near park wearing red collar\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Lost Reports \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "reports"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Lost Report By ID \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Lost Pet Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated: seen near Bandra station\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Lost Pet Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lost-pets/report/{{lostReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lost-pets",
+                "report",
+                "{{lostReportId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udd0d Found Pets",
+      "item": [
+        {
+          "name": "Create Found Pet Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('foundReportId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"images\": [\"https://example.com/found1.jpg\"],\n  \"color\": \"White\",\n  \"breed\": \"Indie\",\n  \"gender\": \"Female\",\n  \"description\": \"Friendly dog found near station\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Found Reports \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Found Report By ID \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Found Pet Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Now at local shelter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Found Pet Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/found-pets/{{foundReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "found-pets",
+                "{{foundReportId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udccb All Pet Reports",
+      "item": [
+        {
+          "name": "Get All Reports (Lost + Found) \ud83c\udf10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Returns lostPets and foundPets arrays combined.",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udeb6 Walking Bookings",
+      "description": "partnerId must be a user with role=partner.\nPets in selectedPetList must belong to the authenticated user.\npaymentStatus is server-controlled.",
+      "item": [
+        {
+          "name": "Create Walking Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.bookingId) pm.collectionVariables.set('walkingBookingId', r.bookingId);",
+                  "else if (r.data && r.data.id) pm.collectionVariables.set('walkingBookingId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partnerId\": \"{{partnerId}}\",\n  \"walkingType\": \"Once a day\",\n  \"selectedDays\": \"Mon,Wed,Fri\",\n  \"walkingDuration\": \"30 mins\",\n  \"isPackage\": false,\n  \"selectedPackage\": null,\n  \"selectedPetList\": [\n    \"{{petId}}\"\n  ],\n  \"selectedService\": {\n    \"title\": \"Standard Walk\",\n    \"description\": \"30 minute walk\",\n    \"price\": 299\n  },\n  \"selectedAddress\": {\n    \"fullAddress\": \"123 Pet Street, Mumbai\"\n  },\n  \"slotTime\": {\n    \"morningSlot\": \"07:00 AM\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking"
+              ]
+            },
+            "description": "partnerId must be a user with role=partner.\nselectedPetList must contain pet IDs owned by the authenticated user.\npaymentStatus is set server-side (always Pending) \u2014 do not send it in the body."
+          }
+        },
+        {
+          "name": "Get My Walking Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Walking Booking By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/walking/{{walkingBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "walking",
+                "{{walkingBookingId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendor Auth",
+      "description": "Vendor-specific authentication for partner accounts. Use `POST /api/auth/vendor/register` and `POST /api/auth/vendor/login` here; admin login remains in the vendor admin folder.",
+      "item": [
+        {
+          "name": "Register Vendor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('token & userId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/vendor/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "vendor",
+                "register"
+              ]
+            },
+            "description": "Creates partner user + draft business profile. Requires `acceptTerms: true`."
+          }
+        },
+        {
+          "name": "Login Vendor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('token & userId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/vendor/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "vendor",
+                "login"
+              ]
+            },
+            "description": "Partner accounts only. Returns 403 for customer/admin accounts."
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{vendorEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{vendorPassword}}\",\n  \"newPassword\": \"Password2\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Onboarding (before approval)",
+      "description": "Use only while `verificationStatus` is `incomplete` or `rejected`.\nBlocked once status is `pending` or `verified`.",
+      "item": [
+        {
+          "name": "Get Onboarding State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.business?.id) pm.collectionVariables.set('businessId', r.data.business.id);",
+                  "if (r.data?.services?.[0]?.id) pm.collectionVariables.set('serviceId', r.data.services[0].id);",
+                  "if (r.data?.documents?.[0]?.id) pm.collectionVariables.set('documentId', r.data.documents[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Save Business Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.business?.id) pm.collectionVariables.set('businessId', r.data.business.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Max Pet Care\",\n  \"contactName\": \"Amit Patel\",\n  \"phone\": \"+919652949690\",\n  \"location\": \"Ghaziabad, UP\",\n  \"description\": \"Trusted pet grooming and care services\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/business",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "business"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[Onboarding] Add Service (Fixed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const services = r.data?.services;",
+                  "if (services?.length) pm.collectionVariables.set('serviceId', services[services.length - 1].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"groomer\",\n  \"name\": \"Full Grooming\",\n  \"description\": \"Complete grooming package\",\n  \"inclusions\": [\"Bath\", \"Haircut\", \"Nail Trim\", \"Blow dry\", \"Ear Cleaning\"],\n  \"durationMinutes\": 60,\n  \"priceType\": \"fixed\",\n  \"price\": 40,\n  \"serviceLocation\": \"at_my_place\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services"
+              ]
+            },
+            "description": "serviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper"
+          }
+        },
+        {
+          "name": "[Onboarding] Add Service (Range)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"groomer\",\n  \"name\": \"Bath & Brushing\",\n  \"description\": \"Bath and brushing service\",\n  \"inclusions\": [\"Bath\", \"Brushing\"],\n  \"durationMinutes\": 30,\n  \"priceType\": \"range\",\n  \"minPrice\": 20,\n  \"maxPrice\": 30,\n  \"serviceLocation\": \"at_client_place\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[Onboarding] Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Full Grooming\",\n  \"priceType\": \"fixed\",\n  \"price\": 70,\n  \"durationMinutes\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services",
+                "{{serviceId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[Onboarding] Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "services",
+                "{{serviceId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "[Onboarding] Set Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\", \"Sat\"],\n  \"startTime\": \"09:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "availability"
+              ]
+            },
+            "description": "\u26a0\ufe0f Onboarding only. After approval use Calendar \u2192 Manage Availability."
+          }
+        },
+        {
+          "name": "Upload Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.documents?.[0]?.id) pm.collectionVariables.set('documentId', r.data.documents[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPEG, PNG, WebP or PDF \u00b7 max 5MB"
+                },
+                {
+                  "key": "documentType",
+                  "value": "business_license",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "documents"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "documents",
+                "{{documentId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review Business",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Application",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/onboarding/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "onboarding",
+                "submit"
+              ]
+            },
+            "description": "Sets verificationStatus to `pending`."
+          }
+        },
+        {
+          "name": "Onboarding Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "dashboard"
+              ]
+            },
+            "description": "Available while verification is pending."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Verification",
+      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin \u2192 saves `adminToken`\n3. List Pending \u2192 saves `businessId`\n4. Approve Application",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) {",
+                  "  pm.collectionVariables.set('adminToken', r.data.token);",
+                  "  console.log('adminToken saved');",
+                  "}",
+                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin \u2014 approval will fail');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Regular login \u2014 NOT `/api/auth/vendor/login`."
+          }
+        },
+        {
+          "name": "List Pending Applications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.[0]?.id) {",
+                  "  pm.collectionVariables.set('businessId', r.data[0].id);",
+                  "  console.log('businessId saved:', r.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/admin/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/admin/{{businessId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "{{businessId}}",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"rejectionReason\": \"Business license is unclear. Please re-upload.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/admin/{{businessId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "admin",
+                "{{businessId}}",
+                "review"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Home",
+      "item": [
+        {
+          "name": "Get Home",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "home"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Go Online",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isOnline\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Go Offline",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isOnline\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unread Notifications Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "notifications",
+                "unread-count"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4.5 Public Vendors",
+      "description": "Customer-facing discovery and public business reviews.",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Vendors By Service",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=Ghaziabad&isOnline=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "key": "serviceType",
+                  "value": "groomer"
+                },
+                {
+                  "key": "city",
+                  "value": "Ghaziabad"
+                },
+                {
+                  "key": "isOnline",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Vendor Reviews",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Public Vendor Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{requestId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent service and communication\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}",
+                "reviews"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Requests",
+      "description": "Locked until `verificationStatus` is `verified`.\nstatus: pending | upcoming | completed | canceled",
+      "item": [
+        {
+          "name": "List Pending Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.data?.[0]?.id) {",
+                  "  pm.collectionVariables.set('requestId', r.data.data[0].id);",
+                  "  console.log('requestId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Upcoming Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "upcoming"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Completed Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=completed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Canceled Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=canceled",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "canceled"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=pending&search=Milo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "search",
+                  "value": "Milo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "accept"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "start"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Request Progress",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionNotes\": \"Buddy is responding well.\",\n  \"milestones\": {\n    \"bath\": true,\n    \"hairCut\": true,\n    \"nailTrim\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "progress"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Request Media",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "media",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/media",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "media"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Request Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 28.6328,\n  \"longitude\": 77.3649,\n  \"address\": \"Indirapuram, Ghaziabad\",\n  \"timestamp\": \"2026-07-07T12:05:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/location",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "location"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Complete Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "summary",
+                  "value": "Service completed successfully",
+                  "type": "text"
+                },
+                {
+                  "key": "clinicalNotes",
+                  "value": "Observed mild dehydration",
+                  "type": "text"
+                },
+                {
+                  "key": "diagnostics",
+                  "value": "Acute gastric",
+                  "type": "text"
+                },
+                {
+                  "key": "treatments",
+                  "value": "ORS recommended",
+                  "type": "text"
+                },
+                {
+                  "key": "followUpRequired",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "followUpDate",
+                  "value": "2026-07-10",
+                  "type": "text"
+                },
+                {
+                  "key": "durationMinutes",
+                  "value": "60",
+                  "type": "text"
+                },
+                {
+                  "key": "petMood",
+                  "value": "happy",
+                  "type": "text"
+                },
+                {
+                  "key": "prescriptionFile",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "walkPhotos",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "complete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests/{{requestId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests",
+                "{{requestId}}",
+                "reject"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Calendar",
+      "description": "After approval, use `/api/vendor/availability` (not onboarding route).",
+      "item": [
+        {
+          "name": "Get Calendar (Today)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/calendar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "calendar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Calendar by Date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/calendar?date=2026-07-10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-07-10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "availability"
+              ]
+            },
+            "description": "\u2705 Use after vendor is approved."
+          }
+        },
+        {
+          "name": "Manage Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workingDays\": [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\"],\n  \"startTime\": \"10:00 AM\",\n  \"endTime\": \"06:00 PM\",\n  \"sameDayRequests\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "availability"
+              ]
+            },
+            "description": "\u2705 Use after vendor is approved. Do NOT use `/onboarding/availability`."
+          }
+        },
+        {
+          "name": "List Blocked Dates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.[0]?.id) pm.collectionVariables.set('blockedDateId', r.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/blocked-dates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Blocked Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('blockedDateId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-07-10\",\n  \"reason\": \"Holiday\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/blocked-dates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove Blocked Date",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/blocked-dates/{{blockedDateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "blocked-dates",
+                "{{blockedDateId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Messages",
+      "item": [
+        {
+          "name": "My Chats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.[0]) {",
+                  "  pm.collectionVariables.set('conversationId', r.data[0].id);",
+                  "  if (r.data[0].otherUser?.id) pm.collectionVariables.set('receiverId', r.data[0].otherUser.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/chats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "chats"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/chats?search=Pawfection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "chats"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Pawfection"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Conversation With User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.conversationId) pm.collectionVariables.set('conversationId', r.data.conversationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversation/with/{{receiverId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversation",
+                "with",
+                "{{receiverId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"receiverId\": \"{{receiverId}}\",\n  \"content\": \"Hi!!! How can I help you today?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Conversation Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/{{conversationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "{{conversationId}}",
+                "read"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Profile & Services",
+      "description": "After approval, manage services via `/api/vendor/services` (not onboarding).",
+      "item": [
+        {
+          "name": "Get Profile (This Month)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile?period=month",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month"
+                }
+              ]
+            },
+            "description": "period: week | month | year"
+          }
+        },
+        {
+          "name": "Get Profile (This Week)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile?period=week",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "week"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contactName\": \"Aman Patel\",\n  \"businessName\": \"Max Pet Care\",\n  \"phone\": \"+919652949690\",\n  \"location\": \"Delhi, India\",\n  \"city\": \"Delhi\",\n  \"state\": \"India\",\n  \"profileTitle\": \"Pet Groomer & Vet\",\n  \"description\": \"Professional pet care services\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "preferences",
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Notification Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pushRequests\": true,\n  \"pushMessages\": true,\n  \"emailMarketing\": false,\n  \"smsAlerts\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/preferences/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "preferences",
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Services",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.[0]?.id) pm.collectionVariables.set('serviceId', r.data[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const services = r.data?.services;",
+                  "if (services?.length) pm.collectionVariables.set('serviceId', services[services.length - 1].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"sitter\",\n  \"name\": \"Pet Sitting\",\n  \"description\": \"In-home pet sitting\",\n  \"inclusions\": [\"Feeding\", \"Walks\", \"Playtime\"],\n  \"durationMinutes\": 120,\n  \"priceType\": \"fixed\",\n  \"price\": 40,\n  \"serviceLocation\": \"at_client_place\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services"
+              ]
+            },
+            "description": "\u2705 After approval. Onboarding route blocked once verified."
+          }
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Full Grooming\",\n  \"priceType\": \"fixed\",\n  \"price\": 70\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services",
+                "{{serviceId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "services",
+                "{{serviceId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.reviews?.[0]?.id) pm.collectionVariables.set('reviewId', r.data.reviews[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reply To Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"replyContent\": \"Thank you so much for trusting Pawffy.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews/{{reviewId}}/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews",
+                "{{reviewId}}",
+                "reply"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8.5 Account & Security",
+      "description": "Phase 2 vendor account-security flows.\n\nNon-production: the API may return `phoneOtp` / `emailOtp` and the collection scripts will save them automatically.\n\nProduction: the API will not return those secrets. Use the OTP received over SMS and the email OTP delivered to the new email address, then paste the real value into the corresponding collection variable before running the verify request.",
+      "item": [
+        {
+          "name": "Get Vendor Profile (Verification State)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request Phone Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.otp) pm.collectionVariables.set('phoneOtp', r.data.otp);",
+                  "if (r.data?.otp) console.log('phoneOtp saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPhone\": \"{{newVendorPhone}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/phone/request-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "phone",
+                "request-update"
+              ]
+            },
+            "description": "Starts a secure phone update. In production, expect the OTP to be delivered outside the API response."
+          }
+        },
+        {
+          "name": "Verify Phone Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) pm.collectionVariables.set('token', r.data.token);",
+                  "if (r.data?.user?.id) pm.collectionVariables.set('userId', r.data.user.id);",
+                  "if (r.data?.token) console.log('token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPhone\": \"{{newVendorPhone}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/phone/verify-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "phone",
+                "verify-update"
+              ]
+            },
+            "description": "Completes phone verification using the real OTP. In production, paste the SMS OTP into `phoneOtp` first."
+          }
+        },
+        {
+          "name": "Request Email Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.otp) pm.collectionVariables.set('emailOtp', r.data.otp);",
+                  "if (r.data?.otp) console.log('emailOtp saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newEmail\": \"{{newVendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "email"
+              ]
+            },
+            "description": "Starts a secure email change. In non-production the API may return `otp`. In production the OTP is delivered by Twilio SendGrid (or SMTP fallback) and is not returned."
+          }
+        },
+        {
+          "name": "Verify Email Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) pm.collectionVariables.set('token', r.data.token);",
+                  "if (r.data?.user?.id) pm.collectionVariables.set('userId', r.data.user.id);",
+                  "if (r.data?.token) console.log('token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newEmail\": \"{{newVendorEmail}}\",\n  \"otp\": \"{{emailOtp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "email"
+              ]
+            },
+            "description": "Completes the email swap using the 6-digit OTP. In production, paste the OTP from the email into `emailOtp` first."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8.6 Adoptions",
+      "description": "Vendor adoption workflow for pet-based applications. Use the wallet payment request only when wallet payments are enabled in the backend; otherwise use the Stripe intent + verify sequence.",
+      "item": [
+        {
+          "name": "List Adoptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.items?.[0]?.id) pm.collectionVariables.set('adoptionId', r.data.items[0].id);",
+                  "if (r.data?.items?.[0]?.id) console.log('adoptionId saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions?status=pending_review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending_review"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Adoption Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Review Adoption",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"approve_to_meet\",\n  \"notes\": \"Looks good for meet and greet.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "review"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Schedule Meet & Greet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2026-07-15\",\n  \"timeSlot\": \"11:00 AM - 12:00 PM\",\n  \"meetingType\": \"in_person\",\n  \"notes\": \"Bring adoption paperwork.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/schedule-meet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "schedule-meet"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record Meet Outcome",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"approve_adoption\",\n  \"notes\": \"Approved after successful meet and greet.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/meet-outcome",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "meet-outcome"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Adoption Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "documentType",
+                  "value": "adoption_agreement",
+                  "type": "text"
+                },
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "documents"
+              ]
+            },
+            "description": "Upload one document at a time using field name `document`. Supported types mirror other vendor document uploads."
+          }
+        },
+        {
+          "name": "Collect Adoption Payment (Wallet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"wallet\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            },
+            "description": "Use only when `WALLET_PAYMENTS_ENABLED=true` in the backend environment."
+          }
+        },
+        {
+          "name": "Create Adoption Payment Intent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.paymentIntentId) pm.collectionVariables.set('adoptionPaymentIntentId', r.data.paymentIntentId);",
+                  "if (r.data?.paymentIntentId) console.log('adoptionPaymentIntentId saved');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"card\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Adoption Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{adoptionPaymentIntentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/adoptions/{{adoptionId}}/collect-payment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "adoptions",
+                "{{adoptionId}}",
+                "collect-payment"
+              ]
+            },
+            "description": "Run after Stripe confirms the intent succeeded; this finalizes the adoption status in the backend."
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Support & Static",
+      "item": [
+        {
+          "name": "Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"App Crash on Start Walk\",\n  \"category\": \"technical_issue\",\n  \"description\": \"Whenever I click Start Walk on an active booking, the application encounters an error.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/support/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "support",
+                "tickets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Terms",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/static/terms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "static",
+                "terms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Privacy",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/static/privacy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "static",
+                "privacy"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const list = r.data || r.data?.notifications;",
+                  "if (Array.isArray(list) && list[0]?.id) pm.collectionVariables.set('notifId', list[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notifId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notifId}}",
+                "read"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

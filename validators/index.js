@@ -414,7 +414,8 @@ exports.vendorEmailUpdateSchema = Joi.alternatives().try(
     password: Joi.string().min(6).required(),
   }),
   Joi.object({
-    verificationToken: Joi.string().min(32).required(),
+    newEmail: Joi.string().email().required(),
+    otp: Joi.string().pattern(/^\d{6}$/).required(),
   })
 );
 

@@ -91,8 +91,8 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 });
 
 exports.updateEmail = asyncHandler(async (req, res) => {
-  if (req.body.verificationToken) {
-    const data = await authService.verifyVendorEmailChange(req.user.id, req.body.verificationToken);
+  if (req.body.otp) {
+    const data = await authService.verifyVendorEmailChange(req.user.id, req.body);
     return res.json({ success: true, message: "Email updated successfully", data });
   }
 

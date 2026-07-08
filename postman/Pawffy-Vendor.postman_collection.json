@@ -2,7 +2,7 @@
   "info": {
     "name": "Pawffy Vendor API",
     "_postman_id": "pawffy-vendor-2026",
-    "description": "Vendor / Partner app backend \u2014 {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** \u2192 Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** \u2192 business \u2192 services \u2192 availability \u2192 documents \u2192 review \u2192 submit\n3. **Admin Verification** \u2192 Login Admin (saves `adminToken`) \u2192 List Pending \u2192 Approve\n4. **Main app** \u2192 Home, Requests, Calendar, Messages, Profile\n5. **Account & Security** \u2192 request phone/email change \u2192 complete verification \u2192 refreshed `token`\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Account & Security notes\n- In non-production, phone OTP and email verification token may be returned in API responses for local testing.\n- In production, those values are **not** returned by the API.\n- Production phone verification expects the OTP to be delivered by your SMS channel.\n- Production email verification expects SMTP delivery of the verification link/token to the new email address.\n- After successful phone/email verification, the API returns a fresh JWT and older sessions become invalid because `tokenVersion` is incremented.\n\n## Password policy\nMin 8 chars \u00b7 uppercase + lowercase + digit\n\n## Collection variables\ntoken \u00b7 adminToken \u00b7 userId \u00b7 businessId \u00b7 serviceId \u00b7 documentId \u00b7 requestId \u00b7 blockedDateId \u00b7 conversationId \u00b7 receiverId \u00b7 vendorEmail \u00b7 vendorPassword \u00b7 adminEmail \u00b7 adminPassword \u00b7 newVendorEmail \u00b7 newVendorPhone \u00b7 emailVerificationToken \u00b7 phoneOtp",
+    "description": "Vendor / Partner app backend \u2014 {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** \u2192 Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** \u2192 business \u2192 services \u2192 availability \u2192 documents \u2192 review \u2192 submit\n3. **Admin Verification** \u2192 Login Admin (saves `adminToken`) \u2192 List Pending \u2192 Approve\n4. **Main app** \u2192 Home, Requests, Calendar, Messages, Profile\n5. **Account & Security** \u2192 request phone/email change \u2192 complete verification \u2192 refreshed `token`\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Account & Security notes\n- In non-production, phone OTP and email verification token may be returned in API responses for local testing.\n- In production, those values are **not** returned by the API.\n- Production phone verification expects the OTP to be delivered by your SMS channel.\n- Production email verification expects Twilio SendGrid (or SMTP) delivery of a 6-digit OTP to the new email address.\n- After successful phone/email verification, the API returns a fresh JWT and older sessions become invalid because `tokenVersion` is incremented.\n\n## Password policy\nMin 8 chars \u00b7 uppercase + lowercase + digit\n\n## Collection variables\ntoken \u00b7 adminToken \u00b7 userId \u00b7 businessId \u00b7 serviceId \u00b7 documentId \u00b7 requestId \u00b7 blockedDateId \u00b7 conversationId \u00b7 receiverId \u00b7 vendorEmail \u00b7 vendorPassword \u00b7 adminEmail \u00b7 adminPassword \u00b7 newVendorEmail \u00b7 newVendorPhone \u00b7 emailOtp \u00b7 phoneOtp",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -102,7 +102,7 @@
       "type": "string"
     },
     {
-      "key": "emailVerificationToken",
+      "key": "emailOtp",
       "value": "",
       "type": "string"
     },
@@ -2123,7 +2123,7 @@
     },
     {
       "name": "8.5 Account & Security",
-      "description": "Phase 2 vendor account-security flows.\n\nNon-production: the API may return `phoneOtp` / `emailVerificationToken` and the collection scripts will save them automatically.\n\nProduction: the API will not return those secrets. Use the OTP received over SMS and the verification token/link delivered to the new email address, then paste the real value into the corresponding collection variable before running the verify request.",
+      "description": "Phase 2 vendor account-security flows.\n\nNon-production: the API may return `phoneOtp` / `emailOtp` and the collection scripts will save them automatically.\n\nProduction: the API will not return those secrets. Use the OTP received over SMS and the email OTP delivered to the new email address, then paste the real value into the corresponding collection variable before running the verify request.",
       "item": [
         {
           "name": "Get Vendor Profile (Verification State)",
@@ -2234,8 +2234,8 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data?.verificationToken) pm.collectionVariables.set('emailVerificationToken', r.data.verificationToken);",
-                  "if (r.data?.verificationToken) console.log('emailVerificationToken saved');"
+                  "if (r.data?.otp) pm.collectionVariables.set('emailOtp', r.data.otp);",
+                  "if (r.data?.otp) console.log('emailOtp saved');"
                 ]
               }
             }
@@ -2263,7 +2263,7 @@
                 "email"
               ]
             },
-            "description": "Creates a pending email change. In production, the verification token/link is delivered to the new email address and is not returned by the API."
+            "description": "Starts a secure email change. In non-production the API may return `otp`. In production the OTP is delivered by Twilio SendGrid (or SMTP fallback) and is not returned."
           }
         },
         {
@@ -2291,7 +2291,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"verificationToken\": \"{{emailVerificationToken}}\"\n}"
+              "raw": "{\n  \"newEmail\": \"{{newVendorEmail}}\",\n  \"otp\": \"{{emailOtp}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/vendor/email",
@@ -2304,7 +2304,7 @@
                 "email"
               ]
             },
-            "description": "Completes the email swap using the real verification token. In production, paste the token from the email link into `emailVerificationToken` first."
+            "description": "Completes the email swap using the 6-digit OTP. In production, paste the OTP from the email into `emailOtp` first."
           }
         }
       ]
