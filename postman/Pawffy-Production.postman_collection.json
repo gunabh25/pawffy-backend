@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Pawffy API — Production",
+    "name": "Pawffy API \u2014 Production",
     "_postman_id": "pawffy-prod-2026",
-    "description": "Complete Pawffy Backend API — {{baseUrl}}\n\n## Architecture\nRoutes → middleware → controllers → services → Prisma/PostgreSQL\n\n## Security\n- JWT HS256 · tokenVersion invalidation on logout/password change\n- Bearer token required on protected routes (public routes marked 🌐)\n- UUID params validated · ownership checks on user/pet/payment data\n- Rate limits: Auth 10/15min · Forgot/Reset password 5/hour · Payments 20/15min · Uploads 10/15min · Writes 30/15min · Public reads 60/15min · General 120/15min\n- Validation errors: { success:false, message:\"Validation failed\", errors:[...] }\n\n## Authorization rules (latest)\n- GET /users/:id · dashboard user/notifications → self or admin only\n- POST /notifications → admin only\n- PATCH /bookings/:id/status → customers may only set \"cancelled\"; admins may set any status\n- POST /vets/:vetId/reviews → requires completed bookingId; rating computed from reviews only\n- Vet mutations (create/update/services/availability) → admin, or partner matching vet email\n- POST /payments/confirm (wallet) → disabled unless server WALLET_PAYMENTS_ENABLED=true\n- Walking bookings → paymentStatus is server-set; selectedPetList pets must belong to caller\n- Medical records & vaccinations → pet owner or admin only\n\n## Password Policy\nMin 8 chars · uppercase + lowercase + digit\n\n## RBAC\n🔒 Admin: GET /users, DELETE /users/:id, GET /bookings/all, POST /notifications\n🔒 Admin/Partner: POST/PUT /vets, services, availability (partner: own email only)\n🔒 Self or Admin: GET /users/:id, dashboard user/notifications\n\n## Auto variables\ntoken · userId · petId · vetId · serviceId · bookingId · walkingBookingId · partnerId · recordId · vaccId · notifId · conversationId · receiverId · lostReportId · foundReportId · resetToken · couponCode",
+    "description": "Complete Pawffy Backend API \u2014 {{baseUrl}}\n\n## Architecture\nRoutes \u2192 middleware \u2192 controllers \u2192 services \u2192 Prisma/PostgreSQL\n\n## Security\n- JWT HS256 \u00b7 tokenVersion invalidation on logout/password change\n- Bearer token required on protected routes (public routes marked \ud83c\udf10)\n- UUID params validated \u00b7 ownership checks on user/pet/payment data\n- Rate limits: Auth 10/15min \u00b7 Forgot/Reset password 5/hour \u00b7 Payments 20/15min \u00b7 Uploads 10/15min \u00b7 Writes 30/15min \u00b7 Public reads 60/15min \u00b7 General 120/15min\n- Validation errors: { success:false, message:\"Validation failed\", errors:[...] }\n\n## Authorization rules (latest)\n- GET /users/:id \u00b7 dashboard user/notifications \u2192 self or admin only\n- POST /notifications \u2192 admin only\n- PATCH /bookings/:id/status \u2192 customers may only set \"cancelled\"; admins may set any status\n- POST /vets/:vetId/reviews \u2192 requires completed bookingId; rating computed from reviews only\n- Vet mutations (create/update/services/availability) \u2192 admin, or partner matching vet email\n- POST /payments/confirm (wallet) \u2192 disabled unless server WALLET_PAYMENTS_ENABLED=true\n- Walking bookings \u2192 paymentStatus is server-set; selectedPetList pets must belong to caller\n- Medical records & vaccinations \u2192 pet owner or admin only\n\n## Password Policy\nMin 8 chars \u00b7 uppercase + lowercase + digit\n\n## RBAC\n\ud83d\udd12 Admin: GET /users, DELETE /users/:id, GET /bookings/all, POST /notifications\n\ud83d\udd12 Admin/Partner: POST/PUT /vets, services, availability (partner: own email only)\n\ud83d\udd12 Self or Admin: GET /users/:id, dashboard user/notifications\n\n## Auto variables\ntoken \u00b7 userId \u00b7 petId \u00b7 vetId \u00b7 serviceId \u00b7 bookingId \u00b7 walkingBookingId \u00b7 partnerId \u00b7 recordId \u00b7 vaccId \u00b7 notifId \u00b7 conversationId \u00b7 receiverId \u00b7 lostReportId \u00b7 foundReportId \u00b7 resetToken \u00b7 couponCode",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -95,11 +95,51 @@
       "key": "couponCode",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "vendorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorServiceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorSlotDate",
+      "value": "2026-07-15",
+      "type": "string"
+    },
+    {
+      "key": "vendorSlotTime",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorRequestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorServiceType",
+      "value": "groomer",
+      "type": "string"
+    },
+    {
+      "key": "vendorCity",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorOnlineOnly",
+      "value": "true",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "🏥 Health Check",
+      "name": "\ud83c\udfe5 Health Check",
       "item": [
         {
           "name": "Health Check",
@@ -120,8 +160,8 @@
       ]
     },
     {
-      "name": "🔐 Auth",
-      "description": "Rate limit: 10 req / 15 min on register & login · 5 req / hour on forgot-password\nLogout increments tokenVersion → all issued tokens become invalid instantly",
+      "name": "\ud83d\udd10 Auth",
+      "description": "Rate limit: 10 req / 15 min on register & login \u00b7 5 req / hour on forgot-password\nLogout increments tokenVersion \u2192 all issued tokens become invalid instantly",
       "item": [
         {
           "name": "Register",
@@ -134,7 +174,7 @@
                   "if (r.data && r.data.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('✅ Token & userId saved');",
+                  "  console.log('\u2705 Token & userId saved');",
                   "}"
                 ]
               }
@@ -157,7 +197,7 @@
                 }
               }
             },
-            "description": "⚠️ Rate limited: 10 attempts / 15 min\n\nPassword policy: min 8 chars, must contain uppercase + lowercase + digit\nExample valid: Password123",
+            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\n\nPassword policy: min 8 chars, must contain uppercase + lowercase + digit\nExample valid: Password123",
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
               "host": [
@@ -182,7 +222,7 @@
                   "if (r.data && r.data.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('✅ Token & userId saved');",
+                  "  console.log('\u2705 Token & userId saved');",
                   "}"
                 ]
               }
@@ -205,7 +245,7 @@
                 }
               }
             },
-            "description": "⚠️ Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.",
+            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.",
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
               "host": [
@@ -263,7 +303,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "Increments tokenVersion in DB → every JWT issued before this call is instantly rejected.\nAll devices are logged out simultaneously.",
+            "description": "Increments tokenVersion in DB \u2192 every JWT issued before this call is instantly rejected.\nAll devices are logged out simultaneously.",
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
               "host": [
@@ -287,7 +327,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.resetToken) {",
                   "  pm.collectionVariables.set('resetToken', r.data.resetToken);",
-                  "  console.log('✅ resetToken saved (dev mode)');",
+                  "  console.log('\u2705 resetToken saved (dev mode)');",
                   "}"
                 ]
               }
@@ -310,7 +350,7 @@
                 }
               }
             },
-            "description": "⚠️ Rate limited: 5 req / hour\n\nDev mode: resetToken returned in response.data.resetToken\nProduction with SMTP: email sent only, token NOT in response.\n\nAlways returns 200 (prevents email enumeration).",
+            "description": "\u26a0\ufe0f Rate limited: 5 req / hour\n\nDev mode: resetToken returned in response.data.resetToken\nProduction with SMTP: email sent only, token NOT in response.\n\nAlways returns 200 (prevents email enumeration).",
             "url": {
               "raw": "{{baseUrl}}/api/auth/forgot-password",
               "host": [
@@ -343,7 +383,7 @@
                 }
               }
             },
-            "description": "Token expires in 1 hour. Single use only.\nAlso increments tokenVersion → logs out all devices.\n\nRate limit: 5 requests/hour per IP (same as forgot-password).",
+            "description": "Token expires in 1 hour. Single use only.\nAlso increments tokenVersion \u2192 logs out all devices.\n\nRate limit: 5 requests/hour per IP (same as forgot-password).",
             "url": {
               "raw": "{{baseUrl}}/api/auth/reset-password",
               "host": [
@@ -367,7 +407,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
-                  "  console.log('✅ New token saved — other sessions logged out');",
+                  "  console.log('\u2705 New token saved \u2014 other sessions logged out');",
                   "}"
                 ]
               }
@@ -411,8 +451,8 @@
       ]
     },
     {
-      "name": "👤 Users",
-      "description": "🔒 GET / and DELETE /:id require admin role",
+      "name": "\ud83d\udc64 Users",
+      "description": "\ud83d\udd12 GET / and DELETE /:id require admin role",
       "item": [
         {
           "name": "Get My Profile",
@@ -490,11 +530,11 @@
                   "key": "avatar",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP — max 2MB"
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
                 }
               ]
             },
-            "description": "⚠️ Rate limited: 10 uploads / 15 min\nField name must be: avatar\nStored as base64 data URL in DB.",
+            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: avatar\nStored as base64 data URL in DB.",
             "url": {
               "raw": "{{baseUrl}}/api/users/me/avatar",
               "host": [
@@ -510,7 +550,7 @@
           }
         },
         {
-          "name": "Get All Users 🔒 Admin",
+          "name": "Get All Users \ud83d\udd12 Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -519,7 +559,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "🔒 Requires role: admin",
+            "description": "\ud83d\udd12 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/users",
               "host": [
@@ -553,11 +593,11 @@
                 "{{userId}}"
               ]
             },
-            "description": "🔒 Requires auth. Own profile or admin role only."
+            "description": "\ud83d\udd12 Requires auth. Own profile or admin role only."
           }
         },
         {
-          "name": "Change User Role 🔒 Admin",
+          "name": "Change User Role \ud83d\udd12 Admin",
           "request": {
             "method": "PATCH",
             "header": [
@@ -591,11 +631,11 @@
                 "role"
               ]
             },
-            "description": "🔒 Admin only. Valid roles: customer | admin | partner | vet"
+            "description": "\ud83d\udd12 Admin only. Valid roles: customer | admin | partner | vet"
           }
         },
         {
-          "name": "Delete User 🔒 Admin",
+          "name": "Delete User \ud83d\udd12 Admin",
           "request": {
             "method": "DELETE",
             "header": [
@@ -604,7 +644,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "🔒 Requires role: admin",
+            "description": "\ud83d\udd12 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/users/{{userId}}",
               "host": [
@@ -621,7 +661,7 @@
       ]
     },
     {
-      "name": "🐾 Pets",
+      "name": "\ud83d\udc3e Pets",
       "item": [
         {
           "name": "Create Pet",
@@ -768,11 +808,11 @@
                   "key": "image",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP — max 2MB"
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
                 }
               ]
             },
-            "description": "⚠️ Rate limited: 10 uploads / 15 min\nField name must be: image",
+            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: image",
             "url": {
               "raw": "{{baseUrl}}/api/pets/{{petId}}/image",
               "host": [
@@ -813,11 +853,11 @@
       ]
     },
     {
-      "name": "🩺 Vets",
-      "description": "Public: GET /vets, GET /vets/:id, /slots, /services, /reviews\n🔒 Admin/Partner: POST/PUT/DELETE vets, services, availability\n🔒 Any auth user: POST reviews",
+      "name": "\ud83e\ude7a Vets",
+      "description": "Public: GET /vets, GET /vets/:id, /slots, /services, /reviews\n\ud83d\udd12 Admin/Partner: POST/PUT/DELETE vets, services, availability\n\ud83d\udd12 Any auth user: POST reviews",
       "item": [
         {
-          "name": "Create Vet 🔒 Admin/Partner",
+          "name": "Create Vet \ud83d\udd12 Admin/Partner",
           "event": [
             {
               "listen": "test",
@@ -850,7 +890,7 @@
                 }
               }
             },
-            "description": "🔒 Requires role: admin or partner\n\nPartners may only create a vet profile using their own account email.\n\nserviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper",
+            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only create a vet profile using their own account email.\n\nserviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper",
             "url": {
               "raw": "{{baseUrl}}/api/vets",
               "host": [
@@ -881,7 +921,7 @@
           }
         },
         {
-          "name": "Get Vets — Filter by serviceType",
+          "name": "Get Vets \u2014 Filter by serviceType",
           "request": {
             "method": "GET",
             "header": [],
@@ -905,7 +945,7 @@
           }
         },
         {
-          "name": "Get Vets — Search by name / clinic",
+          "name": "Get Vets \u2014 Search by name / clinic",
           "request": {
             "method": "GET",
             "header": [],
@@ -928,7 +968,7 @@
           }
         },
         {
-          "name": "Get Vets — Filter by city",
+          "name": "Get Vets \u2014 Filter by city",
           "request": {
             "method": "GET",
             "header": [],
@@ -951,7 +991,7 @@
           }
         },
         {
-          "name": "Get Vets — Combined filters",
+          "name": "Get Vets \u2014 Combined filters",
           "request": {
             "method": "GET",
             "header": [],
@@ -1000,7 +1040,7 @@
           }
         },
         {
-          "name": "Update Vet 🔒 Admin/Partner",
+          "name": "Update Vet \ud83d\udd12 Admin/Partner",
           "request": {
             "method": "PUT",
             "header": [
@@ -1022,7 +1062,7 @@
                 }
               }
             },
-            "description": "🔒 Requires role: admin or partner\n\nPartners may only update the vet profile linked to their account email.\nRating cannot be set here — it is computed from verified reviews only.",
+            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only update the vet profile linked to their account email.\nRating cannot be set here \u2014 it is computed from verified reviews only.",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}",
               "host": [
@@ -1037,7 +1077,7 @@
           }
         },
         {
-          "name": "Set Availability 🔒 Admin/Partner",
+          "name": "Set Availability \ud83d\udd12 Admin/Partner",
           "request": {
             "method": "PUT",
             "header": [
@@ -1094,7 +1134,7 @@
           }
         },
         {
-          "name": "Get Available Slots [Screen 2 — Schedule]",
+          "name": "Get Available Slots [Screen 2 \u2014 Schedule]",
           "request": {
             "method": "GET",
             "header": [],
@@ -1121,7 +1161,7 @@
           }
         },
         {
-          "name": "Get Vet Services [Screen 1 — Select Service]",
+          "name": "Get Vet Services [Screen 1 \u2014 Select Service]",
           "event": [
             {
               "listen": "test",
@@ -1155,7 +1195,7 @@
           }
         },
         {
-          "name": "Create Vet Service 🔒 Admin/Partner",
+          "name": "Create Vet Service \ud83d\udd12 Admin/Partner",
           "request": {
             "method": "POST",
             "header": [
@@ -1177,7 +1217,7 @@
                 }
               }
             },
-            "description": "🔒 Admin/Partner only. Create one service per request.\nCommon services to seed:\n• General Consultancy $40\n• Vaccination $60\n• Emergency Care $100\n• Dental Care $70\n• Others $70\n\nPartners may only manage services for their own vet profile (email match).",
+            "description": "\ud83d\udd12 Admin/Partner only. Create one service per request.\nCommon services to seed:\n\u2022 General Consultancy $40\n\u2022 Vaccination $60\n\u2022 Emergency Care $100\n\u2022 Dental Care $70\n\u2022 Others $70\n\nPartners may only manage services for their own vet profile (email match).",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
               "host": [
@@ -1215,7 +1255,7 @@
                 }
               }
             },
-            "description": "rating: 1–5 (integer). bookingId is required.\nUser must have a completed booking with this vet.\nOne review per user per vet.\nAverage rating on Vet is auto-recalculated.",
+            "description": "rating: 1\u20135 (integer). bookingId is required.\nUser must have a completed booking with this vet.\nOne review per user per vet.\nAverage rating on Vet is auto-recalculated.",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews",
               "host": [
@@ -1262,11 +1302,11 @@
       ]
     },
     {
-      "name": "📅 Bookings — Full Flow",
-      "description": "Complete booking flow:\n1. GET /vets/:vetId/services  → select service + price\n2. GET /vets/:vetId/slots?date → pick time slot\n3. GET /pets                    → pick pet\n4. Client collects symptoms/reason\n5. POST /bookings               → create booking\n6. GET /payments/summary/:id   → price breakdown\n7. POST /payments/apply-coupon → optional coupon\n8a. POST /payments/create-intent → card/net_banking (Stripe)\n8b. POST /payments/confirm       → wallet (disabled unless WALLET_PAYMENTS_ENABLED=true)\n8c. POST /payments/verify        → sync Stripe after payment sheet\n9. GET /bookings/:id            → confirmation screen\n\nStatus: customers can PATCH cancelled only; admins can set any status.",
+      "name": "\ud83d\udcc5 Bookings \u2014 Full Flow",
+      "description": "Complete booking flow:\n1. GET /vets/:vetId/services  \u2192 select service + price\n2. GET /vets/:vetId/slots?date \u2192 pick time slot\n3. GET /pets                    \u2192 pick pet\n4. Client collects symptoms/reason\n5. POST /bookings               \u2192 create booking\n6. GET /payments/summary/:id   \u2192 price breakdown\n7. POST /payments/apply-coupon \u2192 optional coupon\n8a. POST /payments/create-intent \u2192 card/net_banking (Stripe)\n8b. POST /payments/confirm       \u2192 wallet (disabled unless WALLET_PAYMENTS_ENABLED=true)\n8c. POST /payments/verify        \u2192 sync Stripe after payment sheet\n9. GET /bookings/:id            \u2192 confirmation screen\n\nStatus: customers can PATCH cancelled only; admins can set any status.",
       "item": [
         {
-          "name": "STEP 5 — Create Booking",
+          "name": "STEP 5 \u2014 Create Booking",
           "event": [
             {
               "listen": "test",
@@ -1275,7 +1315,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.id) {",
                   "  pm.collectionVariables.set('bookingId', r.data.id);",
-                  "  console.log('✅ bookingId saved:', r.data.id);",
+                  "  console.log('\u2705 bookingId saved:', r.data.id);",
                   "}"
                 ]
               }
@@ -1316,7 +1356,7 @@
           }
         },
         {
-          "name": "STEP 6 — Price Summary",
+          "name": "STEP 6 \u2014 Price Summary",
           "request": {
             "method": "GET",
             "header": [
@@ -1348,7 +1388,7 @@
           }
         },
         {
-          "name": "STEP 7 — Apply Coupon (optional)",
+          "name": "STEP 7 \u2014 Apply Coupon (optional)",
           "request": {
             "method": "POST",
             "header": [
@@ -1384,7 +1424,7 @@
           }
         },
         {
-          "name": "STEP 8a — Create Stripe PaymentIntent (Card / Net Banking)",
+          "name": "STEP 8a \u2014 Create Stripe PaymentIntent (Card / Net Banking)",
           "request": {
             "method": "POST",
             "header": [
@@ -1406,7 +1446,7 @@
                 }
               }
             },
-            "description": "paymentMethod: card | net_banking\n\nReturns clientSecret → pass to flutter_stripe:\n  Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  Stripe.instance.presentPaymentSheet()\n\nBooking confirmed automatically via Stripe webhook.",
+            "description": "paymentMethod: card | net_banking\n\nReturns clientSecret \u2192 pass to flutter_stripe:\n  Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  Stripe.instance.presentPaymentSheet()\n\nBooking confirmed automatically via Stripe webhook.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/create-intent",
               "host": [
@@ -1421,7 +1461,7 @@
           }
         },
         {
-          "name": "STEP 8b — Confirm Wallet Payment",
+          "name": "STEP 8b \u2014 Confirm Wallet Payment",
           "request": {
             "method": "POST",
             "header": [
@@ -1443,7 +1483,7 @@
                 }
               }
             },
-            "description": "Wallet payment — no Stripe.\n\n⚠️ Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true and wallet balance logic is implemented.\nUse STEP 8a (Stripe) for production payments.",
+            "description": "Wallet payment \u2014 no Stripe.\n\n\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true and wallet balance logic is implemented.\nUse STEP 8a (Stripe) for production payments.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/confirm",
               "host": [
@@ -1458,7 +1498,7 @@
           }
         },
         {
-          "name": "STEP 8c — Verify Stripe Payment",
+          "name": "STEP 8c \u2014 Verify Stripe Payment",
           "request": {
             "method": "POST",
             "header": [
@@ -1495,7 +1535,7 @@
           }
         },
         {
-          "name": "STEP 9 — Get Booking Confirmation",
+          "name": "STEP 9 \u2014 Get Booking Confirmation",
           "request": {
             "method": "GET",
             "header": [
@@ -1553,7 +1593,7 @@
           }
         },
         {
-          "name": "Get All Bookings 🔒 Admin",
+          "name": "Get All Bookings \ud83d\udd12 Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -1562,7 +1602,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "🔒 Requires role: admin",
+            "description": "\ud83d\udd12 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/bookings/all",
               "host": [
@@ -1615,7 +1655,7 @@
           }
         },
         {
-          "name": "Update Booking Status 🔒 Admin (confirm)",
+          "name": "Update Booking Status \ud83d\udd12 Admin (confirm)",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1637,7 +1677,7 @@
                 }
               }
             },
-            "description": "🔒 Requires role: admin\n\nAdmins may set: pending | confirmed | completed | cancelled.\nCustomers can only cancel via \"Update Booking Status\".",
+            "description": "\ud83d\udd12 Requires role: admin\n\nAdmins may set: pending | confirmed | completed | cancelled.\nCustomers can only cancel via \"Update Booking Status\".",
             "url": {
               "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
               "host": [
@@ -1655,7 +1695,7 @@
       ]
     },
     {
-      "name": "💬 Messages",
+      "name": "\ud83d\udcac Messages",
       "item": [
         {
           "name": "Get My Conversations",
@@ -1698,7 +1738,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.conversationId) {",
                   "  pm.collectionVariables.set('conversationId', r.data.conversationId);",
-                  "  console.log('✅ conversationId saved');",
+                  "  console.log('\u2705 conversationId saved');",
                   "}"
                 ]
               }
@@ -1725,7 +1765,7 @@
                 "{{receiverId}}"
               ]
             },
-            "description": "Tap a vet profile → call this to get or create a conversation.\nReturns conversationId + otherUser info."
+            "description": "Tap a vet profile \u2192 call this to get or create a conversation.\nReturns conversationId + otherUser info."
           }
         },
         {
@@ -1831,14 +1871,14 @@
                 "read"
               ]
             },
-            "description": "Call when user opens a conversation — clears the unread (orange dot) count."
+            "description": "Call when user opens a conversation \u2014 clears the unread (orange dot) count."
           }
         }
       ]
     },
     {
-      "name": "💳 Payments",
-      "description": "⚠️ Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) · wallet (direct)",
+      "name": "\ud83d\udcb3 Payments",
+      "description": "\u26a0\ufe0f Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) \u00b7 wallet (direct)",
       "item": [
         {
           "name": "Get Price Summary",
@@ -1964,7 +2004,7 @@
                 "confirm"
               ]
             },
-            "description": "⚠️ Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true.\nUse Stripe create-intent + verify for production card/net banking payments."
+            "description": "\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true.\nUse Stripe create-intent + verify for production card/net banking payments."
           }
         },
         {
@@ -1985,7 +2025,7 @@
               "mode": "raw",
               "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}"
             },
-            "description": "🔒 Must own the booking linked to the payment intent.",
+            "description": "\ud83d\udd12 Must own the booking linked to the payment intent.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/verify",
               "host": [
@@ -2026,7 +2066,7 @@
       ]
     },
     {
-      "name": "🏥 Medical Records",
+      "name": "\ud83c\udfe5 Medical Records",
       "item": [
         {
           "name": "Create Medical Record",
@@ -2072,7 +2112,7 @@
                 "medical-records"
               ]
             },
-            "description": "🔒 Pet owner or admin only.\ncreatedByVet is resolved from the authenticated user's email when they manage a linked vet profile."
+            "description": "\ud83d\udd12 Pet owner or admin only.\ncreatedByVet is resolved from the authenticated user's email when they manage a linked vet profile."
           }
         },
         {
@@ -2184,7 +2224,7 @@
       ]
     },
     {
-      "name": "💉 Vaccinations",
+      "name": "\ud83d\udc89 Vaccinations",
       "item": [
         {
           "name": "Add Vaccination",
@@ -2230,7 +2270,7 @@
                 "vaccinations"
               ]
             },
-            "description": "🔒 Pet owner or admin only.\nOptional vetId; otherwise resolved from authenticated user's linked vet profile by email."
+            "description": "\ud83d\udd12 Pet owner or admin only.\nOptional vetId; otherwise resolved from authenticated user's linked vet profile by email."
           }
         },
         {
@@ -2319,7 +2359,7 @@
       ]
     },
     {
-      "name": "🔔 Notifications",
+      "name": "\ud83d\udd14 Notifications",
       "description": "GET/PATCH/DELETE: authenticated user (own notifications only).\nPOST: admin only.",
       "item": [
         {
@@ -2352,7 +2392,7 @@
           }
         },
         {
-          "name": "Create Notification 🔒 Admin",
+          "name": "Create Notification \ud83d\udd12 Admin",
           "event": [
             {
               "listen": "test",
@@ -2385,7 +2425,7 @@
                 }
               }
             },
-            "description": "🔒 Requires role: admin\n\ntype: booking | payment | health | general\nNotification is created for the authenticated admin user. Use server-side jobs for user-targeted notifications.",
+            "description": "\ud83d\udd12 Requires role: admin\n\ntype: booking | payment | health | general\nNotification is created for the authenticated admin user. Use server-side jobs for user-targeted notifications.",
             "url": {
               "raw": "{{baseUrl}}/api/notifications",
               "host": [
@@ -2471,7 +2511,7 @@
       ]
     },
     {
-      "name": "🏠 Dashboard",
+      "name": "\ud83c\udfe0 Dashboard",
       "description": "Optional Bearer on POST /dashboard for personalized data. User/notifications endpoints require self or admin.",
       "item": [
         {
@@ -2512,7 +2552,7 @@
           }
         },
         {
-          "name": "Get User By ID 🔒 Self/Admin",
+          "name": "Get User By ID \ud83d\udd12 Self/Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -2521,7 +2561,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "🔒 Requires auth. Returns private profile only for self or admin.",
+            "description": "\ud83d\udd12 Requires auth. Returns private profile only for self or admin.",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/users/{{userId}}",
               "host": [
@@ -2537,7 +2577,7 @@
           }
         },
         {
-          "name": "Get Partners Nearby 🌐",
+          "name": "Get Partners Nearby \ud83c\udf10",
           "request": {
             "method": "POST",
             "header": [
@@ -2555,7 +2595,7 @@
                 }
               }
             },
-            "description": "🌐 Public. Returns partners within 25km (no email/phone exposed).",
+            "description": "\ud83c\udf10 Public. Returns partners within 25km (no email/phone exposed).",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/partners",
               "host": [
@@ -2570,7 +2610,7 @@
           }
         },
         {
-          "name": "Get Notifications By User 🔒 Self/Admin",
+          "name": "Get Notifications By User \ud83d\udd12 Self/Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -2579,7 +2619,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "🔒 Requires auth. Own notifications or admin only.",
+            "description": "\ud83d\udd12 Requires auth. Own notifications or admin only.",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/notifications/{{userId}}",
               "host": [
@@ -2595,7 +2635,7 @@
           }
         },
         {
-          "name": "Get Active Categories 🌐",
+          "name": "Get Active Categories \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2613,7 +2653,7 @@
           }
         },
         {
-          "name": "Get Banner 🌐",
+          "name": "Get Banner \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2640,8 +2680,8 @@
       ]
     },
     {
-      "name": "🚨 Lost Pets",
-      "description": "Public read · Auth required for create/update/delete · userId from token",
+      "name": "\ud83d\udea8 Lost Pets",
+      "description": "Public read \u00b7 Auth required for create/update/delete \u00b7 userId from token",
       "item": [
         {
           "name": "Create Lost Pet Report",
@@ -2690,7 +2730,7 @@
           }
         },
         {
-          "name": "Get All Lost Reports 🌐",
+          "name": "Get All Lost Reports \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2708,7 +2748,7 @@
           }
         },
         {
-          "name": "Get Lost Report By ID 🌐",
+          "name": "Get Lost Report By ID \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2790,7 +2830,7 @@
       ]
     },
     {
-      "name": "🔍 Found Pets",
+      "name": "\ud83d\udd0d Found Pets",
       "item": [
         {
           "name": "Create Found Pet Report",
@@ -2839,7 +2879,7 @@
           }
         },
         {
-          "name": "Get All Found Reports 🌐",
+          "name": "Get All Found Reports \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2856,7 +2896,7 @@
           }
         },
         {
-          "name": "Get Found Report By ID 🌐",
+          "name": "Get Found Report By ID \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2935,10 +2975,10 @@
       ]
     },
     {
-      "name": "📋 All Pet Reports",
+      "name": "\ud83d\udccb All Pet Reports",
       "item": [
         {
-          "name": "Get All Reports (Lost + Found) 🌐",
+          "name": "Get All Reports (Lost + Found) \ud83c\udf10",
           "request": {
             "method": "GET",
             "header": [],
@@ -2958,7 +2998,7 @@
       ]
     },
     {
-      "name": "🚶 Walking Bookings",
+      "name": "\ud83d\udeb6 Walking Bookings",
       "description": "partnerId must be a user with role=partner.\nPets in selectedPetList must belong to the authenticated user.\npaymentStatus is server-controlled.",
       "item": [
         {
@@ -3007,7 +3047,7 @@
                 "walking"
               ]
             },
-            "description": "partnerId must be a user with role=partner.\nselectedPetList must contain pet IDs owned by the authenticated user.\npaymentStatus is set server-side (always Pending) — do not send it in the body."
+            "description": "partnerId must be a user with role=partner.\nselectedPetList must contain pet IDs owned by the authenticated user.\npaymentStatus is set server-side (always Pending) \u2014 do not send it in the body."
           }
         },
         {
@@ -3055,6 +3095,224 @@
                 "{{walkingBookingId}}"
               ]
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "\ud83e\udde9 Vendors (Customer)",
+      "description": "Customer-side vendor marketplace flow: discover vendors \u2192 view details + reviews \u2192 fetch slots \u2192 create a pending request that shows on vendor inbox.",
+      "item": [
+        {
+          "name": "List Vendors",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const first = r.data?.[0];",
+                  "if (first?.id) pm.collectionVariables.set('vendorId', first.id);",
+                  "if (first?.services?.[0]?.id) pm.collectionVariables.set('vendorServiceId', first.services[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "key": "serviceType",
+                  "value": "{{vendorServiceType}}"
+                },
+                {
+                  "key": "city",
+                  "value": "{{vendorCity}}"
+                },
+                {
+                  "key": "isOnline",
+                  "value": "{{vendorOnlineOnly}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vendor Details",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vendor Reviews",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Vendor Slots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const slot = r.data?.slots?.find(s => s.available);",
+                  "if (slot?.time) pm.collectionVariables.set('vendorSlotTime', slot.time);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/slots?date={{vendorSlotDate}}&serviceId={{vendorServiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "slots"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{vendorSlotDate}}"
+                },
+                {
+                  "key": "serviceId",
+                  "value": "{{vendorServiceId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vendor Request (Pending)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{vendorServiceId}}\",\n  \"petId\": \"{{petId}}\",\n  \"bookingDate\": \"{{vendorSlotDate}}\",\n  \"bookingTime\": \"{{vendorSlotTime}}\",\n  \"location\": \"Customer address\",\n  \"notes\": \"No notes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "requests"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('vendorRequestId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fetch Vendor Requests as Vendor (reference)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/requests?status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "requests"
+              ]
+            },
+            "description": "This call is for the vendor token (role partner). In the customer app, you would not call this."
           }
         }
       ]

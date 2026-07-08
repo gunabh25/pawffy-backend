@@ -4989,6 +4989,37 @@
           }
         },
         {
+          "name": "Upload Vendor Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Multipart upload: field name `avatar`."
+          }
+        },
+        {
           "name": "Get Notification Preferences",
           "request": {
             "method": "GET",

@@ -1,6 +1,7 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const vendorAppService = require("../services/vendorApp.service");
 const authService = require("../services/auth.service");
+const prisma = require("../config/prisma");
 
 exports.getHome = asyncHandler(async (req, res) => {
   const data = await vendorAppService.getHome(req.user.id);
@@ -90,6 +91,23 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   res.json({ success: true, message: "Profile updated", data });
 });
 
+// ─── Upload Vendor Profile Avatar (multipart/form-data, field: "avatar") ───
+exports.uploadProfileAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "No image file provided. Send field name: avatar" });
+  }
+
+  const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { profileImage: base64 },
+    select: { id: true, name: true, email: true, role: true, profileImage: true },
+  });
+
+  res.json({ success: true, message: "Vendor avatar updated", data: updated });
+});
+
 exports.updateEmail = asyncHandler(async (req, res) => {
   if (req.body.otp) {
     const data = await authService.verifyVendorEmailChange(req.user.id, req.body);
@@ -134,3 +152,5 @@ exports.updateNotificationPreferences = asyncHandler(async (req, res) => {
   const data = await vendorAppService.updateNotificationPreferences(req.user.id, req.body);
   res.json({ success: true, message: "Notification preferences updated", data });
 });
+
+// keep exports at end of file stable

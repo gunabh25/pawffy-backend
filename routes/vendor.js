@@ -5,6 +5,7 @@ const { requireRole } = require("../middleware/rbac");
 const validate = require("../middleware/validate");
 const documentUpload = require("../middleware/documentUpload");
 const serviceMediaUpload = require("../middleware/serviceMediaUpload");
+const upload = require("../middleware/upload");
 const { validateUuidParams } = require("../middleware/accessControl");
 const { uploadLimiter, writeLimiter } = require("../middleware/rateLimiter");
 const v = require("../validators");
@@ -50,6 +51,7 @@ router.delete("/blocked-dates/:id", ...partnerOnly, writeLimiter, validateUuidPa
 
 router.get("/profile", ...partnerOnly, validate(v.vendorProfileQuerySchema, "query"), appCtrl.getProfile);
 router.put("/profile", ...partnerOnly, writeLimiter, validate(v.vendorProfileUpdateSchema), appCtrl.updateProfile);
+router.post("/profile/avatar", ...partnerOnly, uploadLimiter, upload.single("avatar"), appCtrl.uploadProfileAvatar);
 router.put("/email", ...partnerOnly, writeLimiter, validate(v.vendorEmailUpdateSchema), appCtrl.updateEmail);
 router.post("/phone/request-update", ...partnerOnly, writeLimiter, validate(v.vendorPhoneRequestUpdateSchema), appCtrl.requestPhoneUpdate);
 router.post("/phone/verify-update", ...partnerOnly, writeLimiter, validate(v.vendorPhoneVerifyUpdateSchema), appCtrl.verifyPhoneUpdate);

@@ -967,126 +967,6 @@
       ]
     },
     {
-      "name": "4.5 Public Vendors",
-      "description": "Customer-facing discovery and public business reviews.",
-      "item": [
-        {
-          "name": "List Vendors",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/vendors",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "vendors"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Search Vendors By Service",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=Ghaziabad&isOnline=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "vendors"
-              ],
-              "query": [
-                {
-                  "key": "serviceType",
-                  "value": "groomer"
-                },
-                {
-                  "key": "city",
-                  "value": "Ghaziabad"
-                },
-                {
-                  "key": "isOnline",
-                  "value": "true"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Public Vendor Reviews",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews?page=1&limit=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "vendors",
-                "{{businessId}}",
-                "reviews"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Create Public Vendor Review",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{requestId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent service and communication\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/vendors/{{businessId}}/reviews",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "vendors",
-                "{{businessId}}",
-                "reviews"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "5. Requests",
       "description": "Locked until `verificationStatus` is `verified`.\nstatus: pending | upcoming | completed | canceled",
       "item": [
@@ -1886,6 +1766,37 @@
                 "profile"
               ]
             }
+          }
+        },
+        {
+          "name": "Upload Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "",
+                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Multipart upload: form-data field name must be `avatar`."
           }
         },
         {
