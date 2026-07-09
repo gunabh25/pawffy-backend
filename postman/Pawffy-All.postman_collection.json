@@ -4408,6 +4408,28 @@
           }
         },
         {
+          "name": "Get Vendor Details",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "description": "Returns vendor profile details plus the linked `userId` for chat, raw `availability` rows, and summarized `timings`. Use `userId` with `/api/messages/conversation/with/{receiverId}`.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{businessId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{businessId}}"
+              ]
+            }
+          }
+        },
+        {
           "name": "Create Public Vendor Review",
           "request": {
             "method": "POST",

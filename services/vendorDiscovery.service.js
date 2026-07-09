@@ -3,6 +3,7 @@ const AppError = require("../middleware/errors");
 const { getDistanceFromLatLonInKm } = require("../utils/geo");
 
 const SEARCH_RADIUS_KM = 25;
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function serializeService(service) {
   return {
@@ -17,9 +18,44 @@ function serializeService(service) {
   };
 }
 
+function formatAvailabilitySummary(availability, sameDayRequests) {
+  if (!availability.length) {
+    return { workingDays: [], startTime: null, endTime: null, sameDayRequests, label: null };
+  }
+
+  const active = availability.filter((d) => d.isAvailable);
+  const workingDays = active.map((d) => d.dayOfWeek);
+  const startTime = active[0]?.startTime || null;
+  const endTime = active[0]?.endTime || null;
+
+  let label = null;
+  if (workingDays.length && startTime && endTime) {
+    const indices = workingDays.map((d) => DAYS.indexOf(d)).filter((i) => i >= 0).sort((a, b) => a - b);
+    const contiguous = indices.length > 1 && indices.every((v, i) => i === 0 || v === indices[i - 1] + 1);
+    const dayLabel = workingDays.length === 1
+      ? workingDays[0]
+      : contiguous
+        ? `${DAYS[indices[0]]}-${DAYS[indices[indices.length - 1]]}`
+        : workingDays.join(", ");
+    label = `${dayLabel}, ${startTime} - ${endTime}`;
+  }
+
+  return { workingDays, startTime, endTime, sameDayRequests, label };
+}
+
+function serializeAvailability(availability) {
+  return availability.map((slot) => ({
+    dayOfWeek: slot.dayOfWeek,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    isAvailable: slot.isAvailable,
+  }));
+}
+
 function serializeVendor(business, distance = null) {
   return {
     id: business.id,
+    userId: business.userId,
     businessName: business.businessName,
     contactName: business.contactName,
     profileImage: business.user.profileImage,
@@ -32,6 +68,8 @@ function serializeVendor(business, distance = null) {
     sameDayRequests: business.sameDayRequests,
     distanceKm: distance,
     services: business.services.map(serializeService),
+    availability: serializeAvailability(business.availability || []),
+    timings: formatAvailabilitySummary(business.availability || [], business.sameDayRequests),
   };
 }
 
@@ -70,6 +108,9 @@ async function listVendors(filters) {
           latitude: true,
           longitude: true,
         },
+      },
+      availability: {
+        orderBy: { dayOfWeek: "asc" },
       },
       services: {
         where: {
@@ -125,6 +166,9 @@ async function getVendorById(vendorId, { latitude, longitude } = {}) {
           latitude: true,
           longitude: true,
         },
+      },
+      availability: {
+        orderBy: { dayOfWeek: "asc" },
       },
       services: {
         where: { isActive: true },
