@@ -98,10 +98,7 @@ async function ensureUniquePhone(newPhone, userId) {
 async function register({ email, phoneNumber, password, name }) {
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [
-        ...(email ? [{ email }] : []),
-        ...(phoneNumber ? [{ phone: phoneNumber }] : []),
-      ],
+      OR: [{ email }, { phone: phoneNumber }],
     },
   });
 
@@ -117,13 +114,15 @@ async function register({ email, phoneNumber, password, name }) {
   return { user: sanitizeUser(user), token: signToken(user) };
 }
 
-async function registerVendor({ email, password, name, acceptTerms }) {
+async function registerVendor({ email, phoneNumber, password, name, acceptTerms }) {
   if (!acceptTerms) {
     throw new AppError("You must agree to the Terms & Conditions", 400);
   }
 
   const existingUser = await prisma.user.findFirst({
-    where: { email },
+    where: {
+      OR: [{ email }, { phone: phoneNumber }],
+    },
   });
 
   if (existingUser) {
@@ -136,6 +135,7 @@ async function registerVendor({ email, password, name, acceptTerms }) {
     const created = await tx.user.create({
       data: {
         email,
+        phone: phoneNumber,
         passwordHash,
         name: name || null,
         role: "partner",
@@ -146,6 +146,7 @@ async function registerVendor({ email, password, name, acceptTerms }) {
       data: {
         userId: created.id,
         contactName: name || null,
+        phone: phoneNumber,
         termsAcceptedAt: new Date(),
         onboardingStep: "business",
         verificationStatus: "incomplete",

@@ -10,12 +10,12 @@ const pw   = () => Joi.string().min(8).max(72).pattern(/^(?=.*[a-z])(?=.*[A-Z])(
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 exports.registerSchema = Joi.object({
   name:  Joi.string().min(2).max(100).optional(),
-  email: Joi.string().email().lowercase().optional(),
-  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional().messages({
+  email: Joi.string().email().lowercase().required(),
+  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
     "string.pattern.base": "Invalid phone number format",
   }),
   password: pw().required(),
-}).or("email", "phoneNumber");
+});
 
 exports.loginSchema = Joi.object({
   email:       Joi.string().email().lowercase().optional(),
@@ -309,6 +309,9 @@ const TIME_PATTERN = /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$|^([01]\d|2[0-3]):[0-5
 exports.vendorRegisterSchema = Joi.object({
   name:        Joi.string().min(2).max(100).required(),
   email:       Joi.string().email().lowercase().required(),
+  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
+    "string.pattern.base": "Invalid phone number format",
+  }),
   password:    pw().required(),
   acceptTerms: Joi.boolean().valid(true).required().messages({
     "any.only": "You must agree to the Terms & Conditions",

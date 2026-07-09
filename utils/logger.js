@@ -24,7 +24,15 @@ const logger = createLogger({
 // In development, also log to console
 if (process.env.NODE_ENV !== "production") {
   logger.add(new transports.Console({
-    format: format.combine(format.colorize(), format.simple()),
+    format: format.combine(
+      format.colorize(),
+      format.printf(({ level, message, timestamp, stack, ...meta }) => {
+        const base = [timestamp, level];
+        if (message) base.push(message);
+        const metaString = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : "";
+        return [base.join(": "), stack, metaString].filter(Boolean).join("\n");
+      })
+    ),
   }));
 }
 

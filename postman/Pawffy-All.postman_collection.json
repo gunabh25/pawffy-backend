@@ -270,7 +270,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+15551234567\",\n  \"password\": \"Password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3434,7 +3434,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
+              "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"phoneNumber\": \"{{newVendorPhone}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/vendor/register",
@@ -3499,7 +3499,7 @@
           }
         },
         {
-          "name": "Verify Vendor Login OTP (Email)",
+          "name": "Verify Vendor Login OTP (SMS)",
           "event": [
             {
               "listen": "test",

@@ -97,6 +97,21 @@
       "type": "string"
     },
     {
+      "key": "phoneOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPhoneNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "Password123",
+      "type": "string"
+    },
+    {
       "key": "vendorId",
       "value": "",
       "type": "string"
@@ -190,7 +205,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+15551234567\",\n  \"password\": \"Password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -219,10 +234,9 @@
               "script": {
                 "exec": [
                   "const r = pm.response.json();",
-                  "if (r.data && r.data.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('\u2705 Token & userId saved');",
+                  "if (r.data?.otp) {",
+                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
+                  "  console.log('SMS OTP saved');",
                   "}"
                 ]
               }
@@ -245,7 +259,110 @@
                 }
               }
             },
-            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.",
+            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.\nThis is step 1 only: password check + SMS OTP send.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Login OTP (SMS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('Token & userId saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Step 2 of login. Paste the SMS OTP into `phoneOtp`, then run this request to receive the JWT token.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login",
+                "2fa",
+                "verify"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login (Phone Number)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.otp) {",
+                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
+                  "  console.log('SMS OTP saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{loginPhoneNumber}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Alternative step 1 login using phone number instead of email.",
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
               "host": [

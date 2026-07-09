@@ -17,8 +17,16 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
   if (!apiKey) return { delivered: false, provider: null };
 
   const smsApiUrl = process.env.MYSMSGATE_API_URL || DEFAULT_SMS_API_URL;
+  const deviceId = process.env.MYSMSGATE_DEVICE_ID || null;
+  const simSlot = process.env.MYSMSGATE_SIM_SLOT;
 
   const message = `Your Pawffy verification code is ${otp}. This code expires in 10 minutes.`;
+  const payload = {
+    to,
+    message,
+    ...(deviceId ? { device_id: deviceId, deviceId } : {}),
+    ...(simSlot !== undefined && simSlot !== "" ? { slot: Number(simSlot), sim_slot: Number(simSlot), simSlot: Number(simSlot) } : {}),
+  };
 
   try {
     const resp = await fetch(smsApiUrl, {
@@ -27,18 +35,22 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ to, message }),
+      body: JSON.stringify(payload),
     });
 
     if (!resp.ok) {
       const bodyText = await resp.text().catch(() => "");
-      logger.error({
+      logger.error(JSON.stringify({
         event: "SMS_OTP_SEND_FAILED",
         status: resp.status,
         response: bodyText?.slice(0, 500) || null,
         to,
         purpose,
-      });
+        payload: {
+          ...payload,
+          message: "[redacted]",
+        },
+      }));
       return { delivered: false, provider: "mysmsgate", error: `HTTP ${resp.status}` };
     }
 
@@ -46,7 +58,7 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
     const data = await resp.json().catch(() => ({}));
     return { delivered: true, provider: "mysmsgate", providerResponse: data || null };
   } catch (err) {
-    logger.error({ event: "SMS_OTP_SEND_FAILED", error: err.message, to, purpose });
+    logger.error(JSON.stringify({ event: "SMS_OTP_SEND_FAILED", error: err.message, to, purpose }));
     return { delivered: false, provider: "mysmsgate", error: err.message };
   }
 }
