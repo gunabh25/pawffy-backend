@@ -20,12 +20,12 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
   const deviceId = process.env.MYSMSGATE_DEVICE_ID || null;
   const simSlot = process.env.MYSMSGATE_SIM_SLOT;
 
-  const message = `Your Pawffy verification code is ${otp}. This code expires in 10 minutes.`;
+  const message = `Pawffy code ${otp}`;
   const payload = {
     to,
     message,
-    ...(deviceId ? { device_id: deviceId, deviceId } : {}),
-    ...(simSlot !== undefined && simSlot !== "" ? { slot: Number(simSlot), sim_slot: Number(simSlot), simSlot: Number(simSlot) } : {}),
+    ...(deviceId ? { device_id: deviceId } : {}),
+    ...(simSlot !== undefined && simSlot !== "" ? { slot: Number(simSlot) } : {}),
   };
 
   try {
