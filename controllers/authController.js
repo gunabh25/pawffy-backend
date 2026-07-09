@@ -16,11 +16,22 @@ exports.registerVendor = asyncHandler(async (req, res) => {
   });
 });
 
+function loginStepMessage(result) {
+  if (!result.requires2fa) return "Login successful";
+  if (result.delivered) {
+    return `SMS OTP sent to ${result.sentTo}. Complete login with POST /api/auth/login/2fa/verify using your phone number.`;
+  }
+  if (result.otp && process.env.NODE_ENV !== "production") {
+    return "SMS delivery failed, but the OTP is included in this response for local testing.";
+  }
+  return "SMS OTP delivery failed. Check MySMSGate configuration on the server.";
+}
+
 exports.login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body, req.ip);
   res.status(200).json({
     success: true,
-    message: result.requires2fa ? "OTP required to complete login" : "Login successful",
+    message: loginStepMessage(result),
     data: result,
   });
 });
@@ -29,7 +40,7 @@ exports.loginVendor = asyncHandler(async (req, res) => {
   const result = await authService.loginVendor(req.body, req.ip);
   res.status(200).json({
     success: true,
-    message: result.requires2fa ? "OTP required to complete login" : "Login successful",
+    message: loginStepMessage(result),
     data: result,
   });
 });

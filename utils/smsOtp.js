@@ -39,7 +39,7 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
         to,
         purpose,
       });
-      return { delivered: false, provider: "mysmsgate" };
+      return { delivered: false, provider: "mysmsgate", error: `HTTP ${resp.status}` };
     }
 
     // MySMSGate typically returns JSON with a success/message field.
@@ -47,7 +47,7 @@ async function sendSmsOtp({ to, otp, purpose = "login_2fa" }) {
     return { delivered: true, provider: "mysmsgate", providerResponse: data || null };
   } catch (err) {
     logger.error({ event: "SMS_OTP_SEND_FAILED", error: err.message, to, purpose });
-    return { delivered: false, provider: "mysmsgate" };
+    return { delivered: false, provider: "mysmsgate", error: err.message };
   }
 }
 

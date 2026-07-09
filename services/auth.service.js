@@ -4,8 +4,7 @@ const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
 const { signToken, sanitizeUser } = require("../utils/auth");
 const logger = require("../utils/logger");
-const { sendEmailOtp, generateOtp } = require("../utils/emailOtp");
-const { sendSmsOtp } = require("../utils/smsOtp");
+const { sendSmsOtp, generateOtp } = require("../utils/smsOtp");
 
 const SALT_ROUNDS = 12;
 const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
@@ -178,34 +177,28 @@ async function login({ email, phoneNumber, password }, ip) {
     throw new AppError("Invalid email/phone or password", 401);
   }
 
-  // Mandatory 2FA for all logins:
-  // - If user has an email, we send email OTP.
-  // - Otherwise, we fallback to phone OTP (SMS) if phone exists.
-  const method = user.email ? "email" : "phone";
+  // Mandatory 2FA for all logins via SMS only.
+  const method = "phone";
   const otp = generateOtp();
 
-  const type = method === "email" ? "login_email_2fa" : "login_phone_2fa";
-  const targetValue = method === "email" ? user.email : user.phone;
-  const expiresInMs = method === "email" ? EMAIL_OTP_TTL_MS : PHONE_OTP_TTL_MS;
+  const type = "login_phone_2fa";
+  const targetValue = user.phone;
+  const expiresInMs = PHONE_OTP_TTL_MS;
 
   if (!targetValue) {
-    throw new AppError("No email/phone available for OTP verification", 400);
+    throw new AppError("A phone number is required on your account for SMS login OTP.", 400);
   }
 
   const { expiresAt } = await createContactVerificationToken(user.id, type, targetValue, otp, expiresInMs);
 
   let delivered = false;
   let provider = null;
+  let deliveryError = null;
 
-  if (method === "email") {
-    const emailRes = await sendEmailOtp({ to: targetValue, otp, purpose: "login_2fa" });
-    delivered = !!emailRes.delivered;
-    provider = emailRes.provider || null;
-  } else {
-    const smsRes = await sendSmsOtp({ to: targetValue, otp, purpose: "login_2fa" });
-    delivered = !!smsRes.delivered;
-    provider = smsRes.provider || null;
-  }
+  const smsRes = await sendSmsOtp({ to: targetValue, otp, purpose: "login_2fa" });
+  delivered = !!smsRes.delivered;
+  provider = smsRes.provider || null;
+  deliveryError = smsRes.error || null;
 
   // For local/dev usage, we optionally expose OTP if delivery is not configured.
   const response = {
@@ -215,7 +208,12 @@ async function login({ email, phoneNumber, password }, ip) {
     delivered,
     provider,
     expiresAt,
+    sentTo: targetValue,
   };
+
+  if (!delivered && deliveryError && process.env.NODE_ENV !== "production") {
+    response.deliveryError = deliveryError;
+  }
 
   if (process.env.NODE_ENV !== "production" && (!delivered || process.env.EXPOSE_OTP_IN_DEV === "true")) {
     response.otp = otp;
@@ -233,9 +231,8 @@ async function verifyLogin2fa({ email, phoneNumber, otp }, ip) {
 
   if (!user) throw new AppError("Invalid OTP", 400);
 
-  const method = normalizedEmail ? "email" : "phone";
-  const type = method === "email" ? "login_email_2fa" : "login_phone_2fa";
-  const targetValue = method === "email" ? normalizedEmail : phoneNumber;
+  const type = "login_phone_2fa";
+  const targetValue = user.phone;
 
   if (!targetValue) throw new AppError("Invalid OTP", 400);
 
@@ -276,10 +273,10 @@ async function verifyLogin2fa({ email, phoneNumber, otp }, ip) {
     const freshUser = await tx.user.findUnique({ where: { id: user.id } });
     if (!freshUser) throw new AppError("Invalid OTP", 400);
 
-    if (method === "email" && freshUser.email !== normalizedEmail) {
+    if (normalizedEmail && freshUser.email !== normalizedEmail) {
       throw new AppError("Invalid OTP", 400);
     }
-    if (method === "phone" && freshUser.phone !== phoneNumber) {
+    if (phoneNumber && freshUser.phone !== phoneNumber) {
       throw new AppError("Invalid OTP", 400);
     }
 
@@ -379,16 +376,21 @@ async function requestVendorEmailChange(user, { newEmail, password }, ip) {
   });
   await createContactVerificationToken(user.id, "email_change", normalizedEmail, otp, EMAIL_OTP_TTL_MS);
 
-  const { delivered, provider } = await sendEmailOtp({
+  const delivered = await sendEmail({
     to: normalizedEmail,
-    otp,
-    purpose: "email_change",
+    subject: "Your Pawffy email verification code",
+    html: `
+      <p>Your Pawffy verification code is:</p>
+      <p style="font-size:24px;font-weight:700;letter-spacing:4px;">${otp}</p>
+      <p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>
+    `,
   });
+  const provider = delivered ? "smtp" : null;
 
   const response = {
     message: delivered
       ? "OTP sent to your new email address."
-      : "OTP generated. Configure SENDGRID_API_KEY or SMTP to deliver email OTPs.",
+      : "OTP generated. Configure SMTP to deliver email OTPs.",
     provider: provider || null,
     delivered,
   };

@@ -120,7 +120,6 @@ enum SupportTicketCategory {
 enum ContactVerificationType {
   email_change
   phone_update
-  login_email_2fa
   login_phone_2fa
 }
 
@@ -487,8 +486,8 @@ model PetReport {
   color       String
   height      String?
   weight      String?
-  breed       String
-  gender      String
+  breed       String?
+  gender      String?
   description String
   images      String[]
   latitude    Decimal    @db.Decimal(10, 7)

@@ -2681,7 +2681,7 @@
     },
     {
       "name": "\ud83d\udea8 Lost Pets",
-      "description": "Public read \u00b7 Auth required for create/update/delete \u00b7 userId from token",
+      "description": "Owner flow — report **your own** missing pet.\n\nRequired: pet photo(s), name, color, breed, gender, description, last-seen location.\nOptional: age, height, weight.\n\nUpload images as files (`images` field, max 3).",
       "item": [
         {
           "name": "Create Lost Pet Report",
@@ -2702,21 +2702,56 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://example.com/pet1.jpg\"],\n  \"name\": \"Bruno\",\n  \"age\": 3,\n  \"color\": \"Brown\",\n  \"height\": \"45 cm\",\n  \"weight\": \"12 kg\",\n  \"breed\": \"Labrador\",\n  \"gender\": \"Male\",\n  \"description\": \"Last seen near park wearing red collar\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Pet photo (JPEG/PNG/WebP, max 2MB). Add up to 3 files with the same field name."
+                },
+                {
+                  "key": "name",
+                  "value": "Bruno",
+                  "type": "text"
+                },
+                {
+                  "key": "color",
+                  "value": "Brown",
+                  "type": "text"
+                },
+                {
+                  "key": "breed",
+                  "value": "Labrador",
+                  "type": "text"
+                },
+                {
+                  "key": "gender",
+                  "value": "Male",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Last seen near park wearing red collar",
+                  "type": "text"
+                },
+                {
+                  "key": "age",
+                  "value": "3",
+                  "type": "text",
+                  "description": "Optional"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"latitude\":19.076,\"longitude\":72.877,\"address\":\"Mumbai, Maharashtra\"}",
+                  "type": "text"
                 }
-              }
+              ]
             },
+            "description": "Owner reports their missing pet. Upload 1\u20133 photos using field name `images`. Age/height/weight are optional.",
             "url": {
               "raw": "{{baseUrl}}/api/lost-pets",
               "host": [
@@ -2831,6 +2866,7 @@
     },
     {
       "name": "\ud83d\udd0d Found Pets",
+      "description": "Stranger flow — report a pet you **saw/found** but do not own.\n\nRequired: photo(s), color, description, location.\nOptional: breed, gender (defaults to `Unknown` if omitted).",
       "item": [
         {
           "name": "Create Found Pet Report",
@@ -2851,21 +2887,35 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"images\": [\"https://example.com/found1.jpg\"],\n  \"color\": \"White\",\n  \"breed\": \"Indie\",\n  \"gender\": \"Female\",\n  \"description\": \"Friendly dog found near station\",\n  \"location\": {\n    \"latitude\": 19.076,\n    \"longitude\": 72.877,\n    \"address\": \"Mumbai, Maharashtra\"\n  }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Photo of the pet you saw (JPEG/PNG/WebP, max 2MB)"
+                },
+                {
+                  "key": "color",
+                  "value": "White and brown",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Medium-sized friendly dog near the station. Looked lost, no collar visible.",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"latitude\":19.076,\"longitude\":72.877,\"address\":\"Mumbai, Maharashtra\"}",
+                  "type": "text"
                 }
-              }
+              ]
             },
+            "description": "For people who spotted a stray/lost pet. Breed and gender are optional.",
             "url": {
               "raw": "{{baseUrl}}/api/found-pets",
               "host": [

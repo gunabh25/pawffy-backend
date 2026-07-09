@@ -207,25 +207,33 @@ const locationSchema = Joi.object({
   address:   Joi.string().required(),
 });
 
+const reportImageValue = Joi.alternatives().try(
+  Joi.string().pattern(/^data:image\/(jpeg|jpg|png|webp);base64,/),
+  Joi.string().uri()
+).messages({ "alternatives.match": "Each image must be a valid URL or uploaded image file." });
+
 const reportImagesSchema = Joi.array()
-  .items(Joi.string().uri())
+  .items(reportImageValue)
   .min(1)
   .max(3)
   .required()
   .messages({
-    "array.min": "At least 1 image is required.",
+    "array.min": "At least 1 image is required. Upload image files (field: images) or provide image URLs.",
     "array.max": "You can upload a maximum of 3 images.",
   });
 
+const petGenderSchema = Joi.string().valid("Male", "Female", "Unknown", "Prefer Not to Say");
+
+// Owner flow — reporting their own missing pet
 exports.createLostPetReportSchema = Joi.object({
   images:      reportImagesSchema,
   name:        Joi.string().trim().required(),
-  age:         Joi.number().min(0).required(),
+  age:         Joi.number().min(0).optional(),
   color:       Joi.string().trim().required(),
-  height:      Joi.string().trim().required(),
-  weight:      Joi.string().trim().required(),
+  height:      Joi.string().trim().optional(),
+  weight:      Joi.string().trim().optional(),
   breed:       Joi.string().trim().required(),
-  gender:      Joi.string().valid("Male", "Female", "Prefer Not to Say").required(),
+  gender:      petGenderSchema.required(),
   description: Joi.string().trim().required(),
   location:    locationSchema.required(),
 });
@@ -235,13 +243,14 @@ exports.updateLostPetReportSchema = exports.createLostPetReportSchema.fork(
   (f) => f.optional()
 );
 
+// Stranger flow — saw a pet, may not know breed/name/details
 exports.createFoundPetReportSchema = Joi.object({
   images:      reportImagesSchema,
   color:       Joi.string().trim().required(),
-  breed:       Joi.string().trim().required(),
+  breed:       Joi.string().trim().default("Unknown"),
   location:    locationSchema.required(),
   description: Joi.string().trim().required(),
-  gender:      Joi.string().valid("Male", "Female", "Prefer Not to Say").required(),
+  gender:      petGenderSchema.default("Unknown"),
 });
 
 exports.updateFoundPetReportSchema = exports.createFoundPetReportSchema.fork(
