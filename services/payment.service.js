@@ -3,12 +3,61 @@ const AppError = require("../middleware/errors");
 const { PLATFORM_FEE, TAX_RATE, PAW_POINTS_RATE } = require("../constants/pricing");
 const { assertOwnerOrAdmin } = require("../utils/petAccess");
 const { formatDateTime, formatAppointmentId } = require("../utils/formatters");
+const {
+  getStripe,
+  getStripePublishableKey,
+  isStripeConfigured,
+  getStripeCurrency,
+} = require("../config/stripe");
 
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new AppError("Stripe is not configured. Add STRIPE_SECRET_KEY to .env", 503);
+async function redeemCouponIfNeeded(tx, couponCode) {
+  if (!couponCode) return;
+  const coupon = await tx.coupon.findUnique({ where: { code: couponCode.toUpperCase() } });
+  if (!coupon) return;
+  await tx.coupon.update({
+    where: { id: coupon.id },
+    data: { usedCount: { increment: 1 } },
+  });
+}
+
+async function finalizeBookingPayment(bookingId, transactionId) {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findFirst({
+      where: { bookingId, transactionId },
+    });
+    if (!payment || payment.paymentStatus === "paid") return false;
+
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: { paymentStatus: "paid", paidAt: new Date() },
+    });
+
+    await redeemCouponIfNeeded(tx, payment.couponCode);
+
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: "confirmed" },
+    });
+
+    return true;
+  });
+}
+
+function getPaymentConfig() {
+  if (!isStripeConfigured()) {
+    throw new AppError("Stripe is not configured on the server", 503);
   }
-  return require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+  const publishableKey = getStripePublishableKey();
+  if (!publishableKey) {
+    throw new AppError("STRIPE_PUBLISHABLE_KEY is not configured", 503);
+  }
+
+  return {
+    publishableKey,
+    currency: getStripeCurrency(),
+    paymentMethods: ["card", "net_banking"],
+  };
 }
 
 async function buildPriceSummary(booking, couponCode) {
@@ -110,14 +159,16 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
   }
 
   const summary = await buildPriceSummary(booking, couponCode);
-  const amountInPaise = Math.round(summary.total * 100);
+  const currency = getStripeCurrency();
+  const amountMinor = Math.round(summary.total * 100);
   const stripe = getStripe();
 
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountInPaise,
-    currency: "inr",
+    amount: amountMinor,
+    currency,
     payment_method_types: paymentMethod === "net_banking" ? ["netbanking"] : ["card"],
     metadata: {
+      type: "booking",
       bookingId,
       userId,
       couponCode: couponCode || "",
@@ -155,19 +206,12 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
     },
   });
 
-  if (summary.appliedCoupon) {
-    await prisma.coupon.update({
-      where: { id: summary.appliedCoupon.id },
-      data: { usedCount: { increment: 1 } },
-    });
-  }
-
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
     amount: summary.total,
-    amountInPaise,
-    currency: "inr",
+    amountMinor,
+    currency,
     summary: {
       serviceName: booking.service?.name || "Consultation",
       servicePrice: summary.subtotal,
@@ -299,15 +343,10 @@ async function verifyPayment(userId, paymentIntentId) {
   if (payment.booking.userId !== userId) throw new AppError("Access denied", 403);
 
   if (intent.status === "succeeded" && payment.paymentStatus !== "paid") {
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: { paymentStatus: "paid", paidAt: new Date() },
-    });
-    await prisma.booking.update({
-      where: { id: payment.bookingId },
-      data: { status: "confirmed" },
-    });
+    await finalizeBookingPayment(payment.bookingId, paymentIntentId);
     payment.paymentStatus = "paid";
+    const refreshed = await prisma.booking.findUnique({ where: { id: payment.bookingId }, select: { status: true } });
+    if (refreshed) payment.booking.status = refreshed.status;
   }
 
   return {
@@ -361,17 +400,17 @@ async function handleStripeWebhook(rawBody, signature) {
 
   if (event.type === "payment_intent.succeeded") {
     const intent = event.data.object;
-    const bookingId = intent.metadata?.bookingId;
+    const metadata = intent.metadata || {};
 
-    if (bookingId) {
-      await prisma.payment.updateMany({
-        where: { transactionId: intent.id },
-        data: { paymentStatus: "paid", paidAt: new Date() },
-      });
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "confirmed" },
-      });
+    if (metadata.type === "wallet_top_up" && metadata.userId) {
+      const walletService = require("./wallet.service");
+      await walletService.creditFromStripePayment(
+        metadata.userId,
+        intent.id,
+        Number(metadata.amount)
+      );
+    } else if (metadata.bookingId) {
+      await finalizeBookingPayment(metadata.bookingId, intent.id);
     }
   }
 
@@ -387,8 +426,8 @@ async function handleStripeWebhook(rawBody, signature) {
 }
 
 module.exports = {
-  getStripe,
   buildPriceSummary,
+  getPaymentConfig,
   getPriceSummary,
   applyCoupon,
   createPaymentIntent,
@@ -396,4 +435,5 @@ module.exports = {
   verifyPayment,
   getPaymentByBooking,
   handleStripeWebhook,
+  finalizeBookingPayment,
 };

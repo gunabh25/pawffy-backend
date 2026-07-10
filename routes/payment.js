@@ -6,7 +6,7 @@ const { validateUuidParams } = require("../middleware/accessControl");
 const { paymentLimiter } = require("../middleware/rateLimiter");
 const v = require("../validators");
 const {
-  getPriceSummary, applyCoupon,
+  getPaymentConfig, getPriceSummary, applyCoupon,
   createPaymentIntent, confirmPayment, verifyPayment,
   getPaymentByBooking, handleWebhook,
 } = require("../controllers/paymentController");
@@ -16,6 +16,7 @@ router.post("/webhook", (req, res, next) => {
   next();
 }, handleWebhook);
 
+router.get("/config", verifyToken, getPaymentConfig);
 router.get ("/summary/:bookingId", verifyToken, validateUuidParams("bookingId"), getPriceSummary);
 router.post("/apply-coupon",       verifyToken, paymentLimiter, validate(v.applyCouponSchema), applyCoupon);
 router.post("/create-intent",      verifyToken, paymentLimiter, validate(v.createPaymentIntentSchema), createPaymentIntent);

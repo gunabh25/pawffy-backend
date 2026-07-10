@@ -1,6 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
-const { getStripe } = require("./payment.service");
+const { getStripe } = require("../config/stripe");
 
 const ADOPTION_FEE = 150;
 const ADOPTION_STATUSES = [

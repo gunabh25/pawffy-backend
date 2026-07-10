@@ -39,6 +39,17 @@ function validateEnv() {
       `Warning: ${missingSupabase.join(", ")} not set — auth session endpoints will return 500`
     );
   }
+
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      console.warn("Warning: STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET should be set in production");
+    }
+    if (!process.env.STRIPE_PUBLISHABLE_KEY) {
+      console.warn("Warning: STRIPE_PUBLISHABLE_KEY is not set — mobile Stripe SDK cannot initialize");
+    }
+  } else if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn("Warning: STRIPE_SECRET_KEY not set — card/net banking payments disabled");
+  }
 }
 
 module.exports = { validateEnv };

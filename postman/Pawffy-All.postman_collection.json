@@ -2165,8 +2165,32 @@
     },
     {
       "name": "💳 Payments",
-      "description": "⚠️ Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) · wallet (direct)",
+      "description": "Stripe payment gateway for bookings. Rate limited: 20 req / 15 min.\n\nMobile flow:\n1. `GET /api/payments/config` → publishableKey\n2. `POST /create-intent` → clientSecret\n3. flutter_stripe Payment Sheet\n4. `POST /verify` → sync status\n\nWebhook: `POST /api/payments/webhook` (Stripe Dashboard)",
       "item": [
+        {
+          "name": "Get Stripe Config (Mobile)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.publishableKey) pm.collectionVariables.set('stripePublishableKey', r.data.publishableKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "description": "Returns Stripe publishable key + currency for flutter_stripe initialization.",
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "config"]
+            }
+          }
+        },
         {
           "name": "Get Price Summary",
           "request": {
@@ -2407,7 +2431,7 @@
                 }
               }
             },
-            "description": "Adds balance instantly (dev/direct credit). Requires WALLET_PAYMENTS_ENABLED=true.",
+            "description": "Dev-only instant credit. For production use **Stripe Top-Up Intent** instead.",
             "url": {
               "raw": "{{baseUrl}}/api/wallet/top-up",
               "host": [
@@ -2418,6 +2442,58 @@
                 "wallet",
                 "top-up"
               ]
+            }
+          }
+        },
+        {
+          "name": "Stripe Top-Up Intent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.paymentIntentId) pm.collectionVariables.set('paymentIntentId', r.data.paymentIntentId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates Stripe PaymentIntent for wallet top-up. Use `clientSecret` in flutter_stripe, then call **Verify Stripe Top-Up**.",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/top-up/intent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "top-up", "intent"]
+            }
+          }
+        },
+        {
+          "name": "Verify Stripe Top-Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{paymentIntentId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/top-up/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "top-up", "verify"]
             }
           }
         },

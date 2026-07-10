@@ -1,6 +1,11 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const paymentService = require("../services/payment.service");
 
+exports.getPaymentConfig = asyncHandler(async (req, res) => {
+  const data = paymentService.getPaymentConfig();
+  res.json({ success: true, data });
+});
+
 exports.getPriceSummary = asyncHandler(async (req, res) => {
   const data = await paymentService.getPriceSummary(
     req.user.id,

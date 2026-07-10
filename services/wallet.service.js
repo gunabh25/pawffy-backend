@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
+const { getStripe, isStripeConfigured, getStripeCurrency } = require("../config/stripe");
 
 const MAX_TOP_UP = 50000;
 const MAX_WITHDRAW = 50000;
@@ -111,6 +112,93 @@ async function topUp(userId, { amount }) {
   });
 }
 
+async function creditFromStripePayment(userId, paymentIntentId, amount) {
+  if (!paymentIntentId || !amount || amount <= 0) return null;
+
+  const existing = await prisma.walletTransaction.findFirst({
+    where: { referenceId: paymentIntentId, type: "top_up" },
+  });
+  if (existing) {
+    const wallet = await getOrCreateWallet(userId);
+    return { balance: Number(wallet.balance), transaction: formatTransaction(existing), alreadyCredited: true };
+  }
+
+  return {
+    ...(await creditWallet(userId, {
+      amount,
+      type: "top_up",
+      description: "Wallet top-up via Stripe",
+      referenceId: paymentIntentId,
+    })),
+    alreadyCredited: false,
+  };
+}
+
+async function createTopUpIntent(userId, { amount }) {
+  if (!isStripeConfigured()) {
+    throw new AppError("Stripe is not configured", 503);
+  }
+  if (process.env.WALLET_PAYMENTS_ENABLED !== "true") {
+    throw new AppError("Wallet is not enabled", 503);
+  }
+
+  const value = Number(amount);
+  if (value <= 0 || value > MAX_TOP_UP) {
+    throw new AppError(`Top-up amount must be between 1 and ${MAX_TOP_UP}`, 400);
+  }
+
+  const currency = getStripeCurrency();
+  const amountMinor = Math.round(value * 100);
+  const stripe = getStripe();
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amountMinor,
+    currency,
+    payment_method_types: ["card"],
+    metadata: {
+      type: "wallet_top_up",
+      userId,
+      amount: String(value),
+    },
+    description: "Pawffy wallet top-up",
+  });
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
+    amount: value,
+    amountMinor,
+    currency,
+  };
+}
+
+async function verifyTopUp(userId, paymentIntentId) {
+  if (!isStripeConfigured()) {
+    throw new AppError("Stripe is not configured", 503);
+  }
+
+  const stripe = getStripe();
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+  if (intent.metadata?.userId !== userId) {
+    throw new AppError("Access denied", 403);
+  }
+  if (intent.metadata?.type !== "wallet_top_up") {
+    throw new AppError("Invalid payment intent for wallet top-up", 400);
+  }
+
+  if (intent.status === "succeeded") {
+    await creditFromStripePayment(userId, paymentIntentId, Number(intent.metadata.amount));
+  }
+
+  const wallet = await getWallet(userId, { limit: 5 });
+
+  return {
+    stripeStatus: intent.status,
+    wallet,
+  };
+}
+
 async function withdraw(userId, { amount }) {
   if (process.env.WALLET_PAYMENTS_ENABLED !== "true") {
     throw new AppError("Wallet is not enabled", 503);
@@ -135,4 +223,7 @@ module.exports = {
   debitWallet,
   topUp,
   withdraw,
+  createTopUpIntent,
+  verifyTopUp,
+  creditFromStripePayment,
 };

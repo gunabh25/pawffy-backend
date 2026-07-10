@@ -24,3 +24,13 @@ exports.withdraw = asyncHandler(async (req, res) => {
     data,
   });
 });
+
+exports.createTopUpIntent = asyncHandler(async (req, res) => {
+  const data = await walletService.createTopUpIntent(req.user.id, req.body);
+  res.json({ success: true, data });
+});
+
+exports.verifyTopUp = asyncHandler(async (req, res) => {
+  const data = await walletService.verifyTopUp(req.user.id, req.body.paymentIntentId);
+  res.json({ success: true, data });
+});

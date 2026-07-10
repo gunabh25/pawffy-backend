@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:reset": "prisma db push --force-reset --accept-data-loss"
   },
   "engines": {
     "node": ">=20.0.0"
