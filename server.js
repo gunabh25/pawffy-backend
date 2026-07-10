@@ -94,6 +94,7 @@ app.use("/api/auth",            require("./routes/auth"));
 app.use("/api/vendor",          require("./routes/vendor"));
 app.use("/api/vendors",         require("./routes/vendors"));
 app.use("/api/support",         require("./routes/support"));
+app.use("/api/wallet",          require("./routes/wallet"));
 app.use("/api/static",          require("./routes/static"));
 app.use("/api/users",           require("./routes/user"));
 app.use("/api/pets",            require("./routes/pet"));

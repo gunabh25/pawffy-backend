@@ -29,6 +29,38 @@ exports.updateProfileSchema = Joi.object({
   profileImage: Joi.string().max(1048576).optional(), // 1MB base64 string
 });
 
+exports.deleteAccountSchema = Joi.object({
+  confirm: Joi.string().valid("DELETE").required().messages({
+    "any.only": 'Type "DELETE" to confirm account deletion',
+  }),
+});
+
+exports.createAddressSchema = Joi.object({
+  label:     Joi.string().max(50).optional().allow("", null),
+  address:   Joi.string().min(3).max(500).required(),
+  city:      Joi.string().max(100).optional().allow("", null),
+  state:     Joi.string().max(100).optional().allow("", null),
+  pincode:   Joi.string().max(20).optional().allow("", null),
+  latitude:  Joi.number().min(-90).max(90).optional(),
+  longitude: Joi.number().min(-180).max(180).optional(),
+  isDefault: Joi.boolean().optional(),
+});
+
+exports.updateAddressSchema = Joi.object({
+  label:     Joi.string().max(50).optional().allow("", null),
+  address:   Joi.string().min(3).max(500).optional(),
+  city:      Joi.string().max(100).optional().allow("", null),
+  state:     Joi.string().max(100).optional().allow("", null),
+  pincode:   Joi.string().max(20).optional().allow("", null),
+  latitude:  Joi.number().min(-90).max(90).optional(),
+  longitude: Joi.number().min(-180).max(180).optional(),
+  isDefault: Joi.boolean().optional(),
+}).min(1);
+
+exports.walletAmountSchema = Joi.object({
+  amount: Joi.number().positive().max(50000).required(),
+});
+
 // ─── Pet ──────────────────────────────────────────────────────────────────────
 exports.createPetSchema = Joi.object({
   name:              Joi.string().min(1).max(100).required(),

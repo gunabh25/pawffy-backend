@@ -117,6 +117,14 @@ enum SupportTicketCategory {
   general
 }
 
+enum WalletTransactionType {
+  top_up
+  payment
+  refund
+  withdrawal
+  adjustment
+}
+
 enum ContactVerificationType {
   email_change
   phone_update
@@ -204,8 +212,60 @@ model User {
   supportTickets      SupportTicket[]
   contactVerificationTokens ContactVerificationToken[]
   adoptionApplications AdoptionApplication[] @relation("AdoptionApplicant")
+  addresses           UserAddress[]
+  wallet              Wallet?
 
   @@map("users")
+}
+
+model UserAddress {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  label     String?
+  address   String
+  city      String?
+  state     String?
+  pincode   String?  @map("pincode")
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isDefault])
+  @@map("user_addresses")
+}
+
+model Wallet {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  balance   Decimal  @default(0) @db.Decimal(12, 2)
+  currency  String   @default("INR")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id           String                @id @default(uuid()) @db.Uuid
+  walletId     String                @map("wallet_id") @db.Uuid
+  type         WalletTransactionType
+  amount       Decimal               @db.Decimal(12, 2)
+  balanceAfter Decimal               @map("balance_after") @db.Decimal(12, 2)
+  description  String?
+  referenceId  String?               @map("reference_id")
+  createdAt    DateTime              @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transactions")
 }
 
 model ContactVerificationToken {
@@ -683,6 +743,9 @@ model SupportTicket {
   category    SupportTicketCategory @default(general)
   description String
   status      String                @default("open")
+  attachmentFileName String?        @map("attachment_file_name")
+  attachmentMimeType String?        @map("attachment_mime_type")
+  attachmentData     String?        @map("attachment_data")
   createdAt   DateTime              @default(now()) @map("created_at")
   updatedAt   DateTime              @updatedAt @map("updated_at")
 

@@ -185,6 +185,8 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
     throw new AppError("Wallet payments are not enabled", 503);
   }
 
+  const walletService = require("./wallet.service");
+
   const booking = await getBookingForUser(userId, bookingId, {
     service: { select: { name: true, price: true } },
     vet: { select: { name: true, consultationFee: true } },
@@ -197,65 +199,80 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
 
   const summary = await buildPriceSummary(booking, couponCode);
 
-  if (summary.appliedCoupon) {
-    await prisma.coupon.update({
-      where: { id: summary.appliedCoupon.id },
-      data: { usedCount: { increment: 1 } },
+  const result = await prisma.$transaction(async (tx) => {
+    if (summary.appliedCoupon) {
+      await tx.coupon.update({
+        where: { id: summary.appliedCoupon.id },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
+    await walletService.debitWallet(
+      userId,
+      {
+        amount: summary.total,
+        type: "payment",
+        description: `Booking payment`,
+        referenceId: bookingId,
+      },
+      tx
+    );
+
+    const payment = await tx.payment.upsert({
+      where: { bookingId },
+      update: {
+        subtotal: summary.subtotal,
+        platformFee: summary.platformFee,
+        taxAmount: summary.taxAmount,
+        discount: summary.discount,
+        couponCode: couponCode || null,
+        amount: summary.total,
+        pawPoints: summary.pawPoints,
+        paymentMethod: "wallet",
+        paymentStatus: "paid",
+        paidAt: new Date(),
+      },
+      create: {
+        bookingId,
+        subtotal: summary.subtotal,
+        platformFee: summary.platformFee,
+        taxAmount: summary.taxAmount,
+        discount: summary.discount,
+        couponCode: couponCode || null,
+        amount: summary.total,
+        pawPoints: summary.pawPoints,
+        paymentMethod: "wallet",
+        paymentStatus: "paid",
+        paidAt: new Date(),
+      },
     });
-  }
 
-  const payment = await prisma.payment.upsert({
-    where: { bookingId },
-    update: {
-      subtotal: summary.subtotal,
-      platformFee: summary.platformFee,
-      taxAmount: summary.taxAmount,
-      discount: summary.discount,
-      couponCode: couponCode || null,
-      amount: summary.total,
-      pawPoints: summary.pawPoints,
-      paymentMethod: "wallet",
-      paymentStatus: "paid",
-      paidAt: new Date(),
-    },
-    create: {
-      bookingId,
-      subtotal: summary.subtotal,
-      platformFee: summary.platformFee,
-      taxAmount: summary.taxAmount,
-      discount: summary.discount,
-      couponCode: couponCode || null,
-      amount: summary.total,
-      pawPoints: summary.pawPoints,
-      paymentMethod: "wallet",
-      paymentStatus: "paid",
-      paidAt: new Date(),
-    },
-  });
+    const updatedBooking = await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: "confirmed" },
+      include: {
+        pet: { select: { id: true, name: true, breed: true } },
+        vet: { select: { id: true, name: true, clinicName: true, clinicAddress: true, clinicCity: true } },
+        service: { select: { name: true, price: true } },
+      },
+    });
 
-  const updatedBooking = await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: "confirmed" },
-    include: {
-      pet: { select: { id: true, name: true, breed: true } },
-      vet: { select: { id: true, name: true, clinicName: true, clinicAddress: true, clinicCity: true } },
-      service: { select: { name: true, price: true } },
-    },
+    return { payment, updatedBooking };
   });
 
   return {
     booking: {
-      ...updatedBooking,
-      appointmentId: formatAppointmentId(updatedBooking.id),
-      dateTimeFormatted: formatDateTime(updatedBooking.bookingDate, updatedBooking.bookingTime),
+      ...result.updatedBooking,
+      appointmentId: formatAppointmentId(result.updatedBooking.id),
+      dateTimeFormatted: formatDateTime(result.updatedBooking.bookingDate, result.updatedBooking.bookingTime),
     },
     payment: {
-      id: payment.id,
-      amount: payment.amount,
+      id: result.payment.id,
+      amount: result.payment.amount,
       paymentMethod: "wallet",
       paymentStatus: "paid",
-      pawPoints: payment.pawPoints,
-      paidAt: payment.paidAt,
+      pawPoints: result.payment.pawPoints,
+      paidAt: result.payment.paidAt,
     },
   };
 }

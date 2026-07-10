@@ -2,6 +2,7 @@ const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { assertOwnerOrAdmin } = require("../utils/petAccess");
+const accountService = require("../services/account.service");
 
 exports.getProfile = asyncHandler(async (req, res) => {
   const { passwordHash, ...user } = req.user;
@@ -21,7 +22,28 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     },
   });
 
+  if (address !== undefined) {
+    const defaultAddress = await prisma.userAddress.findFirst({
+      where: { userId: req.user.id, isDefault: true },
+    });
+    if (defaultAddress) {
+      await prisma.userAddress.update({
+        where: { id: defaultAddress.id },
+        data: {
+          address: address || defaultAddress.address,
+          city: city !== undefined ? city : defaultAddress.city,
+          state: state !== undefined ? state : defaultAddress.state,
+        },
+      });
+    }
+  }
+
   res.json({ success: true, data: updated });
+});
+
+exports.deleteMe = asyncHandler(async (req, res) => {
+  await accountService.deleteAccount(req.user.id);
+  res.json({ success: true, message: "Account deleted successfully" });
 });
 
 // ─── Upload Avatar (multipart/form-data field: "avatar") ──────────────────────
