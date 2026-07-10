@@ -56,12 +56,125 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "💰 Wallet",
+      "description": "Wallet balance and transactions. Requires `WALLET_PAYMENTS_ENABLED=true` on the server for top-up, withdraw, and booking wallet payments.",
+      "item": [
+        {
+          "name": "Get Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Top Up Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Adds balance instantly (dev/direct credit). Requires WALLET_PAYMENTS_ENABLED=true.",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/top-up",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "top-up"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw from Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Deducts balance (Send to Bank flow). Requires sufficient balance.",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "withdraw"
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [
     {
       "key": "doc_id",
       "value": "user123"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
     }
   ]
 }

@@ -125,6 +125,11 @@
       "key": "adoptionPaymentIntentId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "addressId",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -2413,14 +2418,60 @@
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"subject\": \"App Crash on Start Walk\",\n  \"category\": \"technical_issue\",\n  \"description\": \"Whenever I click Start Walk on an active booking, the application encounters an error.\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "subject",
+                  "value": "App issue on booking",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "technical_issue",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "The app crashes when I try to start a walk booking.",
+                  "type": "text"
+                },
+                {
+                  "key": "attachment",
+                  "type": "file",
+                  "src": "",
+                  "description": "Optional — JPEG/PNG/WebP/PDF, max 5MB"
+                }
+              ]
             },
+            "description": "Contact support with optional file attachment. Categories: technical_issue, account_issue, booking_issue, payment_issue, general.",
+            "url": {
+              "raw": "{{baseUrl}}/api/support/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "support",
+                "tickets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List My Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/support/tickets",
               "host": [
@@ -2543,6 +2594,114 @@
                 "api",
                 "notifications",
                 "read-all"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Wallet",
+      "description": "Wallet balance and transactions. Requires `WALLET_PAYMENTS_ENABLED=true` on the server for top-up, withdraw, and booking wallet payments.",
+      "item": [
+        {
+          "name": "Get Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Top Up Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Adds balance instantly (dev/direct credit). Requires WALLET_PAYMENTS_ENABLED=true.",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/top-up",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "top-up"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw from Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Deducts balance (Send to Bank flow). Requires sufficient balance.",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "withdraw"
               ]
             }
           }
