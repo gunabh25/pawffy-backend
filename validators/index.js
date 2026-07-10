@@ -2,49 +2,21 @@ const Joi = require("joi");
 
 // ─── Reusable primitives ──────────────────────────────────────────────────────
 const uuid = () => Joi.string().uuid({ version: "uuidv4" });
-const pw   = () => Joi.string().min(8).max(72).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "strong").messages({
-  "string.pattern.name": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-  "string.min": "Password must be at least 8 characters",
-});
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-exports.registerSchema = Joi.object({
-  name:  Joi.string().min(2).max(100).optional(),
-  email: Joi.string().email().lowercase().required(),
-  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
-    "string.pattern.base": "Invalid phone number format",
-  }),
-  password: pw().required(),
-});
-
-exports.loginSchema = Joi.object({
+// ─── Auth (Supabase phone OTP on mobile → exchange session here) ───────────────
+exports.sessionSchema = Joi.object({
+  accessToken: Joi.string().min(20).required(),
+  name:        Joi.string().min(2).max(100).optional(),
   email:       Joi.string().email().lowercase().optional(),
-  phoneNumber: Joi.string().optional(),
-  password:    Joi.string().required(),
-}).or("email", "phoneNumber");
-
-exports.login2faVerifySchema = Joi.object({
-  email: Joi.string().email().lowercase().optional(),
-  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional().messages({
-    "string.pattern.base": "Invalid phone number format",
-  }),
-  otp: Joi.string().pattern(/^\d{6}$/).required().messages({
-    "string.pattern.base": "OTP must be a 6-digit number",
-  }),
-}).or("email", "phoneNumber");
-
-exports.forgotPasswordSchema = Joi.object({
-  email: Joi.string().email().lowercase().required(),
 });
 
-exports.resetPasswordSchema = Joi.object({
-  token:       Joi.string().min(32).required(),
-  newPassword: pw().required(),
-});
-
-exports.changePasswordSchema = Joi.object({
-  currentPassword: Joi.string().required(),
-  newPassword:     pw().required(),
+exports.vendorRegisterSchema = Joi.object({
+  accessToken: Joi.string().min(20).required(),
+  name:        Joi.string().min(2).max(100).required(),
+  email:       Joi.string().email().lowercase().required(),
+  acceptTerms: Joi.boolean().valid(true).required().messages({
+    "any.only": "You must agree to the Terms & Conditions",
+  }),
 });
 
 // ─── User ─────────────────────────────────────────────────────────────────────
@@ -306,23 +278,6 @@ exports.partnersNearbySchema = Joi.object({
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TIME_PATTERN = /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$|^([01]\d|2[0-3]):[0-5]\d$/i;
 
-exports.vendorRegisterSchema = Joi.object({
-  name:        Joi.string().min(2).max(100).required(),
-  email:       Joi.string().email().lowercase().required(),
-  phoneNumber: Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).required().messages({
-    "string.pattern.base": "Invalid phone number format",
-  }),
-  password:    pw().required(),
-  acceptTerms: Joi.boolean().valid(true).required().messages({
-    "any.only": "You must agree to the Terms & Conditions",
-  }),
-});
-
-exports.vendorLoginSchema = Joi.object({
-  email:    Joi.string().email().lowercase().required(),
-  password: Joi.string().required(),
-});
-
 exports.vendorBusinessSchema = Joi.object({
   businessName: Joi.string().min(2).max(200).required(),
   contactName:  Joi.string().min(2).max(100).required(),
@@ -455,7 +410,6 @@ exports.vendorProfileUpdateSchema = Joi.object({
 exports.vendorEmailUpdateSchema = Joi.alternatives().try(
   Joi.object({
     newEmail: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
   }),
   Joi.object({
     newEmail: Joi.string().email().required(),

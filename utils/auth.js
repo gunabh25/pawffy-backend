@@ -30,6 +30,7 @@ function sanitizeUser(user) {
     passwordHash,
     tokenVersion,
     clerkId,
+    supabaseId,
     pendingEmail,
     pendingPhone,
     ...safeUser

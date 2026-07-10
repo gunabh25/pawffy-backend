@@ -14,9 +14,15 @@
         "url": {
           "raw": "http://localhost:5000/api/users/{{doc_id}}",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "5000",
-          "path": ["api", "users", "{{doc_id}}"]
+          "path": [
+            "api",
+            "users",
+            "{{doc_id}}"
+          ]
         }
       },
       "response": []
@@ -38,9 +44,15 @@
         "url": {
           "raw": "http://localhost:5000/api/users/upsert",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "5000",
-          "path": ["api", "users", "upsert"]
+          "path": [
+            "api",
+            "users",
+            "upsert"
+          ]
         }
       },
       "response": []

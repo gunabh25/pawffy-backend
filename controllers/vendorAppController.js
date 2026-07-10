@@ -114,7 +114,7 @@ exports.updateEmail = asyncHandler(async (req, res) => {
     return res.json({ success: true, message: "Email updated successfully", data });
   }
 
-  const data = await authService.requestVendorEmailChange(req.user, req.body, req.ip);
+  const data = await authService.requestVendorEmailChange(req.user, req.body);
   return res.json({ success: true, message: data.message, data });
 });
 

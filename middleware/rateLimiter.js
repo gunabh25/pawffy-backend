@@ -31,19 +31,6 @@ const authLimiter = rateLimit({
   },
 });
 
-// ─── Forgot password: 5 attempts / hour per IP ───────────────────────────────
-const forgotPasswordLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many password reset requests. Please wait 1 hour." },
-  handler: (req, res, next, options) => {
-    onLimitReached(req);
-    res.status(429).json(options.message);
-  },
-});
-
 // ─── Payment endpoints: 20 requests / 15 min per IP ─────────────────────────
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -99,7 +86,6 @@ const writeLimiter = rateLimit({
 module.exports = {
   generalLimiter,
   authLimiter,
-  forgotPasswordLimiter,
   paymentLimiter,
   uploadLimiter,
   publicReadLimiter,

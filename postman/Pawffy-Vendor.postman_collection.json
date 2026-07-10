@@ -2,7 +2,7 @@
   "info": {
     "name": "Pawffy Vendor API",
     "_postman_id": "pawffy-vendor-2026",
-    "description": "Vendor / Partner app backend \u2014 {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** \u2192 Register Vendor or Login Vendor (saves `token`)\n2. **Onboarding** \u2192 business \u2192 services \u2192 availability \u2192 documents \u2192 review \u2192 submit\n3. **Admin Verification** \u2192 Login Admin (saves `adminToken`) \u2192 List Pending \u2192 Approve\n4. **Main app** \u2192 Home, Requests, Calendar, Messages, Profile\n5. **Account & Security** \u2192 request phone/email change \u2192 complete verification \u2192 refreshed `token`\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- Vendor login: `POST /api/auth/vendor/login`\n- Admin login: `POST /api/auth/login` (NOT vendor login)\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Account & Security notes\n- In non-production, phone OTP and email verification token may be returned in API responses for local testing.\n- In production, those values are **not** returned by the API.\n- Production phone verification expects the OTP to be delivered by your SMS channel.\n- Production email verification expects Twilio SendGrid (or SMTP) delivery of a 6-digit OTP to the new email address.\n- After successful phone/email verification, the API returns a fresh JWT and older sessions become invalid because `tokenVersion` is incremented.\n\n## Password policy\nMin 8 chars \u00b7 uppercase + lowercase + digit\n\n## Collection variables\ntoken \u00b7 adminToken \u00b7 userId \u00b7 businessId \u00b7 serviceId \u00b7 documentId \u00b7 requestId \u00b7 blockedDateId \u00b7 conversationId \u00b7 receiverId \u00b7 vendorEmail \u00b7 vendorPassword \u00b7 adminEmail \u00b7 adminPassword \u00b7 newVendorEmail \u00b7 newVendorPhone \u00b7 emailOtp \u00b7 phoneOtp",
+    "description": "Vendor / Partner app backend — {{baseUrl}}\n\n## Recommended test flow\n1. **Auth** → Supabase phone OTP in app, then `POST /api/auth/session` or `POST /api/auth/vendor/register`\n2. **Onboarding** → business → services → availability → documents → review → submit\n3. **Admin Verification** → Admin session via `POST /api/auth/session` → List Pending → Approve\n4. **Main app** → Home, Requests, Calendar, Messages, Profile\n5. **Account & Security** → request phone/email change → complete verification → refreshed `token`\n\n## Auth\n- Vendor routes: `Authorization: Bearer {{token}}` (role: partner)\n- Admin routes: `Authorization: Bearer {{adminToken}}` (role: admin)\n- All logins: Supabase phone OTP → `POST /api/auth/session`\n- Vendor signup: `POST /api/auth/vendor/register`\n\n## Onboarding vs live routes\n| Action | Before approval | After approval |\n|---|---|---|\n| Availability | `PUT /api/vendor/onboarding/availability` | `PUT /api/vendor/availability` |\n| Services CRUD | `/api/vendor/onboarding/services` | `/api/vendor/services` |\n\nOnboarding routes return 400 once `verificationStatus` is `verified`.\n\n## Account & Security notes\n- In non-production, email change may return `emailOtp` in the response for local testing.\n- In production, configure SMTP for vendor email change OTP delivery.\n- Phone number changes should use Supabase `updateUser` on the mobile app.\n- After successful email verification, the API returns a fresh JWT and older sessions become invalid.\n\n## Collection variables\ntoken · adminToken · userId · businessId · supabaseAccessToken · vendorEmail · newVendorPhone · emailOtp",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -112,6 +112,11 @@
       "type": "string"
     },
     {
+      "key": "supabaseAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "adoptionId",
       "value": "",
       "type": "string"
@@ -159,10 +164,10 @@
     },
     {
       "name": "1. Auth",
-      "description": "Vendor register & login. Auto-saves `token` and `userId`.",
+      "description": "Mobile auth: Supabase phone OTP in the app, then `POST /api/auth/session` with `accessToken` to get a Pawffy JWT. Vendor signup: `POST /api/auth/vendor/register`.",
       "item": [
         {
-          "name": "Register Vendor",
+          "name": "Supabase Vendor Register",
           "event": [
             {
               "listen": "test",
@@ -191,7 +196,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"phoneNumber\": \"{{newVendorPhone}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
+              "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\",\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"acceptTerms\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/vendor/register",
@@ -204,59 +209,11 @@
                 "vendor",
                 "register"
               ]
-            },
-            "description": "Creates partner user + draft business profile. Requires `acceptTerms: true`."
-          }
-        },
-        {
-          "name": "Login Vendor",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('SMS OTP saved');",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');"
-                ]
-              }
             }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/vendor/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "vendor",
-                "login"
-              ]
-            },
-            "description": "Partner accounts only. Returns 403 for customer/admin accounts."
           }
         },
         {
-          "name": "Verify Vendor Login OTP (SMS)",
+          "name": "Supabase Session (Vendor Login)",
           "event": [
             {
               "listen": "test",
@@ -266,9 +223,8 @@
                   "if (r.data?.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('OTP verified — token saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No token returned — check OTP / environment');"
+                  "  console.log('token & userId saved');",
+                  "}"
                 ]
               }
             }
@@ -286,25 +242,17 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\"\n}"
             },
-            "description": "Completes vendor login using the SMS OTP. In production, paste the OTP into `phoneOtp` first.",
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
+              "raw": "{{baseUrl}}/api/auth/session",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "auth",
-                "login",
-                "2fa",
-                "verify"
+                "session"
               ]
             }
           }
@@ -323,63 +271,6 @@
                 "api",
                 "auth",
                 "me"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Forgot Password",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/forgot-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "forgot-password"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Change Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"{{vendorPassword}}\",\n  \"newPassword\": \"Password2\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "change-password"
               ]
             }
           }
@@ -622,7 +513,7 @@
                 "availability"
               ]
             },
-            "description": "\u26a0\ufe0f Onboarding only. After approval use Calendar \u2192 Manage Availability."
+            "description": "⚠️ Onboarding only. After approval use Calendar → Manage Availability."
           }
         },
         {
@@ -648,7 +539,7 @@
                   "key": "document",
                   "type": "file",
                   "src": [],
-                  "description": "JPEG, PNG, WebP or PDF \u00b7 max 5MB"
+                  "description": "JPEG, PNG, WebP or PDF · max 5MB"
                 },
                 {
                   "key": "documentType",
@@ -753,108 +644,8 @@
     },
     {
       "name": "3. Admin Verification",
-      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin \u2192 saves `adminToken`\n3. List Pending \u2192 saves `businessId`\n4. Approve Application",
+      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin → saves `adminToken`\n3. List Pending → saves `businessId`\n4. Approve Application",
       "item": [
-        {
-          "name": "Login Admin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('SMS OTP saved');",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');",
-                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin \u2014 approval will fail');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Regular login \u2014 NOT `/api/auth/vendor/login`."
-          }
-        },
-        {
-          "name": "Verify Admin Login OTP (SMS)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('adminToken', r.data.token);",
-                  "  console.log('adminToken saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No adminToken returned — check OTP / environment');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Completes admin login using the SMS OTP. In production, paste the OTP into `phoneOtp` first.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login",
-                "2fa",
-                "verify"
-              ]
-            }
-          }
-        },
         {
           "name": "List Pending Applications",
           "event": [
@@ -1503,7 +1294,7 @@
                 "availability"
               ]
             },
-            "description": "\u2705 Use after vendor is approved."
+            "description": "✅ Use after vendor is approved."
           }
         },
         {
@@ -1531,7 +1322,7 @@
                 "availability"
               ]
             },
-            "description": "\u2705 Use after vendor is approved. Do NOT use `/onboarding/availability`."
+            "description": "✅ Use after vendor is approved. Do NOT use `/onboarding/availability`."
           }
         },
         {
@@ -1888,7 +1679,7 @@
                   "key": "avatar",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                  "description": "JPEG/PNG/WebP — max 2MB"
                 }
               ]
             },
@@ -2020,7 +1811,7 @@
                 "services"
               ]
             },
-            "description": "\u2705 After approval. Onboarding route blocked once verified."
+            "description": "✅ After approval. Onboarding route blocked once verified."
           }
         },
         {

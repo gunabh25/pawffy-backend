@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Pawffy API \u2014 Unified",
+    "name": "Pawffy API — Unified",
     "_postman_id": "pawffy-all-2026",
-    "description": "Complete Pawffy backend API collection \u2014 `{{baseUrl}}`\n\n## What this collection includes\n- Customer / core backend APIs\n- Admin-protected endpoints\n- Vendor onboarding, live vendor app, account/security, and adoption flows\n- Public discovery, support, and static-content endpoints\n\n## Recommended usage\n1. Use `baseUrl` for your current environment. Default is local: `{{localBaseUrl}}`.\n2. Start with `\ud83d\udd10 Auth` for customer/general flows or `Vendor Auth` for partner flows.\n3. Use the saved variables (`token`, `adminToken`, IDs, OTP/token helpers) as requests populate them.\n4. For production testing, switch `baseUrl` to `{{productionBaseUrl}}` and follow the production notes in the vendor account/security requests.\n\n## Folder layout\n- Core app folders come from the general backend collection.\n- Vendor-specific folders are appended after the core folders so all APIs live in one importable file.\n\n## Security and behavior notes\n- Protected routes require `Authorization: Bearer {{token}}` unless they specifically use `adminToken`.\n- JWT sessions use `tokenVersion`, so logout/password change/contact verification can invalidate older tokens.\n- Wallet payment routes only work when `WALLET_PAYMENTS_ENABLED=true`.\n- In non-production, some vendor verification flows may return OTP/token helpers for local testing; production does not return those secrets.\n\n## Important variables\nbaseUrl \u00b7 localBaseUrl \u00b7 productionBaseUrl \u00b7 token \u00b7 adminToken \u00b7 userId \u00b7 petId \u00b7 vetId \u00b7 serviceId \u00b7 bookingId \u00b7 businessId \u00b7 requestId \u00b7 adoptionId \u00b7 conversationId \u00b7 receiverId \u00b7 emailOtp \u00b7 phoneOtp \u00b7 adoptionPaymentIntentId\n",
+    "description": "Complete Pawffy backend API collection — `{{baseUrl}}`\n\n## What this collection includes\n- Customer / core backend APIs\n- Admin-protected endpoints\n- Vendor onboarding, live vendor app, account/security, and adoption flows\n- Public discovery, support, and static-content endpoints\n\n## Recommended usage\n1. Use `baseUrl` for your current environment. Default is local: `{{localBaseUrl}}`.\n2. Start with `🔐 Auth` for customer/general flows or `Vendor Auth` for partner flows.\n3. Use the saved variables (`token`, `adminToken`, IDs, OTP/token helpers) as requests populate them.\n4. For production testing, switch `baseUrl` to `{{productionBaseUrl}}` and follow the production notes in the vendor account/security requests.\n\n## Folder layout\n- Core app folders come from the general backend collection.\n- Vendor-specific folders are appended after the core folders so all APIs live in one importable file.\n\n## Security and behavior notes\n- Protected routes require `Authorization: Bearer {{token}}` unless they specifically use `adminToken`.\n- JWT sessions use `tokenVersion`, so logout/password change/contact verification can invalidate older tokens.\n- Wallet payment routes only work when `WALLET_PAYMENTS_ENABLED=true`.\n- In non-production, some vendor verification flows may return OTP/token helpers for local testing; production does not return those secrets.\n\n## Important variables\nbaseUrl · localBaseUrl · productionBaseUrl · token · adminToken · userId · petId · vetId · serviceId · bookingId · businessId · requestId · adoptionId · conversationId · receiverId · emailOtp · phoneOtp · adoptionPaymentIntentId\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -167,6 +167,26 @@
       "type": "string"
     },
     {
+      "key": "supabaseAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "supabaseUrl",
+      "value": "https://hnwslusckrzbnulxwgwp.supabase.co",
+      "type": "string"
+    },
+    {
+      "key": "supabaseAnonKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "supabaseOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "loginPhoneNumber",
       "value": "+15551234567",
       "type": "string"
@@ -219,7 +239,7 @@
   },
   "item": [
     {
-      "name": "\ud83c\udfe5 Health Check",
+      "name": "🏥 Health Check",
       "item": [
         {
           "name": "Health Check",
@@ -240,11 +260,72 @@
       ]
     },
     {
-      "name": "\ud83d\udd10 Auth",
-      "description": "Rate limit: 10 req / 15 min on register & login \u00b7 5 req / hour on forgot-password\nLogout increments tokenVersion \u2192 all issued tokens become invalid instantly",
+      "name": "🔐 Auth",
+      "description": "Test flow (run in order):\n1. Set collection vars `supabaseAnonKey` (publishable key) and `loginPhoneNumber`\n2. **STEP 1** — Supabase Send Phone OTP\n3. **STEP 2** — Supabase Verify Phone OTP (saves `supabaseAccessToken`)\n4. **STEP 3** — Session (Customer) → saves Pawffy `token`\n\nVendor signup: run steps 1–2, then **Supabase Vendor Register**.",
       "item": [
         {
-          "name": "Register",
+          "name": "STEP 1 — Supabase Send Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseAnonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{supabaseAnonKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{loginPhoneNumber}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Calls Supabase directly (not Pawffy). Sends SMS OTP to `loginPhoneNumber`.\n\nRequires `supabaseAnonKey` = your **Publishable key** from Supabase Dashboard → Settings → API Keys.",
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/otp",
+              "host": ["{{supabaseUrl}}"],
+              "path": ["auth", "v1", "otp"]
+            }
+          }
+        },
+        {
+          "name": "STEP 2 — Supabase Verify Phone OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "const token = r.access_token || r.session?.access_token;",
+                  "if (token) {",
+                  "  pm.collectionVariables.set('supabaseAccessToken', token);",
+                  "  console.log('supabaseAccessToken saved — run STEP 3 next');",
+                  "} else {",
+                  "  console.log('No access_token in response. Paste SMS code into supabaseOtp and retry.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseAnonKey}}" },
+              { "key": "Authorization", "value": "Bearer {{supabaseAnonKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"sms\",\n  \"phone\": \"{{loginPhoneNumber}}\",\n  \"token\": \"{{supabaseOtp}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Paste the 6-digit SMS code into collection variable `supabaseOtp`, then send.\n\nOn success, saves `supabaseAccessToken` automatically.",
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/verify",
+              "host": ["{{supabaseUrl}}"],
+              "path": ["auth", "v1", "verify"]
+            }
+          }
+        },
+        {
+          "name": "STEP 3 — Session (Customer)",
           "event": [
             {
               "listen": "test",
@@ -254,7 +335,7 @@
                   "if (r.data && r.data.token) {",
                   "  pm.collectionVariables.set('token', r.data.token);",
                   "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('\u2705 Token & userId saved');",
+                  "  console.log('Token & userId saved from Supabase session');",
                   "}"
                 ]
               }
@@ -270,230 +351,72 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+15551234567\",\n  \"password\": \"Password123\"\n}",
+              "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\n\nPassword policy: min 8 chars, must contain uppercase + lowercase + digit\nExample valid: Password123",
+            "description": "Exchange `supabaseAccessToken` (from STEP 2) for a Pawffy API JWT.\n\nIf you see **accessToken is not allowed to be empty**, run STEP 1 and STEP 2 first.",
             "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
+              "raw": "{{baseUrl}}/api/auth/session",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "auth",
+                "session"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Supabase Vendor Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "  console.log('Vendor token saved from Supabase register');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\",\n  \"name\": \"Vendor Name\",\n  \"email\": \"vendor@example.com\",\n  \"acceptTerms\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a vendor account after Supabase phone OTP. Phone comes from the verified Supabase session.",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/vendor/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "vendor",
                 "register"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('SMS OTP saved');",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "\u26a0\ufe0f Rate limited: 10 attempts / 15 min\nFailed attempts are logged with IP.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Verify Login OTP (SMS)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('OTP verified — token saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No token returned — check OTP / environment');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Completes login using the SMS OTP. In production, paste the OTP into `phoneOtp` first.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login",
-                "2fa",
-                "verify"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Login (Phone OTP)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  if (r.data.method === 'phone') pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('OTP saved for', r.data.method);",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{loginPhoneNumber}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Step 1 (password) for phone-login. Saves `phoneOtp` in non-prod if OTP delivery is not configured.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Verify Login OTP (Phone)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('OTP verified — token saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No token returned — check OTP / environment');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{loginPhoneNumber}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Completes login using the phone OTP. In production, paste the SMS OTP into `phoneOtp` first.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login",
-                "2fa",
-                "verify"
               ]
             }
           }
@@ -542,7 +465,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "Increments tokenVersion in DB \u2192 every JWT issued before this call is instantly rejected.\nAll devices are logged out simultaneously.",
+            "description": "Increments tokenVersion in DB → every JWT issued before this call is instantly rejected.\nAll devices are logged out simultaneously.",
             "url": {
               "raw": "{{baseUrl}}/api/auth/logout",
               "host": [
@@ -555,143 +478,12 @@
               ]
             }
           }
-        },
-        {
-          "name": "Forgot Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.resetToken) {",
-                  "  pm.collectionVariables.set('resetToken', r.data.resetToken);",
-                  "  console.log('\u2705 resetToken saved (dev mode)');",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"john@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "\u26a0\ufe0f Rate limited: 5 req / hour\n\nDev mode: resetToken returned in response.data.resetToken\nProduction with SMTP: email sent only, token NOT in response.\n\nAlways returns 200 (prevents email enumeration).",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/forgot-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "forgot-password"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPassword456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Token expires in 1 hour. Single use only.\nAlso increments tokenVersion \u2192 logs out all devices.\n\nRate limit: 5 requests/hour per IP (same as forgot-password).",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/reset-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "reset-password"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Change Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  console.log('\u2705 New token saved \u2014 other sessions logged out');",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Logs out all other devices. Returns a fresh token for the current session.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "change-password"
-              ]
-            }
-          }
         }
       ]
     },
     {
-      "name": "\ud83d\udc64 Users",
-      "description": "\ud83d\udd12 GET / and DELETE /:id require admin role",
+      "name": "👤 Users",
+      "description": "🔒 GET / and DELETE /:id require admin role",
       "item": [
         {
           "name": "Get My Profile",
@@ -769,11 +561,11 @@
                   "key": "avatar",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                  "description": "JPEG/PNG/WebP — max 2MB"
                 }
               ]
             },
-            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: avatar\nStored as base64 data URL in DB.",
+            "description": "⚠️ Rate limited: 10 uploads / 15 min\nField name must be: avatar\nStored as base64 data URL in DB.",
             "url": {
               "raw": "{{baseUrl}}/api/users/me/avatar",
               "host": [
@@ -789,7 +581,7 @@
           }
         },
         {
-          "name": "Get All Users \ud83d\udd12 Admin",
+          "name": "Get All Users 🔒 Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -798,7 +590,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "\ud83d\udd12 Requires role: admin",
+            "description": "🔒 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/users",
               "host": [
@@ -832,11 +624,11 @@
                 "{{userId}}"
               ]
             },
-            "description": "\ud83d\udd12 Requires auth. Own profile or admin role only."
+            "description": "🔒 Requires auth. Own profile or admin role only."
           }
         },
         {
-          "name": "Change User Role \ud83d\udd12 Admin",
+          "name": "Change User Role 🔒 Admin",
           "request": {
             "method": "PATCH",
             "header": [
@@ -870,11 +662,11 @@
                 "role"
               ]
             },
-            "description": "\ud83d\udd12 Admin only. Valid roles: customer | admin | partner | vet"
+            "description": "🔒 Admin only. Valid roles: customer | admin | partner | vet"
           }
         },
         {
-          "name": "Delete User \ud83d\udd12 Admin",
+          "name": "Delete User 🔒 Admin",
           "request": {
             "method": "DELETE",
             "header": [
@@ -883,7 +675,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "\ud83d\udd12 Requires role: admin",
+            "description": "🔒 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/users/{{userId}}",
               "host": [
@@ -900,7 +692,7 @@
       ]
     },
     {
-      "name": "\ud83d\udc3e Pets",
+      "name": "🐾 Pets",
       "item": [
         {
           "name": "Create Pet",
@@ -1047,11 +839,11 @@
                   "key": "image",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                  "description": "JPEG/PNG/WebP — max 2MB"
                 }
               ]
             },
-            "description": "\u26a0\ufe0f Rate limited: 10 uploads / 15 min\nField name must be: image",
+            "description": "⚠️ Rate limited: 10 uploads / 15 min\nField name must be: image",
             "url": {
               "raw": "{{baseUrl}}/api/pets/{{petId}}/image",
               "host": [
@@ -1092,11 +884,11 @@
       ]
     },
     {
-      "name": "\ud83e\ude7a Vets",
-      "description": "Public: GET /vets, GET /vets/:id, /slots, /services, /reviews\n\ud83d\udd12 Admin/Partner: POST/PUT/DELETE vets, services, availability\n\ud83d\udd12 Any auth user: POST reviews",
+      "name": "🩺 Vets",
+      "description": "Public: GET /vets, GET /vets/:id, /slots, /services, /reviews\n🔒 Admin/Partner: POST/PUT/DELETE vets, services, availability\n🔒 Any auth user: POST reviews",
       "item": [
         {
-          "name": "Create Vet \ud83d\udd12 Admin/Partner",
+          "name": "Create Vet 🔒 Admin/Partner",
           "event": [
             {
               "listen": "test",
@@ -1129,7 +921,7 @@
                 }
               }
             },
-            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only create a vet profile using their own account email.\n\nserviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper",
+            "description": "🔒 Requires role: admin or partner\n\nPartners may only create a vet profile using their own account email.\n\nserviceType: vet | groomer | walker | trainer | sitter | boarding | transport | poop_scooper",
             "url": {
               "raw": "{{baseUrl}}/api/vets",
               "host": [
@@ -1160,7 +952,7 @@
           }
         },
         {
-          "name": "Get Vets \u2014 Filter by serviceType",
+          "name": "Get Vets — Filter by serviceType",
           "request": {
             "method": "GET",
             "header": [],
@@ -1184,7 +976,7 @@
           }
         },
         {
-          "name": "Get Vets \u2014 Search by name / clinic",
+          "name": "Get Vets — Search by name / clinic",
           "request": {
             "method": "GET",
             "header": [],
@@ -1207,7 +999,7 @@
           }
         },
         {
-          "name": "Get Vets \u2014 Filter by city",
+          "name": "Get Vets — Filter by city",
           "request": {
             "method": "GET",
             "header": [],
@@ -1230,7 +1022,7 @@
           }
         },
         {
-          "name": "Get Vets \u2014 Combined filters",
+          "name": "Get Vets — Combined filters",
           "request": {
             "method": "GET",
             "header": [],
@@ -1279,7 +1071,7 @@
           }
         },
         {
-          "name": "Update Vet \ud83d\udd12 Admin/Partner",
+          "name": "Update Vet 🔒 Admin/Partner",
           "request": {
             "method": "PUT",
             "header": [
@@ -1301,7 +1093,7 @@
                 }
               }
             },
-            "description": "\ud83d\udd12 Requires role: admin or partner\n\nPartners may only update the vet profile linked to their account email.\nRating cannot be set here \u2014 it is computed from verified reviews only.",
+            "description": "🔒 Requires role: admin or partner\n\nPartners may only update the vet profile linked to their account email.\nRating cannot be set here — it is computed from verified reviews only.",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}",
               "host": [
@@ -1316,7 +1108,7 @@
           }
         },
         {
-          "name": "Set Availability \ud83d\udd12 Admin/Partner",
+          "name": "Set Availability 🔒 Admin/Partner",
           "request": {
             "method": "PUT",
             "header": [
@@ -1373,7 +1165,7 @@
           }
         },
         {
-          "name": "Get Available Slots [Screen 2 \u2014 Schedule]",
+          "name": "Get Available Slots [Screen 2 — Schedule]",
           "request": {
             "method": "GET",
             "header": [],
@@ -1400,7 +1192,7 @@
           }
         },
         {
-          "name": "Get Vet Services [Screen 1 \u2014 Select Service]",
+          "name": "Get Vet Services [Screen 1 — Select Service]",
           "event": [
             {
               "listen": "test",
@@ -1434,7 +1226,7 @@
           }
         },
         {
-          "name": "Create Vet Service \ud83d\udd12 Admin/Partner",
+          "name": "Create Vet Service 🔒 Admin/Partner",
           "request": {
             "method": "POST",
             "header": [
@@ -1456,7 +1248,7 @@
                 }
               }
             },
-            "description": "\ud83d\udd12 Admin/Partner only. Create one service per request.\nCommon services to seed:\n\u2022 General Consultancy $40\n\u2022 Vaccination $60\n\u2022 Emergency Care $100\n\u2022 Dental Care $70\n\u2022 Others $70\n\nPartners may only manage services for their own vet profile (email match).",
+            "description": "🔒 Admin/Partner only. Create one service per request.\nCommon services to seed:\n• General Consultancy $40\n• Vaccination $60\n• Emergency Care $100\n• Dental Care $70\n• Others $70\n\nPartners may only manage services for their own vet profile (email match).",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}/services",
               "host": [
@@ -1494,7 +1286,7 @@
                 }
               }
             },
-            "description": "rating: 1\u20135 (integer). bookingId is required.\nUser must have a completed booking with this vet.\nOne review per user per vet.\nAverage rating on Vet is auto-recalculated.",
+            "description": "rating: 1–5 (integer). bookingId is required.\nUser must have a completed booking with this vet.\nOne review per user per vet.\nAverage rating on Vet is auto-recalculated.",
             "url": {
               "raw": "{{baseUrl}}/api/vets/{{vetId}}/reviews",
               "host": [
@@ -1541,11 +1333,11 @@
       ]
     },
     {
-      "name": "\ud83d\udcc5 Bookings \u2014 Full Flow",
-      "description": "Complete booking flow:\n1. GET /vets/:vetId/services  \u2192 select service + price\n2. GET /vets/:vetId/slots?date \u2192 pick time slot\n3. GET /pets                    \u2192 pick pet\n4. Client collects symptoms/reason\n5. POST /bookings               \u2192 create booking\n6. GET /payments/summary/:id   \u2192 price breakdown\n7. POST /payments/apply-coupon \u2192 optional coupon\n8a. POST /payments/create-intent \u2192 card/net_banking (Stripe)\n8b. POST /payments/confirm       \u2192 wallet (disabled unless WALLET_PAYMENTS_ENABLED=true)\n8c. POST /payments/verify        \u2192 sync Stripe after payment sheet\n9. GET /bookings/:id            \u2192 confirmation screen\n\nStatus: customers can PATCH cancelled only; admins can set any status.",
+      "name": "📅 Bookings — Full Flow",
+      "description": "Complete booking flow:\n1. GET /vets/:vetId/services  → select service + price\n2. GET /vets/:vetId/slots?date → pick time slot\n3. GET /pets                    → pick pet\n4. Client collects symptoms/reason\n5. POST /bookings               → create booking\n6. GET /payments/summary/:id   → price breakdown\n7. POST /payments/apply-coupon → optional coupon\n8a. POST /payments/create-intent → card/net_banking (Stripe)\n8b. POST /payments/confirm       → wallet (disabled unless WALLET_PAYMENTS_ENABLED=true)\n8c. POST /payments/verify        → sync Stripe after payment sheet\n9. GET /bookings/:id            → confirmation screen\n\nStatus: customers can PATCH cancelled only; admins can set any status.",
       "item": [
         {
-          "name": "STEP 5 \u2014 Create Booking",
+          "name": "STEP 5 — Create Booking",
           "event": [
             {
               "listen": "test",
@@ -1554,7 +1346,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.id) {",
                   "  pm.collectionVariables.set('bookingId', r.data.id);",
-                  "  console.log('\u2705 bookingId saved:', r.data.id);",
+                  "  console.log('✅ bookingId saved:', r.data.id);",
                   "}"
                 ]
               }
@@ -1595,7 +1387,7 @@
           }
         },
         {
-          "name": "STEP 6 \u2014 Price Summary",
+          "name": "STEP 6 — Price Summary",
           "request": {
             "method": "GET",
             "header": [
@@ -1627,7 +1419,7 @@
           }
         },
         {
-          "name": "STEP 7 \u2014 Apply Coupon (optional)",
+          "name": "STEP 7 — Apply Coupon (optional)",
           "request": {
             "method": "POST",
             "header": [
@@ -1663,7 +1455,7 @@
           }
         },
         {
-          "name": "STEP 8a \u2014 Create Stripe PaymentIntent (Card / Net Banking)",
+          "name": "STEP 8a — Create Stripe PaymentIntent (Card / Net Banking)",
           "request": {
             "method": "POST",
             "header": [
@@ -1685,7 +1477,7 @@
                 }
               }
             },
-            "description": "paymentMethod: card | net_banking\n\nReturns clientSecret \u2192 pass to flutter_stripe:\n  Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  Stripe.instance.presentPaymentSheet()\n\nBooking confirmed automatically via Stripe webhook.",
+            "description": "paymentMethod: card | net_banking\n\nReturns clientSecret → pass to flutter_stripe:\n  Stripe.instance.initPaymentSheet(paymentIntentClientSecret: clientSecret)\n  Stripe.instance.presentPaymentSheet()\n\nBooking confirmed automatically via Stripe webhook.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/create-intent",
               "host": [
@@ -1700,7 +1492,7 @@
           }
         },
         {
-          "name": "STEP 8b \u2014 Confirm Wallet Payment",
+          "name": "STEP 8b — Confirm Wallet Payment",
           "request": {
             "method": "POST",
             "header": [
@@ -1722,7 +1514,7 @@
                 }
               }
             },
-            "description": "Wallet payment \u2014 no Stripe.\n\n\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true and wallet balance logic is implemented.\nUse STEP 8a (Stripe) for production payments.",
+            "description": "Wallet payment — no Stripe.\n\n⚠️ Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true and wallet balance logic is implemented.\nUse STEP 8a (Stripe) for production payments.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/confirm",
               "host": [
@@ -1737,7 +1529,7 @@
           }
         },
         {
-          "name": "STEP 8c \u2014 Verify Stripe Payment",
+          "name": "STEP 8c — Verify Stripe Payment",
           "request": {
             "method": "POST",
             "header": [
@@ -1774,7 +1566,7 @@
           }
         },
         {
-          "name": "STEP 9 \u2014 Get Booking Confirmation",
+          "name": "STEP 9 — Get Booking Confirmation",
           "request": {
             "method": "GET",
             "header": [
@@ -1832,7 +1624,7 @@
           }
         },
         {
-          "name": "Get All Bookings \ud83d\udd12 Admin",
+          "name": "Get All Bookings 🔒 Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -1841,7 +1633,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "\ud83d\udd12 Requires role: admin",
+            "description": "🔒 Requires role: admin",
             "url": {
               "raw": "{{baseUrl}}/api/bookings/all",
               "host": [
@@ -1894,7 +1686,7 @@
           }
         },
         {
-          "name": "Update Booking Status \ud83d\udd12 Admin (confirm)",
+          "name": "Update Booking Status 🔒 Admin (confirm)",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1916,7 +1708,7 @@
                 }
               }
             },
-            "description": "\ud83d\udd12 Requires role: admin\n\nAdmins may set: pending | confirmed | completed | cancelled.\nCustomers can only cancel via \"Update Booking Status\".",
+            "description": "🔒 Requires role: admin\n\nAdmins may set: pending | confirmed | completed | cancelled.\nCustomers can only cancel via \"Update Booking Status\".",
             "url": {
               "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
               "host": [
@@ -1934,7 +1726,7 @@
       ]
     },
     {
-      "name": "\ud83d\udcac Messages",
+      "name": "💬 Messages",
       "item": [
         {
           "name": "Get My Conversations",
@@ -1977,7 +1769,7 @@
                   "const r = pm.response.json();",
                   "if (r.data && r.data.conversationId) {",
                   "  pm.collectionVariables.set('conversationId', r.data.conversationId);",
-                  "  console.log('\u2705 conversationId saved');",
+                  "  console.log('✅ conversationId saved');",
                   "}"
                 ]
               }
@@ -2004,7 +1796,7 @@
                 "{{receiverId}}"
               ]
             },
-            "description": "Tap a vet profile \u2192 call this to get or create a conversation.\nReturns conversationId + otherUser info."
+            "description": "Tap a vet profile → call this to get or create a conversation.\nReturns conversationId + otherUser info."
           }
         },
         {
@@ -2110,14 +1902,14 @@
                 "read"
               ]
             },
-            "description": "Call when user opens a conversation \u2014 clears the unread (orange dot) count."
+            "description": "Call when user opens a conversation — clears the unread (orange dot) count."
           }
         }
       ]
     },
     {
-      "name": "\ud83d\udcb3 Payments",
-      "description": "\u26a0\ufe0f Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) \u00b7 wallet (direct)",
+      "name": "💳 Payments",
+      "description": "⚠️ Rate limited: 20 req / 15 min\nPayment methods: card | net_banking (Stripe) · wallet (direct)",
       "item": [
         {
           "name": "Get Price Summary",
@@ -2243,7 +2035,7 @@
                 "confirm"
               ]
             },
-            "description": "\u26a0\ufe0f Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true.\nUse Stripe create-intent + verify for production card/net banking payments."
+            "description": "⚠️ Disabled by default (503) unless server env WALLET_PAYMENTS_ENABLED=true.\nUse Stripe create-intent + verify for production card/net banking payments."
           }
         },
         {
@@ -2264,7 +2056,7 @@
               "mode": "raw",
               "raw": "{\n  \"paymentIntentId\": \"pi_xxxxxxxxxxxxxxxxxxxxxxxx\"\n}"
             },
-            "description": "\ud83d\udd12 Must own the booking linked to the payment intent.",
+            "description": "🔒 Must own the booking linked to the payment intent.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/verify",
               "host": [
@@ -2305,7 +2097,7 @@
       ]
     },
     {
-      "name": "\ud83c\udfe5 Medical Records",
+      "name": "🏥 Medical Records",
       "item": [
         {
           "name": "Create Medical Record",
@@ -2351,7 +2143,7 @@
                 "medical-records"
               ]
             },
-            "description": "\ud83d\udd12 Pet owner or admin only.\ncreatedByVet is resolved from the authenticated user's email when they manage a linked vet profile."
+            "description": "🔒 Pet owner or admin only.\ncreatedByVet is resolved from the authenticated user's email when they manage a linked vet profile."
           }
         },
         {
@@ -2463,7 +2255,7 @@
       ]
     },
     {
-      "name": "\ud83d\udc89 Vaccinations",
+      "name": "💉 Vaccinations",
       "item": [
         {
           "name": "Add Vaccination",
@@ -2509,7 +2301,7 @@
                 "vaccinations"
               ]
             },
-            "description": "\ud83d\udd12 Pet owner or admin only.\nOptional vetId; otherwise resolved from authenticated user's linked vet profile by email."
+            "description": "🔒 Pet owner or admin only.\nOptional vetId; otherwise resolved from authenticated user's linked vet profile by email."
           }
         },
         {
@@ -2598,7 +2390,7 @@
       ]
     },
     {
-      "name": "\ud83d\udd14 Notifications",
+      "name": "🔔 Notifications",
       "description": "GET/PATCH/DELETE: authenticated user (own notifications only).\nPOST: admin only.",
       "item": [
         {
@@ -2631,7 +2423,7 @@
           }
         },
         {
-          "name": "Create Notification \ud83d\udd12 Admin",
+          "name": "Create Notification 🔒 Admin",
           "event": [
             {
               "listen": "test",
@@ -2664,7 +2456,7 @@
                 }
               }
             },
-            "description": "\ud83d\udd12 Requires role: admin\n\ntype: booking | payment | health | general\nNotification is created for the authenticated admin user. Use server-side jobs for user-targeted notifications.",
+            "description": "🔒 Requires role: admin\n\ntype: booking | payment | health | general\nNotification is created for the authenticated admin user. Use server-side jobs for user-targeted notifications.",
             "url": {
               "raw": "{{baseUrl}}/api/notifications",
               "host": [
@@ -2750,7 +2542,7 @@
       ]
     },
     {
-      "name": "\ud83c\udfe0 Dashboard",
+      "name": "🏠 Dashboard",
       "description": "Optional Bearer on POST /dashboard for personalized data. User/notifications endpoints require self or admin.",
       "item": [
         {
@@ -2791,7 +2583,7 @@
           }
         },
         {
-          "name": "Get User By ID \ud83d\udd12 Self/Admin",
+          "name": "Get User By ID 🔒 Self/Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -2800,7 +2592,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "\ud83d\udd12 Requires auth. Returns private profile only for self or admin.",
+            "description": "🔒 Requires auth. Returns private profile only for self or admin.",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/users/{{userId}}",
               "host": [
@@ -2816,7 +2608,7 @@
           }
         },
         {
-          "name": "Get Partners Nearby \ud83c\udf10",
+          "name": "Get Partners Nearby 🌐",
           "request": {
             "method": "POST",
             "header": [
@@ -2834,7 +2626,7 @@
                 }
               }
             },
-            "description": "\ud83c\udf10 Public. Returns partners within 25km (no email/phone exposed).",
+            "description": "🌐 Public. Returns partners within 25km (no email/phone exposed).",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/partners",
               "host": [
@@ -2849,7 +2641,7 @@
           }
         },
         {
-          "name": "Get Notifications By User \ud83d\udd12 Self/Admin",
+          "name": "Get Notifications By User 🔒 Self/Admin",
           "request": {
             "method": "GET",
             "header": [
@@ -2858,7 +2650,7 @@
                 "value": "Bearer {{token}}"
               }
             ],
-            "description": "\ud83d\udd12 Requires auth. Own notifications or admin only.",
+            "description": "🔒 Requires auth. Own notifications or admin only.",
             "url": {
               "raw": "{{baseUrl}}/api/dashboard/notifications/{{userId}}",
               "host": [
@@ -2874,7 +2666,7 @@
           }
         },
         {
-          "name": "Get Active Categories \ud83c\udf10",
+          "name": "Get Active Categories 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -2892,7 +2684,7 @@
           }
         },
         {
-          "name": "Get Banner \ud83c\udf10",
+          "name": "Get Banner 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -2919,7 +2711,7 @@
       ]
     },
     {
-      "name": "\ud83d\udea8 Lost Pets",
+      "name": "🚨 Lost Pets",
       "description": "Owner flow — report **your own** missing pet.\n\nRequired: pet photo(s), name, color, breed, gender, description, last-seen location.\nOptional: age, height, weight.\n\nUpload images as files (`images` field, max 3). JSON body with image URLs is still supported for testing.",
       "item": [
         {
@@ -2990,7 +2782,7 @@
                 }
               ]
             },
-            "description": "Owner reports their missing pet. Upload 1\u20133 photos using field name `images`. Age/height/weight are optional.",
+            "description": "Owner reports their missing pet. Upload 1–3 photos using field name `images`. Age/height/weight are optional.",
             "url": {
               "raw": "{{baseUrl}}/api/lost-pets",
               "host": [
@@ -3004,7 +2796,7 @@
           }
         },
         {
-          "name": "Get All Lost Reports \ud83c\udf10",
+          "name": "Get All Lost Reports 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -3022,7 +2814,7 @@
           }
         },
         {
-          "name": "Get Lost Report By ID \ud83c\udf10",
+          "name": "Get Lost Report By ID 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -3104,7 +2896,7 @@
       ]
     },
     {
-      "name": "\ud83d\udd0d Found Pets",
+      "name": "🔍 Found Pets",
       "description": "Stranger flow — report a pet you **saw/found** but do not own.\n\nRequired: photo(s), color, description, location.\nOptional: breed, gender (defaults to `Unknown` if omitted).\n\nYou do NOT need to know the pet's name, exact breed, age, height, or weight.",
       "item": [
         {
@@ -3180,7 +2972,7 @@
           }
         },
         {
-          "name": "Get All Found Reports \ud83c\udf10",
+          "name": "Get All Found Reports 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -3197,7 +2989,7 @@
           }
         },
         {
-          "name": "Get Found Report By ID \ud83c\udf10",
+          "name": "Get Found Report By ID 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -3276,10 +3068,10 @@
       ]
     },
     {
-      "name": "\ud83d\udccb All Pet Reports",
+      "name": "📋 All Pet Reports",
       "item": [
         {
-          "name": "Get All Reports (Lost + Found) \ud83c\udf10",
+          "name": "Get All Reports (Lost + Found) 🌐",
           "request": {
             "method": "GET",
             "header": [],
@@ -3299,7 +3091,7 @@
       ]
     },
     {
-      "name": "\ud83d\udeb6 Walking Bookings",
+      "name": "🚶 Walking Bookings",
       "description": "partnerId must be a user with role=partner.\nPets in selectedPetList must belong to the authenticated user.\npaymentStatus is server-controlled.",
       "item": [
         {
@@ -3348,7 +3140,7 @@
                 "walking"
               ]
             },
-            "description": "partnerId must be a user with role=partner.\nselectedPetList must contain pet IDs owned by the authenticated user.\npaymentStatus is set server-side (always Pending) \u2014 do not send it in the body."
+            "description": "partnerId must be a user with role=partner.\nselectedPetList must contain pet IDs owned by the authenticated user.\npaymentStatus is set server-side (always Pending) — do not send it in the body."
           }
         },
         {
@@ -3402,156 +3194,8 @@
     },
     {
       "name": "Vendor Auth",
-      "description": "Vendor-specific authentication for partner accounts. Use `POST /api/auth/vendor/register` and `POST /api/auth/vendor/login` here; admin login remains in the vendor admin folder.",
+      "description": "Mobile auth: Supabase phone OTP in the app, then `POST /api/auth/session` with `accessToken` to get a Pawffy JWT. Vendor signup: `POST /api/auth/vendor/register`.",
       "item": [
-        {
-          "name": "Register Vendor",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('SMS OTP saved');",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Amit Patel\",\n  \"email\": \"{{vendorEmail}}\",\n  \"phoneNumber\": \"{{newVendorPhone}}\",\n  \"password\": \"{{vendorPassword}}\",\n  \"acceptTerms\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/vendor/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "vendor",
-                "register"
-              ]
-            },
-            "description": "Creates partner user + draft business profile. Requires `acceptTerms: true`."
-          }
-        },
-        {
-          "name": "Login Vendor",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('token & userId saved');",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"password\": \"{{vendorPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/vendor/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "vendor",
-                "login"
-              ]
-            },
-            "description": "Partner accounts only. Returns 403 for customer/admin accounts."
-          }
-        },
-        {
-          "name": "Verify Vendor Login OTP (SMS)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('token', r.data.token);",
-                  "  pm.collectionVariables.set('userId', r.data.user.id);",
-                  "  console.log('OTP verified — token saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No token returned — check OTP / environment');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Completes vendor login using the SMS OTP. In production, paste the OTP into `phoneOtp` first.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login",
-                "2fa",
-                "verify"
-              ]
-            }
-          }
-        },
         {
           "name": "Get Me",
           "request": {
@@ -3566,63 +3210,6 @@
                 "api",
                 "auth",
                 "me"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Forgot Password",
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{vendorEmail}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/forgot-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "forgot-password"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Change Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"{{vendorPassword}}\",\n  \"newPassword\": \"Password2\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "change-password"
               ]
             }
           }
@@ -3865,7 +3452,7 @@
                 "availability"
               ]
             },
-            "description": "\u26a0\ufe0f Onboarding only. After approval use Calendar \u2192 Manage Availability."
+            "description": "⚠️ Onboarding only. After approval use Calendar → Manage Availability."
           }
         },
         {
@@ -3891,7 +3478,7 @@
                   "key": "document",
                   "type": "file",
                   "src": [],
-                  "description": "JPEG, PNG, WebP or PDF \u00b7 max 5MB"
+                  "description": "JPEG, PNG, WebP or PDF · max 5MB"
                 },
                 {
                   "key": "documentType",
@@ -3996,108 +3583,8 @@
     },
     {
       "name": "3. Admin Verification",
-      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin \u2192 saves `adminToken`\n3. List Pending \u2192 saves `businessId`\n4. Approve Application",
+      "description": "1. Set `adminEmail` + `adminPassword` in collection variables\n2. Run Login Admin → saves `adminToken`\n3. List Pending → saves `businessId`\n4. Approve Application",
       "item": [
-        {
-          "name": "Login Admin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.otp) {",
-                  "  pm.collectionVariables.set('phoneOtp', r.data.otp);",
-                  "  console.log('SMS OTP saved');",
-                  "}",
-                  "pm.collectionVariables.set('loginMethod', r.data.method || 'phone');",
-                  "if (r.data?.user?.role !== 'admin') console.warn('User is not admin \u2014 approval will fail');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
-            },
-            "description": "Regular login \u2014 NOT `/api/auth/vendor/login`."
-          }
-        },
-        {
-          "name": "Verify Admin Login OTP (SMS)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data?.token) {",
-                  "  pm.collectionVariables.set('adminToken', r.data.token);",
-                  "  console.log('adminToken saved');",
-                  "}",
-                  "if (!r.data?.token) console.warn('No adminToken returned — check OTP / environment');"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"otp\": \"{{phoneOtp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "description": "Completes admin login using the SMS OTP. In production, paste the OTP into `phoneOtp` first.",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login/2fa/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login",
-                "2fa",
-                "verify"
-              ]
-            }
-          }
-        },
         {
           "name": "List Pending Applications",
           "event": [
@@ -4976,7 +4463,7 @@
                 "availability"
               ]
             },
-            "description": "\u2705 Use after vendor is approved."
+            "description": "✅ Use after vendor is approved."
           }
         },
         {
@@ -5004,7 +4491,7 @@
                 "availability"
               ]
             },
-            "description": "\u2705 Use after vendor is approved. Do NOT use `/onboarding/availability`."
+            "description": "✅ Use after vendor is approved. Do NOT use `/onboarding/availability`."
           }
         },
         {
@@ -5361,7 +4848,7 @@
                   "key": "avatar",
                   "type": "file",
                   "src": "",
-                  "description": "JPEG/PNG/WebP \u2014 max 2MB"
+                  "description": "JPEG/PNG/WebP — max 2MB"
                 }
               ]
             },
@@ -5493,7 +4980,7 @@
                 "services"
               ]
             },
-            "description": "\u2705 After approval. Onboarding route blocked once verified."
+            "description": "✅ After approval. Onboarding route blocked once verified."
           }
         },
         {

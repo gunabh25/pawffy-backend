@@ -167,6 +167,7 @@ enum AdoptionDocumentType {
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   clerkId      String?  @unique @map("clerk_id")
+  supabaseId   String?  @unique @map("supabase_id")
   name         String?
   email        String?  @unique
   phone        String?  @unique
@@ -174,7 +175,7 @@ model User {
   pendingPhone  String?  @unique @map("pending_phone")
   emailVerifiedAt DateTime? @map("email_verified_at")
   phoneVerifiedAt DateTime? @map("phone_verified_at")
-  passwordHash  String   @map("password_hash")
+  passwordHash  String?  @map("password_hash")
   tokenVersion  Int      @default(0) @map("token_version")
   role          Role     @default(customer)
   profileImage  String?  @map("profile_image")
