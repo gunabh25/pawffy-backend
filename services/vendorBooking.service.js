@@ -24,8 +24,8 @@ function parseTimeToMinutes(timeStr) {
   const ampmMatch = s.match(/^((0?[1-9])|1[0-2]):([0-5]\d)\s?(AM|PM)$/i);
   if (ampmMatch) {
     let hour = parseInt(ampmMatch[1], 10);
-    const minute = parseInt(ampmMatch[4], 10);
-    const ampm = ampmMatch[5].toUpperCase();
+    const minute = parseInt(ampmMatch[3], 10);
+    const ampm = ampmMatch[4].toUpperCase();
 
     if (ampm === "AM") {
       if (hour === 12) hour = 0;
