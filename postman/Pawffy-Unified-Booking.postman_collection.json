@@ -1,0 +1,409 @@
+{
+  "info": {
+    "name": "Pawffy — Unified Booking Flow",
+    "description": "User-side unified booking flow for Pawffy. Every service type (vet, grooming, walking, training, boarding, sitting, transport, poop_scooper) is a PartnerService on a PartnerBusiness, booked as a single PartnerBooking. Flow: Auth → Vendors/Slots → Bookings (pending) → Payments (confirm). Import into Postman; the Session request auto-saves {{token}}. See docs/booking-flow.md.",
+    "_postman_id": "pawffy-unified-booking-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5001", "type": "string" },
+    { "key": "supabaseAccessToken", "value": "", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "vendorId", "value": "", "type": "string" },
+    { "key": "serviceId", "value": "", "type": "string" },
+    { "key": "petId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "paymentIntentId", "value": "", "type": "string" },
+    { "key": "couponCode", "value": "SAVE10", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Session (exchange Supabase token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('token', r.data.token);",
+                  "  pm.collectionVariables.set('userId', r.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Exchange a Supabase accessToken for the app JWT. Token is auto-saved to {{token}}."
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🐾 Pets",
+      "item": [
+        {
+          "name": "Create Pet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) { pm.collectionVariables.set('petId', r.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buddy\",\n  \"species\": \"dog\",\n  \"breed\": \"Golden Retriever\",\n  \"gender\": \"male\",\n  \"age\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pets"]
+            },
+            "description": "Creates a pet and auto-saves {{petId}} for booking."
+          }
+        },
+        {
+          "name": "Get My Pets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/pets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏪 Vendors (Discovery)",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=&isOnline=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors"],
+              "query": [
+                { "key": "serviceType", "value": "groomer", "description": "Optional: vet|groomer|walker|trainer|sitter|boarding|transport|poop_scooper" },
+                { "key": "city", "value": "", "disabled": true },
+                { "key": "latitude", "value": "", "description": "Optional; must be paired with longitude", "disabled": true },
+                { "key": "longitude", "value": "", "disabled": true },
+                { "key": "isOnline", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Public. Browse verified providers. Copy an id into {{vendorId}}."
+          }
+        },
+        {
+          "name": "Get Vendor By ID (+ services)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) { pm.collectionVariables.set('vendorId', r.data.id); }",
+                  "if (r.data && Array.isArray(r.data.services) && r.data.services[0]) {",
+                  "  pm.collectionVariables.set('serviceId', r.data.services[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors", "{{vendorId}}"]
+            },
+            "description": "Public. Provider profile + active services. Auto-saves {{vendorId}} and the first {{serviceId}} when present."
+          }
+        },
+        {
+          "name": "Get Vendor Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/slots?date=2026-12-25&serviceId={{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vendors", "{{vendorId}}", "slots"],
+              "query": [
+                { "key": "date", "value": "2026-12-25", "description": "Required. YYYY-MM-DD" },
+                { "key": "serviceId", "value": "{{serviceId}}", "description": "Optional. Uses the service duration for the slot grid" },
+                { "key": "slotDurationMinutes", "value": "30", "description": "Optional 10-240 (ignored when serviceId given)", "disabled": true }
+              ]
+            },
+            "description": "Public. Available time slots for the given date."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Bookings",
+      "item": [
+        {
+          "name": "Create Booking (status=pending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) { pm.collectionVariables.set('bookingId', r.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendorId\": \"{{vendorId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"petId\": \"{{petId}}\",\n  \"bookingDate\": \"2026-12-25\",\n  \"bookingTime\": \"14:30\",\n  \"location\": \"123 Main St, New York\",\n  \"notes\": \"Pet needs a bath and nail trim\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"]
+            },
+            "description": "Customer only. Creates a PartnerBooking with status=pending. bookingTime accepts HH:MM or HH:MM AM/PM. Auto-saves {{bookingId}}."
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "Optional: pending|confirmed|completed|cancelled|rejected", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Booking By ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}"]
+            },
+            "description": "Owner only. Includes business, service, payment, appointmentId, dateTimeFormatted."
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "{{bookingId}}", "status"]
+            },
+            "description": "Customer (owner) only. Only 'cancelled' is accepted; works when the booking is pending or confirmed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Payments",
+      "item": [
+        {
+          "name": "Get Config",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "config"]
+            },
+            "description": "Stripe publishable key, currency, supported payment methods."
+          }
+        },
+        {
+          "name": "Get Price Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}?coupon={{couponCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "summary", "{{bookingId}}"],
+              "query": [
+                { "key": "coupon", "value": "{{couponCode}}", "description": "Optional coupon code", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"code\": \"{{couponCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/apply-coupon",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "apply-coupon"]
+            }
+          }
+        },
+        {
+          "name": "Create Payment Intent (Stripe)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.paymentIntentId) {",
+                  "  pm.collectionVariables.set('paymentIntentId', r.data.paymentIntentId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"paymentMethod\": \"card\",\n  \"couponCode\": \"{{couponCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/create-intent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "create-intent"]
+            },
+            "description": "paymentMethod: card | net_banking. Returns clientSecret for client-side confirmation. Auto-saves {{paymentIntentId}}."
+          }
+        },
+        {
+          "name": "Confirm Wallet Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"couponCode\": \"{{couponCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "confirm"]
+            },
+            "description": "Requires WALLET_PAYMENTS_ENABLED=true. Debits wallet, marks payment paid, sets booking confirmed."
+          }
+        },
+        {
+          "name": "Verify Stripe Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentIntentId\": \"{{paymentIntentId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "verify"]
+            },
+            "description": "Confirms payment status with Stripe and moves the booking pending → confirmed on success."
+          }
+        },
+        {
+          "name": "Get Payment By Booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/booking/{{bookingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "booking", "{{bookingId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
