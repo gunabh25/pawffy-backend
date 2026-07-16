@@ -77,66 +77,33 @@ exports.createPetSchema = Joi.object({
 
 exports.updatePetSchema = exports.createPetSchema.fork(["name", "species"], (f) => f.optional());
 
-// ─── Vet ──────────────────────────────────────────────────────────────────────
+// Shared service-type list used by vendor onboarding schemas below.
 const SERVICE_TYPES = ["vet", "groomer", "walker", "trainer", "sitter", "boarding", "transport", "poop_scooper"];
 
-exports.createVetSchema = Joi.object({
-  name:            Joi.string().min(2).max(100).required(),
-  email:           Joi.string().email().lowercase().required(),
-  serviceType:     Joi.string().valid(...SERVICE_TYPES).default("vet"),
-  specialization:  Joi.string().max(200).optional(),
-  experienceYears: Joi.number().integer().min(0).max(60).optional(),
-  clinicName:      Joi.string().max(200).optional(),
-  clinicAddress:   Joi.string().max(500).optional(),
-  clinicCity:      Joi.string().max(100).optional(),
-  phone:           Joi.string().pattern(/^\+?[1-9]\d{6,14}$/).optional(),
-  consultationFee: Joi.number().min(0).optional(),
-  city:            Joi.string().max(100).optional(),
-  state:           Joi.string().max(100).optional(),
-});
-
-exports.updateVetSchema = exports.createVetSchema.fork(["name", "email"], (f) => f.optional()).append({
-  availableStatus: Joi.boolean().optional(),
-  profileImage:    Joi.string().max(1048576).optional(),
-});
-
-// ─── Vet Service ──────────────────────────────────────────────────────────────
-exports.createVetServiceSchema = Joi.object({
-  name:        Joi.string().min(2).max(150).required(),
-  description: Joi.string().max(500).optional(),
-  price:       Joi.number().min(0).max(99999).required(),
-  duration:    Joi.number().integer().min(5).max(480).default(30),
-});
-
-// ─── Booking ──────────────────────────────────────────────────────────────────
-const BOOKING_TYPES = ["veterinarian", "grooming", "walking", "training", "boarding", "sitting", "sitter", "poop_scooper", "transport"];
+// ─── Booking (unified) ─────────────────────────────────────────────────────────
+// Time pattern inlined here (TIME_PATTERN const is declared later in this file).
+const BOOKING_TIME_PATTERN = /^(0?[1-9]|1[0-2]):[0-5]\d\s?(AM|PM)$|^([01]\d|2[0-3]):[0-5]\d$/i;
 
 exports.createBookingSchema = Joi.object({
-  petId:            uuid().required(),
-  vetId:            uuid().optional(),
-  serviceId:        uuid().optional(),
-  bookingType:      Joi.string().valid(...BOOKING_TYPES).required(),
-  bookingDate:      Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+  vendorId:    uuid().required(),
+  serviceId:   uuid().required(),
+  petId:       uuid().required(),
+  bookingDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
     "string.pattern.base": "bookingDate must be in YYYY-MM-DD format",
   }),
-  bookingTime:      Joi.string().pattern(/^\d{2}:\d{2}$/).required().messages({
-    "string.pattern.base": "bookingTime must be in HH:MM format",
+  bookingTime: Joi.string().pattern(BOOKING_TIME_PATTERN).required().messages({
+    "string.pattern.base": "bookingTime must be in HH:MM or HH:MM AM/PM format",
   }),
-  reasonForVisit:   Joi.string().max(500).optional(),
-  symptoms:         Joi.string().max(500).optional(),
-  symptomsDuration: Joi.string().valid("Today", "2 Days ago", "A week ago", "More than a week").optional(),
-  notes:            Joi.string().max(500).optional(),
+  location:    Joi.string().max(500).optional().allow("", null),
+  notes:       Joi.string().max(2000).optional().allow("", null),
 });
 
-exports.updateBookingStatusSchema = Joi.object({
-  status: Joi.string().valid("pending", "confirmed", "completed", "cancelled").required(),
+exports.bookingsQuerySchema = Joi.object({
+  status: Joi.string().valid("pending", "confirmed", "completed", "cancelled", "rejected").optional(),
 });
 
-// ─── Review ───────────────────────────────────────────────────────────────────
-exports.createReviewSchema = Joi.object({
-  rating:    Joi.number().integer().min(1).max(5).required(),
-  comment:   Joi.string().max(1000).optional(),
-  bookingId: uuid().required(),
+exports.cancelBookingSchema = Joi.object({
+  status: Joi.string().valid("cancelled").required(),
 });
 
 // ─── Notification ─────────────────────────────────────────────────────────────
@@ -191,7 +158,6 @@ exports.createVaccinationSchema = Joi.object({
   vaccineName:     Joi.string().min(1).max(200).required(),
   vaccinationDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required(),
   nextDueDate:     Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  vetId:           uuid().optional(),
   notes:           Joi.string().max(500).optional(),
 });
 
@@ -261,38 +227,6 @@ exports.updateFoundPetReportSchema = exports.createFoundPetReportSchema.fork(
   ["images", "color", "breed", "location", "description", "gender"],
   (f) => f.optional()
 );
-
-// ─── Walking Booking ──────────────────────────────────────────────────────────
-const walkingSlotTimeSchema = Joi.object({
-  morningSlot: Joi.string().allow(""),
-  eveningSlot: Joi.string().allow(""),
-});
-
-exports.createWalkingBookingSchema = Joi.object({
-  selectedAddress: Joi.object({
-    fullAddress: Joi.string().required(),
-    latitude:    Joi.number().optional(),
-    longitude:   Joi.number().optional(),
-    city:        Joi.string().optional(),
-    state:       Joi.string().optional(),
-    country:     Joi.string().optional(),
-    postalCode:  Joi.string().optional(),
-  }).optional(),
-
-  selectedDays:    Joi.string().required(),
-  selectedPetList: Joi.array().min(1).required(),
-  selectedService: Joi.object({
-    title:       Joi.string().required(),
-    description: Joi.string().allow(""),
-    price:       Joi.number().optional(),
-  }).required(),
-  selectedPackage: Joi.object().allow(null),
-  isPackage:       Joi.boolean().required(),
-  partnerId:       uuid().required(),
-  walkingType:     Joi.string().valid("Once a day", "Twice a day").required(),
-  slotTime:        walkingSlotTimeSchema.required(),
-  walkingDuration: Joi.string().required(),
-});
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 exports.dashboardSchema = Joi.object({
@@ -410,19 +344,6 @@ exports.vendorSlotsQuerySchema = Joi.object({
   serviceId: uuid().optional(),
   slotDurationMinutes: Joi.number().integer().min(10).max(240).optional().default(30),
 });
-
-exports.vendorCreateRequestSchema = Joi.object({
-  serviceId: uuid().required(),
-  petId: uuid().required(),
-  bookingDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
-    "string.pattern.base": "bookingDate must be in YYYY-MM-DD format",
-  }),
-  bookingTime: Joi.string().pattern(TIME_PATTERN).required().messages({
-    "string.pattern.base": "bookingTime must be in HH:MM or HH:MM AM/PM format",
-  }),
-  location: Joi.string().max(500).optional().allow("", null),
-  notes: Joi.string().max(2000).optional().allow("", null),
-}).min(1);
 
 exports.vendorProfileQuerySchema = Joi.object({
   period: Joi.string().valid("week", "month", "year").default("month"),

@@ -36,25 +36,14 @@ router.post(
   businessReviewController.createVendorReviewPublic
 );
 
-const customerOnly = [verifyToken, requireRole("customer")];
-
 // Customer: browse vendor slots for a specific date (optionally pass serviceId to match slot duration).
+// Booking creation is unified under POST /api/bookings.
 router.get(
   "/:vendorId/slots",
   publicReadLimiter,
   validateUuidParams("vendorId"),
   validate(v.vendorSlotsQuerySchema, "query"),
   vendorBookingController.getVendorSlots
-);
-
-// Customer: create a vendor request that appears in the vendor inbox as a pending PartnerBooking.
-router.post(
-  "/:vendorId/requests",
-  ...customerOnly,
-  writeLimiter,
-  validateUuidParams("vendorId"),
-  validate(v.vendorCreateRequestSchema),
-  vendorBookingController.createVendorRequest
 );
 
 module.exports = router;

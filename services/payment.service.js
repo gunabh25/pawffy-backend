@@ -34,7 +34,7 @@ async function finalizeBookingPayment(bookingId, transactionId) {
 
     await redeemCouponIfNeeded(tx, payment.couponCode);
 
-    await tx.booking.update({
+    await tx.partnerBooking.update({
       where: { id: bookingId },
       data: { status: "confirmed" },
     });
@@ -61,9 +61,7 @@ function getPaymentConfig() {
 }
 
 async function buildPriceSummary(booking, couponCode) {
-  const servicePrice = booking.service
-    ? Number(booking.service.price)
-    : Number(booking.vet?.consultationFee || 0);
+  const servicePrice = Number(booking.price || 0);
 
   let discount = 0;
   let appliedCoupon = null;
@@ -91,26 +89,23 @@ async function buildPriceSummary(booking, couponCode) {
 }
 
 async function getBookingForUser(userId, bookingId, include = {}) {
-  const booking = await prisma.booking.findUnique({
+  const booking = await prisma.partnerBooking.findUnique({
     where: { id: bookingId },
     include,
   });
 
   if (!booking) throw new AppError("Booking not found", 404);
-  if (booking.userId !== userId) throw new AppError("Access denied", 403);
+  if (booking.customerId !== userId) throw new AppError("Access denied", 403);
   return booking;
 }
 
 async function getPriceSummary(userId, bookingId, couponCode) {
-  const booking = await getBookingForUser(userId, bookingId, {
-    service: { select: { name: true, price: true } },
-    vet: { select: { name: true, consultationFee: true } },
-  });
+  const booking = await getBookingForUser(userId, bookingId);
 
   const summary = await buildPriceSummary(booking, couponCode);
 
   return {
-    serviceName: booking.service?.name || "Consultation",
+    serviceName: booking.serviceName || "Service",
     servicePrice: summary.subtotal,
     platformFee: summary.platformFee,
     tax: summary.taxAmount,
@@ -125,10 +120,7 @@ async function getPriceSummary(userId, bookingId, couponCode) {
 }
 
 async function applyCoupon(userId, bookingId, code) {
-  const booking = await getBookingForUser(userId, bookingId, {
-    service: true,
-    vet: true,
-  });
+  const booking = await getBookingForUser(userId, bookingId);
 
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
   if (!coupon || !coupon.isActive) throw new AppError("Invalid coupon code", 400);
@@ -148,11 +140,7 @@ async function applyCoupon(userId, bookingId, code) {
 }
 
 async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCode }) {
-  const booking = await getBookingForUser(userId, bookingId, {
-    service: { select: { name: true, price: true } },
-    vet: { select: { name: true, consultationFee: true } },
-    payment: true,
-  });
+  const booking = await getBookingForUser(userId, bookingId, { payment: true });
 
   if (booking.payment?.paymentStatus === "paid") {
     throw new AppError("This booking has already been paid", 409);
@@ -174,7 +162,7 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
       couponCode: couponCode || "",
       paymentMethod,
     },
-    description: `Pawffy booking – ${booking.service?.name || "Consultation"}`,
+    description: `Pawffy booking – ${booking.serviceName || "Service"}`,
   });
 
   await prisma.payment.upsert({
@@ -213,7 +201,7 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
     amountMinor,
     currency,
     summary: {
-      serviceName: booking.service?.name || "Consultation",
+      serviceName: booking.serviceName || "Service",
       servicePrice: summary.subtotal,
       platformFee: summary.platformFee,
       tax: summary.taxAmount,
@@ -231,11 +219,7 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
 
   const walletService = require("./wallet.service");
 
-  const booking = await getBookingForUser(userId, bookingId, {
-    service: { select: { name: true, price: true } },
-    vet: { select: { name: true, consultationFee: true } },
-    payment: true,
-  });
+  const booking = await getBookingForUser(userId, bookingId, { payment: true });
 
   if (booking.payment?.paymentStatus === "paid") {
     throw new AppError("This booking has already been paid", 409);
@@ -291,12 +275,11 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
       },
     });
 
-    const updatedBooking = await tx.booking.update({
+    const updatedBooking = await tx.partnerBooking.update({
       where: { id: bookingId },
       data: { status: "confirmed" },
       include: {
-        pet: { select: { id: true, name: true, breed: true } },
-        vet: { select: { id: true, name: true, clinicName: true, clinicAddress: true, clinicCity: true } },
+        business: { select: { id: true, businessName: true, location: true, city: true, state: true } },
         service: { select: { name: true, price: true } },
       },
     });
@@ -330,22 +313,21 @@ async function verifyPayment(userId, paymentIntentId) {
     include: {
       booking: {
         select: {
-          userId: true,
+          customerId: true,
           id: true, status: true, bookingDate: true, bookingTime: true,
-          pet: { select: { name: true } },
-          vet: { select: { name: true } },
+          serviceName: true,
         },
       },
     },
   });
 
   if (!payment) throw new AppError("Payment record not found", 404);
-  if (payment.booking.userId !== userId) throw new AppError("Access denied", 403);
+  if (payment.booking.customerId !== userId) throw new AppError("Access denied", 403);
 
   if (intent.status === "succeeded" && payment.paymentStatus !== "paid") {
     await finalizeBookingPayment(payment.bookingId, paymentIntentId);
     payment.paymentStatus = "paid";
-    const refreshed = await prisma.booking.findUnique({ where: { id: payment.bookingId }, select: { status: true } });
+    const refreshed = await prisma.partnerBooking.findUnique({ where: { id: payment.bookingId }, select: { status: true } });
     if (refreshed) payment.booking.status = refreshed.status;
   }
 
@@ -364,18 +346,17 @@ async function getPaymentByBooking(req, bookingId) {
     include: {
       booking: {
         select: {
-          userId: true,
-          bookingType: true, bookingDate: true, bookingTime: true, status: true,
-          pet: { select: { name: true, species: true } },
-          vet: { select: { name: true, clinicName: true } },
-          service: { select: { name: true } },
+          customerId: true,
+          serviceName: true, bookingDate: true, bookingTime: true, status: true,
+          business: { select: { id: true, businessName: true } },
+          service: { select: { name: true, serviceType: true } },
         },
       },
     },
   });
 
   if (!payment) throw new AppError("Payment not found", 404);
-  assertOwnerOrAdmin(req, payment.booking.userId);
+  assertOwnerOrAdmin(req, payment.booking.customerId);
   return payment;
 }
 

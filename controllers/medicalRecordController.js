@@ -3,17 +3,10 @@ const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { requirePetAccess, assertPetAccess } = require("../utils/petAccess");
 
-async function resolveVetIdForUser(user) {
-  if (!user.email || user.role === "customer") return null;
-  const vet = await prisma.vet.findUnique({ where: { email: user.email } });
-  return vet?.id || null;
-}
-
 exports.createRecord = asyncHandler(async (req, res) => {
   const { petId, diagnosis, prescription, allergies, symptoms, reportUrl } = req.body;
 
   const pet = await requirePetAccess(req.user, petId);
-  const createdByVet = await resolveVetIdForUser(req.user);
 
   const record = await prisma.medicalRecord.create({
     data: {
@@ -23,7 +16,6 @@ exports.createRecord = asyncHandler(async (req, res) => {
       allergies,
       symptoms,
       reportUrl,
-      createdByVet,
     },
   });
 

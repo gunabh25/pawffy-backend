@@ -26,16 +26,6 @@ async function deleteAccount(userId) {
     throw new AppError("Cannot delete account with active service bookings", 409);
   }
 
-  const activeVetBooking = await prisma.booking.count({
-    where: {
-      userId,
-      status: { in: ["pending", "confirmed"] },
-    },
-  });
-  if (activeVetBooking > 0) {
-    throw new AppError("Cannot delete account with active vet bookings", 409);
-  }
-
   if (user.partnerBusiness && user.partnerBusiness.verificationStatus === "verified") {
     throw new AppError("Vendor accounts must contact support to delete a verified business profile", 409);
   }

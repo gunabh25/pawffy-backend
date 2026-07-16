@@ -98,7 +98,6 @@ app.use("/api/wallet",          require("./routes/wallet"));
 app.use("/api/static",          require("./routes/static"));
 app.use("/api/users",           require("./routes/user"));
 app.use("/api/pets",            require("./routes/pet"));
-app.use("/api/vets",            require("./routes/vet"));
 app.use("/api/bookings",        require("./routes/booking"));
 app.use("/api/payments",        require("./routes/payment"));
 app.use("/api/medical-records", require("./routes/medicalRecord"));

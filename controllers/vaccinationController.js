@@ -3,18 +3,10 @@ const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { requirePetAccess, assertPetAccess } = require("../utils/petAccess");
 
-async function resolveVetIdForUser(user) {
-  if (!user.email || user.role === "customer") return null;
-  const vet = await prisma.vet.findUnique({ where: { email: user.email } });
-  return vet?.id || null;
-}
-
 exports.addVaccination = asyncHandler(async (req, res) => {
-  const { petId, vaccineName, vaccinationDate, nextDueDate, vetId, notes } = req.body;
+  const { petId, vaccineName, vaccinationDate, nextDueDate, notes } = req.body;
 
   await requirePetAccess(req.user, petId);
-
-  const resolvedVetId = vetId || (await resolveVetIdForUser(req.user));
 
   const vaccination = await prisma.vaccination.create({
     data: {
@@ -22,7 +14,6 @@ exports.addVaccination = asyncHandler(async (req, res) => {
       vaccineName,
       vaccinationDate: new Date(vaccinationDate),
       nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-      vetId: resolvedVetId,
       notes,
     },
   });
@@ -35,7 +26,6 @@ exports.getVaccinationsByPet = asyncHandler(async (req, res) => {
 
   const vaccinations = await prisma.vaccination.findMany({
     where: { petId: req.params.petId },
-    include: { vet: { select: { id: true, name: true, clinicName: true } } },
     orderBy: { vaccinationDate: "desc" },
   });
 

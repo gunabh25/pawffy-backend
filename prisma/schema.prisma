@@ -25,25 +25,6 @@ enum ServiceType {
   poop_scooper
 }
 
-enum BookingType {
-  veterinarian
-  grooming
-  walking
-  training
-  boarding
-  sitting
-  sitter
-  poop_scooper
-  transport
-}
-
-enum BookingStatus {
-  pending
-  confirmed
-  completed
-  cancelled
-}
-
 enum PaymentStatus {
   pending
   paid
@@ -173,47 +154,43 @@ enum AdoptionDocumentType {
 }
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  clerkId      String?  @unique @map("clerk_id")
-  supabaseId   String?  @unique @map("supabase_id")
-  name         String?
-  email        String?  @unique
-  phone        String?  @unique
-  pendingEmail  String?  @unique @map("pending_email")
-  pendingPhone  String?  @unique @map("pending_phone")
+  id              String    @id @default(uuid()) @db.Uuid
+  clerkId         String?   @unique @map("clerk_id")
+  supabaseId      String?   @unique @map("supabase_id")
+  name            String?
+  email           String?   @unique
+  phone           String?   @unique
+  pendingEmail    String?   @unique @map("pending_email")
+  pendingPhone    String?   @unique @map("pending_phone")
   emailVerifiedAt DateTime? @map("email_verified_at")
   phoneVerifiedAt DateTime? @map("phone_verified_at")
-  passwordHash  String?  @map("password_hash")
-  tokenVersion  Int      @default(0) @map("token_version")
-  role          Role     @default(customer)
-  profileImage  String?  @map("profile_image")
-  address      String?
-  city         String?
-  state        String?
-  latitude     Decimal? @db.Decimal(10, 7)
-  longitude    Decimal? @db.Decimal(10, 7)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  passwordHash    String?   @map("password_hash")
+  tokenVersion    Int       @default(0) @map("token_version")
+  role            Role      @default(customer)
+  profileImage    String?   @map("profile_image")
+  address         String?
+  city            String?
+  state           String?
+  latitude        Decimal?  @db.Decimal(10, 7)
+  longitude       Decimal?  @db.Decimal(10, 7)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  pets                Pet[]
-  bookings            Booking[]
-  notifications       Notification[]
-  passwordResetTokens PasswordResetToken[]
-  sentMessages        Message[]            @relation("MessageSender")
-  conversations1      Conversation[]       @relation("ConversationUser1")
-  conversations2      Conversation[]       @relation("ConversationUser2")
-  vetReviews          VetReview[]
-  petReports          PetReport[]
-  walkingBookings     WalkingBooking[]     @relation("WalkingBookingUser")
-  partnerWalkBookings WalkingBooking[]     @relation("WalkingBookingPartner")
-  partnerBusiness     PartnerBusiness?
-  partnerBookings     PartnerBooking[]     @relation("PartnerBookingCustomer")
-  businessReviews     BusinessReview[]
-  supportTickets      SupportTicket[]
+  pets                      Pet[]
+  notifications             Notification[]
+  passwordResetTokens       PasswordResetToken[]
+  sentMessages              Message[]                  @relation("MessageSender")
+  conversations1            Conversation[]             @relation("ConversationUser1")
+  conversations2            Conversation[]             @relation("ConversationUser2")
+  petReports                PetReport[]
+  partnerBusiness           PartnerBusiness?
+  partnerBookings           PartnerBooking[]           @relation("PartnerBookingCustomer")
+  businessReviews           BusinessReview[]
+  supportTickets            SupportTicket[]
   contactVerificationTokens ContactVerificationToken[]
-  adoptionApplications AdoptionApplication[] @relation("AdoptionApplicant")
-  addresses           UserAddress[]
-  wallet              Wallet?
+  adoptionApplications      AdoptionApplication[]      @relation("AdoptionApplicant")
+  addresses                 UserAddress[]
+  wallet                    Wallet?
 
   @@map("users")
 }
@@ -315,115 +292,13 @@ model Pet {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  owner          User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  bookings       Booking[]
-  medicalRecords MedicalRecord[]
-  vaccinations   Vaccination[]
+  owner                User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings             PartnerBooking[]
+  medicalRecords       MedicalRecord[]
+  vaccinations         Vaccination[]
   adoptionApplications AdoptionApplication[]
 
   @@map("pets")
-}
-
-model Vet {
-  id              String      @id @default(uuid()) @db.Uuid
-  name            String
-  email           String      @unique
-  serviceType     ServiceType @default(vet) @map("service_type")
-  specialization  String?
-  experienceYears Int?        @map("experience_years")
-  clinicName      String?     @map("clinic_name")
-  clinicAddress   String?     @map("clinic_address")
-  clinicCity      String?     @map("clinic_city")
-  profileImage    String?     @map("profile_image")
-  phone           String?
-  consultationFee Decimal?    @map("consultation_fee") @db.Decimal(10, 2)
-  rating          Decimal?    @db.Decimal(3, 2)
-  city            String?
-  state           String?
-  availableStatus Boolean     @default(true) @map("available_status")
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
-
-  bookings       Booking[]
-  availability   VetAvailability[]
-  medicalRecords MedicalRecord[]
-  vaccinations   Vaccination[]
-  reviews        VetReview[]
-  services       VetService[]
-
-  @@map("vets")
-}
-
-model VetService {
-  id          String   @id @default(uuid()) @db.Uuid
-  vetId       String   @map("vet_id") @db.Uuid
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  duration    Int      @default(30)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  vet      Vet       @relation(fields: [vetId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-
-  @@map("vet_services")
-}
-
-model VetAvailability {
-  id           String  @id @default(uuid()) @db.Uuid
-  vetId        String  @map("vet_id") @db.Uuid
-  dayOfWeek    String  @map("day_of_week")
-  startTime    String  @map("start_time")
-  endTime      String  @map("end_time")
-  slotDuration Int     @default(30) @map("slot_duration")
-  isAvailable  Boolean @default(true) @map("is_available")
-
-  vet Vet @relation(fields: [vetId], references: [id], onDelete: Cascade)
-
-  @@map("vet_availability")
-}
-
-model VetReview {
-  id        String   @id @default(uuid()) @db.Uuid
-  vetId     String   @map("vet_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  bookingId String?  @unique @map("booking_id") @db.Uuid
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now()) @map("created_at")
-
-  vet  Vet     @relation(fields: [vetId], references: [id], onDelete: Cascade)
-  user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([vetId, userId])
-  @@map("vet_reviews")
-}
-
-model Booking {
-  id                String        @id @default(uuid()) @db.Uuid
-  userId            String        @map("user_id") @db.Uuid
-  petId             String        @map("pet_id") @db.Uuid
-  vetId             String?       @map("vet_id") @db.Uuid
-  serviceId         String?       @map("service_id") @db.Uuid
-  bookingType       BookingType   @map("booking_type")
-  bookingDate       DateTime      @map("booking_date") @db.Date
-  bookingTime       String        @map("booking_time")
-  status            BookingStatus @default(pending)
-  reasonForVisit    String?       @map("reason_for_visit")
-  symptoms          String?
-  symptomsDuration  String?       @map("symptoms_duration")
-  notes             String?
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
-
-  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pet     Pet         @relation(fields: [petId], references: [id], onDelete: Cascade)
-  vet     Vet?        @relation(fields: [vetId], references: [id])
-  service VetService? @relation(fields: [serviceId], references: [id])
-  payment Payment?
-
-  @@map("bookings")
 }
 
 model Payment {
@@ -442,21 +317,21 @@ model Payment {
   paidAt        DateTime?     @map("paid_at")
   createdAt     DateTime      @default(now()) @map("created_at")
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking PartnerBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
 model Coupon {
-  id         String    @id @default(uuid()) @db.Uuid
-  code       String    @unique
-  discount   Decimal   @db.Decimal(5, 2)
-  isPercent  Boolean   @default(true) @map("is_percent")
-  maxUses    Int?      @map("max_uses")
-  usedCount  Int       @default(0) @map("used_count")
-  expiresAt  DateTime? @map("expires_at")
-  isActive   Boolean   @default(true) @map("is_active")
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id        String    @id @default(uuid()) @db.Uuid
+  code      String    @unique
+  discount  Decimal   @db.Decimal(5, 2)
+  isPercent Boolean   @default(true) @map("is_percent")
+  maxUses   Int?      @map("max_uses")
+  usedCount Int       @default(0) @map("used_count")
+  expiresAt DateTime? @map("expires_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@map("coupons")
 }
@@ -469,11 +344,9 @@ model MedicalRecord {
   allergies    String?
   symptoms     String?
   reportUrl    String?  @map("report_url")
-  createdByVet String?  @map("created_by_vet") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")
 
-  pet Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
-  vet Vet? @relation(fields: [createdByVet], references: [id])
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@map("medical_records")
 }
@@ -484,12 +357,10 @@ model Vaccination {
   vaccineName     String    @map("vaccine_name")
   vaccinationDate DateTime  @map("vaccination_date") @db.Date
   nextDueDate     DateTime? @map("next_due_date") @db.Date
-  vetId           String?   @map("vet_id") @db.Uuid
   notes           String?
   createdAt       DateTime  @default(now()) @map("created_at")
 
-  pet Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
-  vet Vet? @relation(fields: [vetId], references: [id])
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
 
   @@map("vaccinations")
 }
@@ -562,67 +433,43 @@ model PetReport {
   @@map("pet_reports")
 }
 
-model WalkingBooking {
-  id              String        @id @default(uuid()) @db.Uuid
-  userId          String        @map("user_id") @db.Uuid
-  partnerId       String        @map("partner_id") @db.Uuid
-  walkingType     String        @map("walking_type")
-  selectedDays    String        @map("selected_days")
-  walkingDuration String        @map("walking_duration")
-  selectedAddress Json          @map("selected_address")
-  selectedPetList Json          @map("selected_pet_list")
-  selectedService Json          @map("selected_service")
-  selectedPackage Json?         @map("selected_package")
-  isPackage       Boolean       @default(false) @map("is_package")
-  slotTime        Json          @map("slot_time")
-  paymentStatus   String        @default("Pending") @map("payment_status")
-  status          BookingStatus @default(pending)
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-
-  user    User @relation("WalkingBookingUser", fields: [userId], references: [id], onDelete: Cascade)
-  partner User @relation("WalkingBookingPartner", fields: [partnerId], references: [id])
-
-  @@map("walking_bookings")
-}
-
 model PartnerBusiness {
-  id                   String             @id @default(uuid()) @db.Uuid
-  userId               String             @unique @map("user_id") @db.Uuid
-  businessName         String?            @map("business_name")
-  contactName          String?            @map("contact_name")
-  phone                String?
-  location             String?
-  city                 String?
-  state                String?
-  description          String?
-  profileTitle         String?            @map("profile_title")
-  isOnline             Boolean            @default(true) @map("is_online")
-  sameDayRequests      Boolean            @default(false) @map("same_day_requests")
-  onboardingStep       OnboardingStep     @default(business) @map("onboarding_step")
-  verificationStatus   VerificationStatus @default(incomplete) @map("verification_status")
-  rejectionReason      String?            @map("rejection_reason")
-  termsAcceptedAt      DateTime?          @map("terms_accepted_at")
-  submittedAt          DateTime?          @map("submitted_at")
-  verifiedAt           DateTime?          @map("verified_at")
-  membershipPlan       String             @default("free") @map("membership_plan")
-  membershipExpiresAt  DateTime?          @map("membership_expires_at")
-  rating               Decimal?           @db.Decimal(3, 2)
-  reviewCount          Int                @default(0) @map("review_count")
-  pushRequests         Boolean            @default(true) @map("push_requests")
-  pushMessages         Boolean            @default(true) @map("push_messages")
-  emailMarketing       Boolean            @default(false) @map("email_marketing")
-  smsAlerts            Boolean            @default(true) @map("sms_alerts")
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
+  id                  String             @id @default(uuid()) @db.Uuid
+  userId              String             @unique @map("user_id") @db.Uuid
+  businessName        String?            @map("business_name")
+  contactName         String?            @map("contact_name")
+  phone               String?
+  location            String?
+  city                String?
+  state               String?
+  description         String?
+  profileTitle        String?            @map("profile_title")
+  isOnline            Boolean            @default(true) @map("is_online")
+  sameDayRequests     Boolean            @default(false) @map("same_day_requests")
+  onboardingStep      OnboardingStep     @default(business) @map("onboarding_step")
+  verificationStatus  VerificationStatus @default(incomplete) @map("verification_status")
+  rejectionReason     String?            @map("rejection_reason")
+  termsAcceptedAt     DateTime?          @map("terms_accepted_at")
+  submittedAt         DateTime?          @map("submitted_at")
+  verifiedAt          DateTime?          @map("verified_at")
+  membershipPlan      String             @default("free") @map("membership_plan")
+  membershipExpiresAt DateTime?          @map("membership_expires_at")
+  rating              Decimal?           @db.Decimal(3, 2)
+  reviewCount         Int                @default(0) @map("review_count")
+  pushRequests        Boolean            @default(true) @map("push_requests")
+  pushMessages        Boolean            @default(true) @map("push_messages")
+  emailMarketing      Boolean            @default(false) @map("email_marketing")
+  smsAlerts           Boolean            @default(true) @map("sms_alerts")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
 
-  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  services     PartnerService[]
-  availability PartnerAvailability[]
-  documents    PartnerDocument[]
-  blockedDates PartnerBlockedDate[]
-  bookings     PartnerBooking[]
-  reviews      BusinessReview[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services             PartnerService[]
+  availability         PartnerAvailability[]
+  documents            PartnerDocument[]
+  blockedDates         PartnerBlockedDate[]
+  bookings             PartnerBooking[]
+  reviews              BusinessReview[]
   adoptionApplications AdoptionApplication[]
 
   @@map("partner_businesses")
@@ -694,42 +541,44 @@ model PartnerBlockedDate {
 }
 
 model PartnerBooking {
-  id           String               @id @default(uuid()) @db.Uuid
-  businessId   String               @map("business_id") @db.Uuid
-  customerId   String               @map("customer_id") @db.Uuid
-  petId        String?              @map("pet_id") @db.Uuid
-  serviceId    String?              @map("service_id") @db.Uuid
-  serviceName  String               @map("service_name")
-  petName      String?              @map("pet_name")
-  petBreed     String?              @map("pet_breed")
-  petAge       String?              @map("pet_age")
-  petImageUrl  String?              @map("pet_image_url")
-  bookingDate  DateTime             @map("booking_date") @db.Date
-  bookingTime  String               @map("booking_time")
-  location     String?
-  price        Decimal              @db.Decimal(10, 2)
-  status       PartnerBookingStatus @default(pending)
-  servicePhase PartnerServicePhase  @default(not_started) @map("service_phase")
-  notes        String?
-  isNew        Boolean              @default(true) @map("is_new")
-  respondedAt  DateTime?            @map("responded_at")
-  startedAt    DateTime?            @map("started_at")
-  inProgressAt DateTime?            @map("in_progress_at")
-  completedAt  DateTime?            @map("completed_at")
-  progressData Json?                @map("progress_data")
-  completionSummary String?         @map("completion_summary")
-  serviceMedia Json?                @map("service_media")
-  serviceLatitude Decimal?          @map("service_latitude") @db.Decimal(10, 7)
-  serviceLongitude Decimal?         @map("service_longitude") @db.Decimal(10, 7)
-  serviceAddress String?            @map("service_address")
-  lastLocationAt DateTime?          @map("last_location_at")
-  createdAt    DateTime             @default(now()) @map("created_at")
-  updatedAt    DateTime             @updatedAt @map("updated_at")
+  id                String               @id @default(uuid()) @db.Uuid
+  businessId        String               @map("business_id") @db.Uuid
+  customerId        String               @map("customer_id") @db.Uuid
+  petId             String?              @map("pet_id") @db.Uuid
+  serviceId         String?              @map("service_id") @db.Uuid
+  serviceName       String               @map("service_name")
+  petName           String?              @map("pet_name")
+  petBreed          String?              @map("pet_breed")
+  petAge            String?              @map("pet_age")
+  petImageUrl       String?              @map("pet_image_url")
+  bookingDate       DateTime             @map("booking_date") @db.Date
+  bookingTime       String               @map("booking_time")
+  location          String?
+  price             Decimal              @db.Decimal(10, 2)
+  status            PartnerBookingStatus @default(pending)
+  servicePhase      PartnerServicePhase  @default(not_started) @map("service_phase")
+  notes             String?
+  isNew             Boolean              @default(true) @map("is_new")
+  respondedAt       DateTime?            @map("responded_at")
+  startedAt         DateTime?            @map("started_at")
+  inProgressAt      DateTime?            @map("in_progress_at")
+  completedAt       DateTime?            @map("completed_at")
+  progressData      Json?                @map("progress_data")
+  completionSummary String?              @map("completion_summary")
+  serviceMedia      Json?                @map("service_media")
+  serviceLatitude   Decimal?             @map("service_latitude") @db.Decimal(10, 7)
+  serviceLongitude  Decimal?             @map("service_longitude") @db.Decimal(10, 7)
+  serviceAddress    String?              @map("service_address")
+  lastLocationAt    DateTime?            @map("last_location_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
 
   business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer User            @relation("PartnerBookingCustomer", fields: [customerId], references: [id], onDelete: Cascade)
   service  PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  pet      Pet?            @relation(fields: [petId], references: [id], onDelete: SetNull)
   review   BusinessReview?
+  payment  Payment?
 
   @@index([businessId, status])
   @@index([businessId, bookingDate])
@@ -737,17 +586,17 @@ model PartnerBooking {
 }
 
 model SupportTicket {
-  id          String                @id @default(uuid()) @db.Uuid
-  userId      String                @map("user_id") @db.Uuid
-  subject     String
-  category    SupportTicketCategory @default(general)
-  description String
-  status      String                @default("open")
-  attachmentFileName String?        @map("attachment_file_name")
-  attachmentMimeType String?        @map("attachment_mime_type")
-  attachmentData     String?        @map("attachment_data")
-  createdAt   DateTime              @default(now()) @map("created_at")
-  updatedAt   DateTime              @updatedAt @map("updated_at")
+  id                 String                @id @default(uuid()) @db.Uuid
+  userId             String                @map("user_id") @db.Uuid
+  subject            String
+  category           SupportTicketCategory @default(general)
+  description        String
+  status             String                @default("open")
+  attachmentFileName String?               @map("attachment_file_name")
+  attachmentMimeType String?               @map("attachment_mime_type")
+  attachmentData     String?               @map("attachment_data")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -756,37 +605,37 @@ model SupportTicket {
 }
 
 model AdoptionApplication {
-  id                String               @id @default(uuid()) @db.Uuid
-  businessId        String               @map("business_id") @db.Uuid
-  petId             String               @map("pet_id") @db.Uuid
-  applicantId       String               @map("applicant_id") @db.Uuid
-  status            AdoptionStatus       @default(pending_review)
-  reviewDecision    AdoptionReviewDecision? @map("review_decision")
-  reviewNotes       String?              @map("review_notes")
-  rejectionReason   String?              @map("rejection_reason")
-  applicationData   Json?                @map("application_data")
-  applicantProfile  Json?                @map("applicant_profile")
-  meetApprovedAt    DateTime?            @map("meet_approved_at")
-  meetScheduledFor  DateTime?            @map("meet_scheduled_for")
-  meetTimeSlot      String?              @map("meet_time_slot")
-  meetingType       AdoptionMeetingType? @map("meeting_type")
-  meetingNotes      String?              @map("meeting_notes")
-  meetOutcome       AdoptionMeetOutcome? @map("meet_outcome")
-  meetOutcomeNotes  String?              @map("meet_outcome_notes")
-  meetOutcomeAt     DateTime?            @map("meet_outcome_at")
-  approvedAt        DateTime?            @map("approved_at")
-  declinedAt        DateTime?            @map("declined_at")
-  completedAt       DateTime?            @map("completed_at")
-  requestedInfoAt   DateTime?            @map("requested_info_at")
-  feeAmount         Decimal              @default(150) @map("fee_amount") @db.Decimal(10, 2)
-  createdAt         DateTime             @default(now()) @map("created_at")
-  updatedAt         DateTime             @updatedAt @map("updated_at")
+  id               String                  @id @default(uuid()) @db.Uuid
+  businessId       String                  @map("business_id") @db.Uuid
+  petId            String                  @map("pet_id") @db.Uuid
+  applicantId      String                  @map("applicant_id") @db.Uuid
+  status           AdoptionStatus          @default(pending_review)
+  reviewDecision   AdoptionReviewDecision? @map("review_decision")
+  reviewNotes      String?                 @map("review_notes")
+  rejectionReason  String?                 @map("rejection_reason")
+  applicationData  Json?                   @map("application_data")
+  applicantProfile Json?                   @map("applicant_profile")
+  meetApprovedAt   DateTime?               @map("meet_approved_at")
+  meetScheduledFor DateTime?               @map("meet_scheduled_for")
+  meetTimeSlot     String?                 @map("meet_time_slot")
+  meetingType      AdoptionMeetingType?    @map("meeting_type")
+  meetingNotes     String?                 @map("meeting_notes")
+  meetOutcome      AdoptionMeetOutcome?    @map("meet_outcome")
+  meetOutcomeNotes String?                 @map("meet_outcome_notes")
+  meetOutcomeAt    DateTime?               @map("meet_outcome_at")
+  approvedAt       DateTime?               @map("approved_at")
+  declinedAt       DateTime?               @map("declined_at")
+  completedAt      DateTime?               @map("completed_at")
+  requestedInfoAt  DateTime?               @map("requested_info_at")
+  feeAmount        Decimal                 @default(150) @map("fee_amount") @db.Decimal(10, 2)
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
 
-  business   PartnerBusiness   @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  pet        Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
-  applicant  User              @relation("AdoptionApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
-  documents  AdoptionDocument[]
-  payment    AdoptionPayment?
+  business  PartnerBusiness    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  pet       Pet                @relation(fields: [petId], references: [id], onDelete: Cascade)
+  applicant User               @relation("AdoptionApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  documents AdoptionDocument[]
+  payment   AdoptionPayment?
 
   @@index([businessId, status])
   @@index([applicantId, status])
@@ -795,13 +644,13 @@ model AdoptionApplication {
 }
 
 model AdoptionDocument {
-  id           String              @id @default(uuid()) @db.Uuid
-  adoptionId   String              @map("adoption_id") @db.Uuid
+  id           String               @id @default(uuid()) @db.Uuid
+  adoptionId   String               @map("adoption_id") @db.Uuid
   documentType AdoptionDocumentType @default(other) @map("document_type")
-  fileName     String              @map("file_name")
-  mimeType     String              @map("mime_type")
-  fileData     String              @map("file_data")
-  createdAt    DateTime            @default(now()) @map("created_at")
+  fileName     String               @map("file_name")
+  mimeType     String               @map("mime_type")
+  fileData     String               @map("file_data")
+  createdAt    DateTime             @default(now()) @map("created_at")
 
   adoption AdoptionApplication @relation(fields: [adoptionId], references: [id], onDelete: Cascade)
 
@@ -833,16 +682,16 @@ model AdoptionPayment {
 }
 
 model BusinessReview {
-  id           String          @id @default(uuid()) @db.Uuid
-  businessId   String          @map("business_id") @db.Uuid
-  userId       String          @map("user_id") @db.Uuid
-  bookingId    String          @unique @map("booking_id") @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
+  businessId   String    @map("business_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  bookingId    String    @unique @map("booking_id") @db.Uuid
   rating       Int
   comment      String?
-  replyContent String?         @map("reply_content")
-  repliedAt    DateTime?       @map("replied_at")
-  createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  replyContent String?   @map("reply_content")
+  repliedAt    DateTime? @map("replied_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)

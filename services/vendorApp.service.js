@@ -441,28 +441,31 @@ async function getRequests(userId, { status = "pending", search } = {}) {
 
 async function respondToRequest(userId, bookingId, action) {
   const { business, booking } = await getPartnerBookingOrThrow(userId, bookingId);
-  if (booking.status !== "pending") {
-    throw new AppError("Only pending requests can be accepted or rejected", 400);
+
+  // Pay-to-confirm: bookings are confirmed automatically once the customer completes
+  // payment, so vendors can only decline a request, not manually accept it.
+  if (action === "accept") {
+    throw new AppError("Bookings are confirmed automatically once the customer completes payment", 400);
   }
 
-  const status = action === "accept" ? "confirmed" : "rejected";
+  if (booking.status !== "pending" && booking.status !== "confirmed") {
+    throw new AppError("Only pending or confirmed bookings can be declined", 400);
+  }
+
   const updated = await prisma.partnerBooking.update({
     where: { id: bookingId },
     data: {
-      status,
+      status: "rejected",
       isNew: false,
       respondedAt: new Date(),
-      ...(action === "accept" ? { servicePhase: "not_started" } : {}),
     },
     include: { customer: { select: { id: true, name: true, profileImage: true } } },
   });
 
   await createCustomerNotification(
     booking.customerId,
-    action === "accept" ? "Request accepted" : "Request declined",
-    action === "accept"
-      ? `${business.businessName || "A partner"} accepted your ${booking.serviceName} request.`
-      : `${business.businessName || "A partner"} declined your ${booking.serviceName} request.`
+    "Request declined",
+    `${business.businessName || "A partner"} declined your ${booking.serviceName} request.`
   );
 
   return serializeBooking(updated);

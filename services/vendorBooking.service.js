@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
+const { formatDateTime, formatAppointmentId } = require("../utils/formatters");
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_NAMES_UTC = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -167,8 +168,8 @@ async function getVendorSlotsInternal(businessId, dateStr, { serviceId, slotDura
   };
 }
 
-async function createVendorRequest(userId, vendorId, payload) {
-  const { serviceId, petId, bookingDate, bookingTime, location, notes } = payload;
+async function createBooking(userId, payload) {
+  const { vendorId, serviceId, petId, bookingDate, bookingTime, location, notes } = payload;
 
   const business = await prisma.partnerBusiness.findUnique({
     where: { id: vendorId },
@@ -253,8 +254,88 @@ async function createVendorRequest(userId, vendorId, payload) {
   return created;
 }
 
+const BUSINESS_SELECT = {
+  id: true,
+  businessName: true,
+  profileTitle: true,
+  location: true,
+  city: true,
+  state: true,
+  phone: true,
+  rating: true,
+};
+
+const SERVICE_SELECT = {
+  id: true,
+  name: true,
+  description: true,
+  serviceType: true,
+  price: true,
+  durationMinutes: true,
+};
+
+async function getMyBookings(userId, { status } = {}) {
+  return prisma.partnerBooking.findMany({
+    where: {
+      customerId: userId,
+      ...(status && { status }),
+    },
+    include: {
+      business: { select: BUSINESS_SELECT },
+      service: { select: SERVICE_SELECT },
+      payment: { select: { paymentStatus: true, amount: true, paymentMethod: true } },
+    },
+    orderBy: { bookingDate: "desc" },
+  });
+}
+
+async function getBookingById(userId, bookingId) {
+  const booking = await prisma.partnerBooking.findUnique({
+    where: { id: bookingId },
+    include: {
+      business: { select: BUSINESS_SELECT },
+      service: { select: SERVICE_SELECT },
+      payment: true,
+    },
+  });
+
+  if (!booking) throw new AppError("Booking not found", 404);
+  if (booking.customerId !== userId) throw new AppError("Access denied", 403);
+
+  return {
+    ...booking,
+    appointmentId: formatAppointmentId(booking.id),
+    dateTimeFormatted: formatDateTime(booking.bookingDate, booking.bookingTime),
+  };
+}
+
+async function cancelBooking(userId, bookingId) {
+  const booking = await prisma.partnerBooking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, customerId: true, status: true },
+  });
+
+  if (!booking) throw new AppError("Booking not found", 404);
+  if (booking.customerId !== userId) throw new AppError("Access denied", 403);
+  if (["completed", "cancelled", "rejected"].includes(booking.status)) {
+    throw new AppError(`Cannot cancel a ${booking.status} booking`, 409);
+  }
+
+  return prisma.partnerBooking.update({
+    where: { id: bookingId },
+    data: { status: "cancelled" },
+    include: {
+      business: { select: { id: true, businessName: true } },
+      service: { select: { id: true, name: true } },
+    },
+  });
+}
+
 module.exports = {
   getVendorSlotsInternal,
-  createVendorRequest,
+  createBooking,
+  getMyBookings,
+  getBookingById,
+  cancelBooking,
 };
 
