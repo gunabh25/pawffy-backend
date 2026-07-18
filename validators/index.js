@@ -484,6 +484,17 @@ exports.replyToBusinessReviewSchema = Joi.object({
   replyContent: Joi.string().min(1).max(1000).required(),
 });
 
+exports.createCustomerReviewSchema = Joi.object({
+  bookingId: uuid().required(),
+  rating: Joi.number().integer().min(1).max(5).required(),
+  comment: Joi.string().max(1000).allow("", null).optional(),
+});
+
+exports.customerReviewsQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(20),
+});
+
 // ─── Vendor preferences & support ────────────────────────────────────────────
 exports.vendorNotificationPreferencesSchema = Joi.object({
   pushRequests: Joi.boolean().required(),

@@ -179,10 +179,12 @@ model User {
   address         String?
   city            String?
   state           String?
-  latitude        Decimal?  @db.Decimal(10, 7)
-  longitude       Decimal?  @db.Decimal(10, 7)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  latitude             Decimal?  @db.Decimal(10, 7)
+  longitude            Decimal?  @db.Decimal(10, 7)
+  customerRating       Decimal?  @map("customer_rating") @db.Decimal(3, 2)
+  customerReviewCount  Int       @default(0) @map("customer_review_count")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   pets                      Pet[]
   notifications             Notification[]
@@ -194,6 +196,7 @@ model User {
   partnerBusiness           PartnerBusiness?
   partnerBookings           PartnerBooking[]           @relation("PartnerBookingCustomer")
   businessReviews           BusinessReview[]
+  customerReviewsReceived   CustomerReview[]           @relation("CustomerReviewCustomer")
   supportTickets            SupportTicket[]
   contactVerificationTokens ContactVerificationToken[]
   adoptionApplications      AdoptionApplication[]      @relation("AdoptionApplicant")
@@ -490,6 +493,7 @@ model PartnerBusiness {
   blockedDates         PartnerBlockedDate[]
   bookings             PartnerBooking[]
   reviews              BusinessReview[]
+  customerReviews      CustomerReview[]
   adoptionApplications AdoptionApplication[]
 
   @@map("partner_businesses")
@@ -593,12 +597,13 @@ model PartnerBooking {
   createdAt         DateTime             @default(now()) @map("created_at")
   updatedAt         DateTime             @updatedAt @map("updated_at")
 
-  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer User            @relation("PartnerBookingCustomer", fields: [customerId], references: [id], onDelete: Cascade)
-  service  PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  pet      Pet?            @relation(fields: [petId], references: [id], onDelete: SetNull)
-  review   BusinessReview?
-  payment  Payment?
+  business        PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer        User            @relation("PartnerBookingCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  service         PartnerService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  pet             Pet?            @relation(fields: [petId], references: [id], onDelete: SetNull)
+  review          BusinessReview?
+  customerReview  CustomerReview?
+  payment         Payment?
 
   @@index([businessId, status])
   @@index([businessId, bookingDate])
@@ -720,6 +725,26 @@ model BusinessReview {
   @@index([businessId, createdAt])
   @@index([userId, createdAt])
   @@map("business_reviews")
+}
+
+// Vendor → customer review (one per completed booking)
+model CustomerReview {
+  id         String   @id @default(uuid()) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  customerId String   @map("customer_id") @db.Uuid
+  bookingId  String   @unique @map("booking_id") @db.Uuid
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business PartnerBusiness @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer User            @relation("CustomerReviewCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  booking  PartnerBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+  @@map("customer_reviews")
 }
 
 model Category {

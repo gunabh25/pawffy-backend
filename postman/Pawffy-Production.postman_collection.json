@@ -2,13 +2,13 @@
   "info": {
     "name": "Pawffy API — Production",
     "_postman_id": "pawffy-prod-2026",
-    "description": "Complete Pawffy Backend API — {{baseUrl}}\n\n## Architecture\nRoutes → middleware → controllers → services → Prisma/PostgreSQL\n\n## Security\n- JWT HS256 · tokenVersion invalidation on logout/password change\n- Bearer token required on protected routes (public routes marked 🌐)\n- UUID params validated · ownership checks on user/pet/payment data\n- Rate limits: Auth 10/15min · Forgot/Reset password 5/hour · Payments 20/15min · Uploads 10/15min · Writes 30/15min · Public reads 60/15min · General 120/15min\n- Validation errors: { success:false, message:\"Validation failed\", errors:[...] }\n\n## Authorization rules (latest)\n- GET /users/:id · dashboard user/notifications → self or admin only\n- POST /notifications → admin only\n- PATCH /bookings/:id/status → customers may only set \"cancelled\"; admins may set any status\n- POST /vets/:vetId/reviews → requires completed bookingId; rating computed from reviews only\n- Vet mutations (create/update/services/availability) → admin, or partner matching vet email\n- POST /payments/confirm (wallet) → disabled unless server WALLET_PAYMENTS_ENABLED=true\n- Walking bookings → paymentStatus is server-set; selectedPetList pets must belong to caller\n- Medical records & vaccinations → pet owner or admin only\n\n## Password Policy\nMin 8 chars · uppercase + lowercase + digit\n\n## RBAC\n🔒 Admin: GET /users, DELETE /users/:id, GET /bookings/all, POST /notifications\n🔒 Admin/Partner: POST/PUT /vets, services, availability (partner: own email only)\n🔒 Self or Admin: GET /users/:id, dashboard user/notifications\n\n## Auto variables\ntoken · userId · petId · vetId · serviceId · bookingId · walkingBookingId · partnerId · recordId · vaccId · notifId · conversationId · receiverId · lostReportId · foundReportId · resetToken · couponCode",
+    "description": "Complete Pawffy Backend API — {{baseUrl}}\n\n## Architecture\nRoutes → middleware → controllers → services → Prisma/PostgreSQL\n\n## Security\n- JWT HS256 · tokenVersion invalidation on logout/password change\n- Bearer token required on protected routes (public routes marked 🌐)\n- UUID params validated · ownership checks on user/pet/payment data\n- Rate limits: Auth 10/15min · Forgot/Reset password 5/hour · Payments 20/15min · Uploads 10/15min · Writes 30/15min · Public reads 60/15min · General 120/15min\n- Validation errors: { success:false, message:\"Validation failed\", errors:[...] }\n\n## Authorization rules (latest)\n- GET /users/:id · dashboard user/notifications → self or admin only\n- POST /notifications → admin only\n- PATCH /bookings/:id/status → customers may only set \"cancelled\"; admins may set any status\n- POST /vets/:vetId/reviews → requires completed bookingId; rating computed from reviews only\n- Vet mutations (create/update/services/availability) → admin, or partner matching vet email\n- POST /payments/confirm (wallet) → disabled unless server WALLET_PAYMENTS_ENABLED=true\n- Walking bookings → paymentStatus is server-set; selectedPetList pets must belong to caller\n- Medical records & vaccinations → pet owner or admin only\n\n## Password Policy\nMin 8 chars · uppercase + lowercase + digit\n\n## RBAC\n🔒 Admin: GET /users, DELETE /users/:id, GET /bookings/all, POST /notifications\n🔒 Admin/Partner: POST/PUT /vets, services, availability (partner: own email only)\n🔒 Self or Admin: GET /users/:id, dashboard user/notifications\n\n## Auto variables\ntoken · userId · petId · vetId · serviceId · bookingId · walkingBookingId · partnerId · recordId · vaccId · notifId · conversationId · receiverId · lostReportId · foundReportId · resetToken · couponCode\n\n## Stripe Connect (vendor payouts)\n- Folder: **💸 Vendor Payouts (Stripe Connect)**\n- Endpoints: `GET /api/vendor/payouts/check`, `POST /api/vendor/payouts/onboard`, `GET /api/vendor/payouts/status`\n- Production: `https://pawffy-backend-yyed.onrender.com` (set `baseUrl` = `{{productionBaseUrl}}`)\n- Local: `http://localhost:5001`\n- Variables: stripeAccountId · connectOnboardingUrl\n\n\n## Reviews\nFolder **⭐ Reviews (Customer ↔ Vendor)**: customer rates vendor + vendor rates customer after completed booking. Set `vendorId` (business UUID) and `bookingId`. Switch `token` between customer and partner JWTs as noted in each step.\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://pawffy-backend.onrender.com",
+      "value": "https://pawffy-backend-yyed.onrender.com",
       "type": "string"
     },
     {
@@ -155,6 +155,41 @@
       "key": "addressId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "productionBaseUrl",
+      "value": "https://pawffy-backend-yyed.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "localBaseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "stripeAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "connectOnboardingUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessReviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerReviewId",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -284,6 +319,119 @@
                 "api",
                 "auth",
                 "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💸 Vendor Payouts (Stripe Connect)",
+      "description": "Vendor payout onboarding via Stripe Connect Express.\n\n**Production baseUrl:** `https://pawffy-backend-yyed.onrender.com`\n\nRun order (partner JWT in `token`):\n1. **Check Onboarded** — fast DB check (`onboarded` boolean)\n2. **Onboard** — returns Stripe `url` + `stripeAccountId`. Open URL, finish Express onboarding (test: SSN `000-00-0000`, routing `110000000`, account `000123456789`)\n3. **Get Payout Status** — live Stripe sync; expect `payoutsEnabled: true`, `onboarded: true`\n\nCard payments are blocked until `payoutsEnabled` is true. Wallet payments credit the vendor wallet and do not need Connect.\n\nFlutter: open onboard `url` in WebView; intercept `/vendor/payouts/return` and `/vendor/payouts/refresh`, then call Check/Status.",
+      "item": [
+        {
+          "name": "Check Onboarded (DB, fast)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.stripeAccountId) pm.collectionVariables.set('stripeAccountId', r.data.stripeAccountId);",
+                  "console.log('onboarded:', r.data?.onboarded, '| payoutsEnabled:', r.data?.payoutsEnabled, '| hasStripeAccount:', r.data?.hasStripeAccount);",
+                  "pm.test('check ok', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Fast DB-only check. Use to gate Flutter UI (show \"Set up payouts\" vs \"Payouts active\").",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/payouts/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "payouts",
+                "check"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Onboard (Create Connect Link)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.stripeAccountId) pm.collectionVariables.set('stripeAccountId', r.data.stripeAccountId);",
+                  "if (r.data?.url) {",
+                  "  pm.collectionVariables.set('connectOnboardingUrl', r.data.url);",
+                  "  console.log('Open this URL to finish Stripe onboarding:', r.data.url);",
+                  "}",
+                  "pm.test('has onboarding url', () => pm.expect(r.data?.url).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Creates/retrieves Stripe Express account and returns onboarding URL.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/payouts/onboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "payouts",
+                "onboard"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Payout Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.stripeAccountId) pm.collectionVariables.set('stripeAccountId', r.data.stripeAccountId);",
+                  "console.log('payoutsEnabled:', r.data?.payoutsEnabled, '| onboarded:', r.data?.onboarded, '| requirementsDue:', r.data?.requirementsDue);",
+                  "pm.test('status ok', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Live Stripe sync (retrieves account + updates DB). Call after finishing onboarding.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/payouts/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "payouts",
+                "status"
               ]
             }
           }
@@ -1748,6 +1896,301 @@
       ]
     },
     {
+      "name": "⭐ Reviews (Customer ↔ Vendor)",
+      "description": "Two-way reviews after a **completed** booking.\n\n**Variables needed:** `token` (switch customer/partner JWT), `bookingId`, `vendorId` (same as businessId).\n\n### Run order\n1. Complete a booking end-to-end (pay + vendor complete)\n2. Set `token` = **customer** JWT → **STEP 1** Review Vendor\n3. **STEP 2** Public list (no auth needed)\n4. Set `token` = **partner** JWT → **STEP 3** Vendor inbox + **STEP 4** Reply\n5. Still partner JWT → **STEP 5** Review Customer + **STEP 6** List written\n6. Set `token` = **customer** JWT → **STEP 7** Reviews about me\n\nRules: booking `completed`; one review per booking per direction; rating 1–5.\nProduction: `https://pawffy-backend-yyed.onrender.com`",
+      "item": [
+        {
+          "name": "STEP 1 — Customer → Review Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **customer** JWT in `token`. Body needs completed `bookingId`. Also sets `businessId` if you use that var — set `vendorId` = business UUID.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great service, highly recommend!\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('businessReviewId', r.data.id);",
+                  "pm.test('created or already reviewed', () => pm.expect([201,409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "STEP 2 — Public List Vendor Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Public. No auth required.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 3 — Vendor Inbox (Reviews About Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **partner** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 4 — Vendor Reply to Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **partner** JWT. `businessReviewId` auto-saved from STEP 1.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews/{{businessReviewId}}/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews",
+                "{{businessReviewId}}",
+                "reply"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"replyContent\": \"Thank you for your kind words!\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 5 — Vendor → Review Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **partner** JWT. Same completed `bookingId`.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/customer-reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "customer-reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Friendly customer, pets were well behaved.\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('customerReviewId', r.data.id);",
+                  "pm.test('created or already reviewed', () => pm.expect([201,409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "STEP 6 — Vendor List Customer Reviews I Wrote",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **partner** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/customer-reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "customer-reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 7 — Customer Reviews About Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **customer** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "💬 Messages",
       "item": [
         {
@@ -1948,12 +2391,23 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "description": "Returns Stripe publishable key + currency for flutter_stripe initialization.",
             "url": {
               "raw": "{{baseUrl}}/api/payments/config",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "config"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "config"
+              ]
             }
           }
         },
@@ -2227,18 +2681,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"amount\": 500\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/wallet/top-up/intent",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "wallet", "top-up", "intent"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "top-up",
+                "intent"
+              ]
             }
           }
         },
@@ -2247,18 +2718,35 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"paymentIntentId\": \"{{paymentIntentId}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/wallet/top-up/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "wallet", "top-up", "verify"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallet",
+                "top-up",
+                "verify"
+              ]
             }
           }
         },

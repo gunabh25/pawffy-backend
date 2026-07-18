@@ -10,3 +10,8 @@ exports.getStatus = asyncHandler(async (req, res) => {
   const data = await connectService.refreshAccountStatus(req.user.id);
   res.json({ success: true, data });
 });
+
+exports.checkOnboarded = asyncHandler(async (req, res) => {
+  const data = await connectService.getOnboardingState(req.user.id);
+  res.json({ success: true, data });
+});

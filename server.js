@@ -111,6 +111,46 @@ app.use("/api/dashboard",       require("./routes/dashboard"));
 
 app.get("/", (req, res) => res.json({ status: "ok", message: "Pawffy API is running 🐾" }));
 
+// ─── Stripe Connect onboarding landing pages ─────────────────────────────────
+// Stripe requires http(s) return/refresh URLs. For the Flutter app these pages
+// are opened inside a WebView/Custom Tab; the app detects navigation to these
+// paths, closes the WebView, and calls GET /api/vendor/payouts/status.
+const connectLandingPage = ({ title, heading, message, accent }) => `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${title}</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:#0f172a;color:#e2e8f0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:420px;text-align:center;background:#1e293b;border-radius:20px;padding:40px 28px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .badge{width:72px;height:72px;border-radius:50%;background:${accent};margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:36px}
+  h1{font-size:22px;margin:0 0 10px}p{color:#94a3b8;line-height:1.5;margin:0}
+</style></head>
+<body><div class="card"><div class="badge">🐾</div>
+<h1>${heading}</h1><p>${message}</p></div></body></html>`;
+
+app.get("/vendor/payouts/return", (req, res) => {
+  res.type("html").send(
+    connectLandingPage({
+      title: "Payouts Setup Complete",
+      heading: "You're all set!",
+      message: "Your payout details were submitted. You can now return to the Pawffy app.",
+      accent: "#16a34a",
+    })
+  );
+});
+
+app.get("/vendor/payouts/refresh", (req, res) => {
+  res.type("html").send(
+    connectLandingPage({
+      title: "Resume Payouts Setup",
+      heading: "Let's finish setup",
+      message: "Your onboarding link expired. Please return to the Pawffy app and start payout setup again.",
+      accent: "#d97706",
+    })
+  );
+});
+
 app.use((req, res) => {
   logger.warn({ event: "ROUTE_NOT_FOUND", method: req.method, path: req.path, ip: req.ip });
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });

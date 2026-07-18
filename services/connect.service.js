@@ -90,6 +90,30 @@ async function refreshAccountStatus(userId) {
   };
 }
 
+// Lightweight, DB-only onboarding check (no live Stripe call). Use this to
+// quickly gate UI/actions; use refreshAccountStatus when you need fresh state.
+async function getOnboardingState(userId) {
+  const business = await prisma.partnerBusiness.findUnique({
+    where: { userId },
+    select: {
+      stripeAccountId: true,
+      payoutsEnabled: true,
+      chargesEnabled: true,
+      stripeOnboardedAt: true,
+    },
+  });
+  if (!business) throw new AppError("Create your vendor profile first", 404);
+
+  return {
+    onboarded: Boolean(business.stripeAccountId && business.payoutsEnabled),
+    payoutsEnabled: Boolean(business.payoutsEnabled),
+    chargesEnabled: Boolean(business.chargesEnabled),
+    hasStripeAccount: Boolean(business.stripeAccountId),
+    stripeAccountId: business.stripeAccountId || null,
+    onboardedAt: business.stripeOnboardedAt || null,
+  };
+}
+
 async function syncAccountFromWebhook(account) {
   const business = await prisma.partnerBusiness.findFirst({
     where: { stripeAccountId: account.id },
@@ -238,6 +262,7 @@ async function refundForBooking(bookingId, tx = prisma) {
 module.exports = {
   createOnboardingLink,
   refreshAccountStatus,
+  getOnboardingState,
   syncAccountFromWebhook,
   payoutForBooking,
   refundForBooking,

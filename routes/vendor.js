@@ -14,6 +14,7 @@ const appCtrl = require("../controllers/vendorAppController");
 const businessReviewCtrl = require("../controllers/businessReviewController");
 const adoptionCtrl = require("../controllers/vendorAdoptionController");
 const payoutCtrl = require("../controllers/vendorPayoutController");
+const customerReviewCtrl = require("../controllers/customerReviewController");
 
 const partnerOnly = [verifyToken, requireRole("partner")];
 const adminOnly = [verifyToken, requireRole("admin")];
@@ -25,6 +26,7 @@ router.patch("/status", ...partnerOnly, writeLimiter, validate(v.vendorOnlineSta
 // ─── Payouts (Stripe Connect onboarding) ─────────────────────────────────────
 router.post("/payouts/onboard", ...partnerOnly, writeLimiter, payoutCtrl.onboard);
 router.get("/payouts/status", ...partnerOnly, payoutCtrl.getStatus);
+router.get("/payouts/check", ...partnerOnly, payoutCtrl.checkOnboarded);
 
 router.get("/requests", ...partnerOnly, validate(v.vendorRequestsQuerySchema, "query"), appCtrl.getRequests);
 router.post("/requests/:id/accept", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.acceptRequest);
@@ -82,6 +84,21 @@ router.get("/chats", ...partnerOnly, appCtrl.getChats);
 router.get("/notifications/unread-count", ...partnerOnly, appCtrl.getUnreadNotifications);
 router.get("/reviews", ...partnerOnly, validate(v.businessReviewsQuerySchema, "query"), businessReviewCtrl.getMyVendorReviews);
 router.post("/reviews/:reviewId/reply", ...partnerOnly, writeLimiter, validateUuidParams("reviewId"), validate(v.replyToBusinessReviewSchema), businessReviewCtrl.replyToVendorReview);
+
+// Vendor → customer reviews (after completed booking)
+router.post(
+  "/customer-reviews",
+  ...partnerOnly,
+  writeLimiter,
+  validate(v.createCustomerReviewSchema),
+  customerReviewCtrl.createCustomerReview
+);
+router.get(
+  "/customer-reviews",
+  ...partnerOnly,
+  validate(v.customerReviewsQuerySchema, "query"),
+  customerReviewCtrl.getMyCustomerReviews
+);
 router.get("/preferences/notifications", ...partnerOnly, appCtrl.getNotificationPreferences);
 router.put(
   "/preferences/notifications",

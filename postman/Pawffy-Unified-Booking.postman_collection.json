@@ -1,21 +1,86 @@
 {
   "info": {
     "name": "Pawffy — Unified Booking Flow",
-    "description": "User-side unified booking flow for Pawffy. Every service type (vet, grooming, walking, training, boarding, sitting, transport, poop_scooper) is a PartnerService on a PartnerBusiness, booked as a single PartnerBooking. Flow: Auth → Vendors/Slots → Bookings (pending) → Payments (confirm). Import into Postman; the Session request auto-saves {{token}}. See docs/booking-flow.md.",
+    "description": "User-side unified booking flow for Pawffy. Every service type (vet, grooming, walking, training, boarding, sitting, transport, poop_scooper) is a PartnerService on a PartnerBusiness, booked as a single PartnerBooking. Flow: Auth → Vendors/Slots → Bookings (pending) → Payments (confirm). Import into Postman; the Session request auto-saves {{token}}. See docs/booking-flow.md.\n\n## Stripe Connect note\nCard `create-intent` is blocked until the vendor has `payoutsEnabled`. Vendor must complete `POST /api/vendor/payouts/onboard` first (see Pawffy API — Unified / Vendor collection).\nProduction: https://pawffy-backend-yyed.onrender.com\n\n\n## Reviews\nFolder **⭐ Reviews (Customer ↔ Vendor)**: customer rates vendor + vendor rates customer after completed booking. Set `vendorId` (business UUID) and `bookingId`. Switch `token` between customer and partner JWTs as noted in each step.\n",
     "_postman_id": "pawffy-unified-booking-collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:5001", "type": "string" },
-    { "key": "supabaseAccessToken", "value": "", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "vendorId", "value": "", "type": "string" },
-    { "key": "serviceId", "value": "", "type": "string" },
-    { "key": "petId", "value": "", "type": "string" },
-    { "key": "bookingId", "value": "", "type": "string" },
-    { "key": "paymentIntentId", "value": "", "type": "string" },
-    { "key": "couponCode", "value": "SAVE10", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "supabaseAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "vendorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "petId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentIntentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "couponCode",
+      "value": "SAVE10",
+      "type": "string"
+    },
+    {
+      "key": "productionBaseUrl",
+      "value": "https://pawffy-backend-yyed.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "localBaseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "businessId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "businessReviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerReviewId",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -39,15 +104,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"accessToken\": \"{{supabaseAccessToken}}\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/session",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "session"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "session"
+              ]
             },
             "description": "Exchange a Supabase accessToken for the app JWT. Token is auto-saved to {{token}}."
           }
@@ -56,11 +132,22 @@
           "name": "Get Me",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
             }
           }
         }
@@ -85,8 +172,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -94,8 +187,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/pets",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "pets"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ]
             },
             "description": "Creates a pet and auto-saves {{petId}} for booking."
           }
@@ -104,11 +202,21 @@
           "name": "Get My Pets",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/pets",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "pets"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pets"
+              ]
             }
           }
         }
@@ -124,14 +232,40 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors?serviceType=groomer&city=&isOnline=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors"
+              ],
               "query": [
-                { "key": "serviceType", "value": "groomer", "description": "Optional: vet|groomer|walker|trainer|sitter|boarding|transport|poop_scooper" },
-                { "key": "city", "value": "", "disabled": true },
-                { "key": "latitude", "value": "", "description": "Optional; must be paired with longitude", "disabled": true },
-                { "key": "longitude", "value": "", "disabled": true },
-                { "key": "isOnline", "value": "true", "disabled": true }
+                {
+                  "key": "serviceType",
+                  "value": "groomer",
+                  "description": "Optional: vet|groomer|walker|trainer|sitter|boarding|transport|poop_scooper"
+                },
+                {
+                  "key": "city",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "latitude",
+                  "value": "",
+                  "description": "Optional; must be paired with longitude",
+                  "disabled": true
+                },
+                {
+                  "key": "longitude",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "isOnline",
+                  "value": "true",
+                  "disabled": true
+                }
               ]
             },
             "description": "Public. Browse verified providers. Copy an id into {{vendorId}}."
@@ -158,8 +292,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors/{{vendorId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors", "{{vendorId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}"
+              ]
             },
             "description": "Public. Provider profile + active services. Auto-saves {{vendorId}} and the first {{serviceId}} when present."
           }
@@ -171,12 +311,32 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/slots?date=2026-12-25&serviceId={{serviceId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "vendors", "{{vendorId}}", "slots"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "slots"
+              ],
               "query": [
-                { "key": "date", "value": "2026-12-25", "description": "Required. YYYY-MM-DD" },
-                { "key": "serviceId", "value": "{{serviceId}}", "description": "Optional. Uses the service duration for the slot grid" },
-                { "key": "slotDurationMinutes", "value": "30", "description": "Optional 10-240 (ignored when serviceId given)", "disabled": true }
+                {
+                  "key": "date",
+                  "value": "2026-12-25",
+                  "description": "Required. YYYY-MM-DD"
+                },
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}",
+                  "description": "Optional. Uses the service duration for the slot grid"
+                },
+                {
+                  "key": "slotDurationMinutes",
+                  "value": "30",
+                  "description": "Optional 10-240 (ignored when serviceId given)",
+                  "disabled": true
+                }
               ]
             },
             "description": "Public. Available time slots for the given date."
@@ -203,8 +363,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -212,8 +378,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/bookings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bookings"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
             },
             "description": "Customer only. Creates a PartnerBooking with status=pending. bookingTime accepts HH:MM or HH:MM AM/PM. Auto-saves {{bookingId}}."
           }
@@ -222,13 +393,28 @@
           "name": "Get My Bookings",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/bookings?status=pending",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bookings"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ],
               "query": [
-                { "key": "status", "value": "pending", "description": "Optional: pending|confirmed|completed|cancelled|rejected", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Optional: pending|confirmed|completed|cancelled|rejected",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -237,11 +423,22 @@
           "name": "Get Booking By ID",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bookings", "{{bookingId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}"
+              ]
             },
             "description": "Owner only. Includes business, service, payment, appointmentId, dateTimeFormatted."
           }
@@ -251,8 +448,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -260,10 +463,312 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/bookings/{{bookingId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bookings", "{{bookingId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{bookingId}}",
+                "status"
+              ]
             },
             "description": "Customer (owner) only. Only 'cancelled' is accepted; works when the booking is pending or confirmed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Reviews (Customer ↔ Vendor)",
+      "description": "Two-way reviews after a **completed** booking.\n\n**Variables needed:** `token` (switch customer/partner JWT), `bookingId`, `vendorId` (same as businessId).\n\n### Run order\n1. Complete a booking end-to-end (pay + vendor complete)\n2. Set `token` = **customer** JWT → **STEP 1** Review Vendor\n3. **STEP 2** Public list (no auth needed)\n4. Set `token` = **partner** JWT → **STEP 3** Vendor inbox + **STEP 4** Reply\n5. Still partner JWT → **STEP 5** Review Customer + **STEP 6** List written\n6. Set `token` = **customer** JWT → **STEP 7** Reviews about me\n\nRules: booking `completed`; one review per booking per direction; rating 1–5.\nProduction: `https://pawffy-backend-yyed.onrender.com`",
+      "item": [
+        {
+          "name": "STEP 1 — Customer → Review Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **customer** JWT in `token`. Body needs completed `bookingId`. Also sets `businessId` if you use that var — set `vendorId` = business UUID.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great service, highly recommend!\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('businessReviewId', r.data.id);",
+                  "pm.test('created or already reviewed', () => pm.expect([201,409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "STEP 2 — Public List Vendor Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Public. No auth required.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendors/{{vendorId}}/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendors",
+                "{{vendorId}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 3 — Vendor Inbox (Reviews About Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **partner** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 4 — Vendor Reply to Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **partner** JWT. `businessReviewId` auto-saved from STEP 1.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/reviews/{{businessReviewId}}/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "reviews",
+                "{{businessReviewId}}",
+                "reply"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"replyContent\": \"Thank you for your kind words!\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 5 — Vendor → Review Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Use **partner** JWT. Same completed `bookingId`.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/customer-reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "customer-reviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Friendly customer, pets were well behaved.\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data?.id) pm.collectionVariables.set('customerReviewId', r.data.id);",
+                  "pm.test('created or already reviewed', () => pm.expect([201,409]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "STEP 6 — Vendor List Customer Reviews I Wrote",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **partner** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/vendor/customer-reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vendor",
+                "customer-reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "STEP 7 — Customer Reviews About Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Use **customer** JWT.",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me/reviews?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         }
       ]
@@ -275,11 +780,22 @@
           "name": "Get Config",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/config",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "config"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "config"
+              ]
             },
             "description": "Stripe publishable key, currency, supported payment methods."
           }
@@ -288,13 +804,30 @@
           "name": "Get Price Summary",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/summary/{{bookingId}}?coupon={{couponCode}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "summary", "{{bookingId}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "summary",
+                "{{bookingId}}"
+              ],
               "query": [
-                { "key": "coupon", "value": "{{couponCode}}", "description": "Optional coupon code", "disabled": true }
+                {
+                  "key": "coupon",
+                  "value": "{{couponCode}}",
+                  "description": "Optional coupon code",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -304,8 +837,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -313,8 +852,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/payments/apply-coupon",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "apply-coupon"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "apply-coupon"
+              ]
             }
           }
         },
@@ -336,8 +881,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -345,8 +896,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/payments/create-intent",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "create-intent"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "create-intent"
+              ]
             },
             "description": "paymentMethod: card | net_banking. Returns clientSecret for client-side confirmation. Auto-saves {{paymentIntentId}}."
           }
@@ -356,8 +913,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -365,8 +928,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/payments/confirm",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "confirm"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "confirm"
+              ]
             },
             "description": "Requires WALLET_PAYMENTS_ENABLED=true. Debits wallet, marks payment paid, sets booking confirmed."
           }
@@ -376,8 +945,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -385,8 +960,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/payments/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "verify"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "verify"
+              ]
             },
             "description": "Confirms payment status with Stripe and moves the booking pending → confirmed on success."
           }
@@ -395,11 +976,23 @@
           "name": "Get Payment By Booking",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/booking/{{bookingId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "booking", "{{bookingId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "booking",
+                "{{bookingId}}"
+              ]
             }
           }
         }

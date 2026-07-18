@@ -12,11 +12,13 @@ const {
   getAllUsers, getUserById, deleteUser, changeUserRole,
 } = require("../controllers/userController");
 const addressController = require("../controllers/addressController");
+const customerReviewCtrl = require("../controllers/customerReviewController");
 
 router.get   ("/me",        verifyToken, getProfile);
 router.put   ("/me",        verifyToken, validate(v.updateProfileSchema), updateProfile);
 router.delete("/me",        verifyToken, writeLimiter, validate(v.deleteAccountSchema), deleteMe);
 router.post  ("/me/avatar", verifyToken, uploadLimiter, upload.single("avatar"), uploadAvatar);
+router.get   ("/me/reviews", verifyToken, validate(v.customerReviewsQuerySchema, "query"), customerReviewCtrl.getMyReceivedReviews);
 router.get   ("/me/addresses", verifyToken, addressController.listAddresses);
 router.post  ("/me/addresses", verifyToken, writeLimiter, validate(v.createAddressSchema), addressController.createAddress);
 router.put   ("/me/addresses/:id", verifyToken, writeLimiter, validateUuidParams("id"), validate(v.updateAddressSchema), addressController.updateAddress);
