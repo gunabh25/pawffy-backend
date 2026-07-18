@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
+const logger = require("../utils/logger");
 const messageService = require("./message.service");
 
 const STATUS_LABELS = {
@@ -632,6 +633,15 @@ async function completeRequest(userId, bookingId, data, files = {}) {
     "Service completed",
     `${business.businessName || "Your provider"} completed ${booking.serviceName}.`
   );
+
+  // Pay the vendor now that the service is delivered. Failures must not roll back
+  // completion — the payout stays `pending` and can be retried.
+  try {
+    const connectService = require("./connect.service");
+    await connectService.payoutForBooking(bookingId);
+  } catch (err) {
+    logger.error({ event: "VENDOR_PAYOUT_FAILED", bookingId, error: err.message });
+  }
 
   return serializeBooking(updated);
 }

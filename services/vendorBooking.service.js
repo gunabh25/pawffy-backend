@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const AppError = require("../middleware/errors");
+const logger = require("../utils/logger");
 const { formatDateTime, formatAppointmentId } = require("../utils/formatters");
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -319,6 +320,17 @@ async function cancelBooking(userId, bookingId) {
   if (booking.customerId !== userId) throw new AppError("Access denied", 403);
   if (["completed", "cancelled", "rejected"].includes(booking.status)) {
     throw new AppError(`Cannot cancel a ${booking.status} booking`, 409);
+  }
+
+  // Refund a paid booking (payout only happens on completion, so nothing has been
+  // sent to the vendor yet). Refund failure is logged but does not block cancellation.
+  if (booking.status === "confirmed") {
+    try {
+      const connectService = require("./connect.service");
+      await connectService.refundForBooking(bookingId);
+    } catch (err) {
+      logger.error({ event: "BOOKING_REFUND_FAILED", bookingId, error: err.message });
+    }
   }
 
   return prisma.partnerBooking.update({

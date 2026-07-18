@@ -13,6 +13,7 @@ const ctrl = require("../controllers/vendorOnboardingController");
 const appCtrl = require("../controllers/vendorAppController");
 const businessReviewCtrl = require("../controllers/businessReviewController");
 const adoptionCtrl = require("../controllers/vendorAdoptionController");
+const payoutCtrl = require("../controllers/vendorPayoutController");
 
 const partnerOnly = [verifyToken, requireRole("partner")];
 const adminOnly = [verifyToken, requireRole("admin")];
@@ -20,6 +21,10 @@ const adminOnly = [verifyToken, requireRole("admin")];
 // ─── Main app screens (Home, Requests, Calendar, Profile, Chats) ─────────────
 router.get("/home", ...partnerOnly, appCtrl.getHome);
 router.patch("/status", ...partnerOnly, writeLimiter, validate(v.vendorOnlineStatusSchema), appCtrl.setOnlineStatus);
+
+// ─── Payouts (Stripe Connect onboarding) ─────────────────────────────────────
+router.post("/payouts/onboard", ...partnerOnly, writeLimiter, payoutCtrl.onboard);
+router.get("/payouts/status", ...partnerOnly, payoutCtrl.getStatus);
 
 router.get("/requests", ...partnerOnly, validate(v.vendorRequestsQuerySchema, "query"), appCtrl.getRequests);
 router.post("/requests/:id/accept", ...partnerOnly, writeLimiter, validateUuidParams("id"), appCtrl.acceptRequest);

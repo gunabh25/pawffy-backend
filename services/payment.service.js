@@ -20,7 +20,7 @@ async function redeemCouponIfNeeded(tx, couponCode) {
   });
 }
 
-async function finalizeBookingPayment(bookingId, transactionId) {
+async function finalizeBookingPayment(bookingId, transactionId, chargeId = null) {
   return prisma.$transaction(async (tx) => {
     const payment = await tx.payment.findFirst({
       where: { bookingId, transactionId },
@@ -29,7 +29,11 @@ async function finalizeBookingPayment(bookingId, transactionId) {
 
     await tx.payment.update({
       where: { id: payment.id },
-      data: { paymentStatus: "paid", paidAt: new Date() },
+      data: {
+        paymentStatus: "paid",
+        paidAt: new Date(),
+        ...(chargeId ? { chargeId } : {}),
+      },
     });
 
     await redeemCouponIfNeeded(tx, payment.couponCode);
@@ -140,13 +144,21 @@ async function applyCoupon(userId, bookingId, code) {
 }
 
 async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCode }) {
-  const booking = await getBookingForUser(userId, bookingId, { payment: true });
+  const booking = await getBookingForUser(userId, bookingId, {
+    payment: true,
+    business: { select: { payoutsEnabled: true, stripeAccountId: true } },
+  });
 
   if (booking.payment?.paymentStatus === "paid") {
     throw new AppError("This booking has already been paid", 409);
   }
 
+  if (!booking.business?.payoutsEnabled) {
+    throw new AppError("Vendor is not set up to receive payments yet", 409);
+  }
+
   const summary = await buildPriceSummary(booking, couponCode);
+  const vendorAmount = parseFloat((summary.subtotal - summary.discount).toFixed(2));
   const currency = getStripeCurrency();
   const amountMinor = Math.round(summary.total * 100);
   const stripe = getStripe();
@@ -155,6 +167,7 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
     amount: amountMinor,
     currency,
     payment_method_types: paymentMethod === "net_banking" ? ["netbanking"] : ["card"],
+    transfer_group: bookingId,
     metadata: {
       type: "booking",
       bookingId,
@@ -174,6 +187,7 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
       discount: summary.discount,
       couponCode: couponCode || null,
       amount: summary.total,
+      vendorAmount,
       pawPoints: summary.pawPoints,
       paymentMethod,
       paymentStatus: "pending",
@@ -187,6 +201,7 @@ async function createPaymentIntent(userId, { bookingId, paymentMethod, couponCod
       discount: summary.discount,
       couponCode: couponCode || null,
       amount: summary.total,
+      vendorAmount,
       pawPoints: summary.pawPoints,
       paymentMethod,
       paymentStatus: "pending",
@@ -226,6 +241,7 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
   }
 
   const summary = await buildPriceSummary(booking, couponCode);
+  const vendorAmount = parseFloat((summary.subtotal - summary.discount).toFixed(2));
 
   const result = await prisma.$transaction(async (tx) => {
     if (summary.appliedCoupon) {
@@ -255,6 +271,7 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
         discount: summary.discount,
         couponCode: couponCode || null,
         amount: summary.total,
+        vendorAmount,
         pawPoints: summary.pawPoints,
         paymentMethod: "wallet",
         paymentStatus: "paid",
@@ -268,6 +285,7 @@ async function confirmWalletPayment(userId, { bookingId, couponCode }) {
         discount: summary.discount,
         couponCode: couponCode || null,
         amount: summary.total,
+        vendorAmount,
         pawPoints: summary.pawPoints,
         paymentMethod: "wallet",
         paymentStatus: "paid",
@@ -325,7 +343,8 @@ async function verifyPayment(userId, paymentIntentId) {
   if (payment.booking.customerId !== userId) throw new AppError("Access denied", 403);
 
   if (intent.status === "succeeded" && payment.paymentStatus !== "paid") {
-    await finalizeBookingPayment(payment.bookingId, paymentIntentId);
+    const chargeId = typeof intent.latest_charge === "string" ? intent.latest_charge : intent.latest_charge?.id;
+    await finalizeBookingPayment(payment.bookingId, paymentIntentId, chargeId);
     payment.paymentStatus = "paid";
     const refreshed = await prisma.partnerBooking.findUnique({ where: { id: payment.bookingId }, select: { status: true } });
     if (refreshed) payment.booking.status = refreshed.status;
@@ -391,7 +410,8 @@ async function handleStripeWebhook(rawBody, signature) {
         Number(metadata.amount)
       );
     } else if (metadata.bookingId) {
-      await finalizeBookingPayment(metadata.bookingId, intent.id);
+      const chargeId = typeof intent.latest_charge === "string" ? intent.latest_charge : intent.latest_charge?.id;
+      await finalizeBookingPayment(metadata.bookingId, intent.id, chargeId);
     }
   }
 
@@ -401,6 +421,11 @@ async function handleStripeWebhook(rawBody, signature) {
       where: { transactionId: intent.id },
       data: { paymentStatus: "failed" },
     });
+  }
+
+  if (event.type === "account.updated") {
+    const connectService = require("./connect.service");
+    await connectService.syncAccountFromWebhook(event.data.object);
   }
 
   return { received: true };

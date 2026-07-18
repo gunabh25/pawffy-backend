@@ -32,6 +32,14 @@ enum PaymentStatus {
   refunded
 }
 
+enum PayoutStatus {
+  pending
+  processing
+  paid
+  reversed
+  failed
+}
+
 enum NotificationType {
   booking
   payment
@@ -314,6 +322,14 @@ model Payment {
   paymentMethod String?       @map("payment_method")
   paymentStatus PaymentStatus @default(pending) @map("payment_status")
   transactionId String?       @map("transaction_id")
+  chargeId      String?       @map("charge_id")
+  vendorAmount  Decimal?      @map("vendor_amount") @db.Decimal(10, 2)
+  payoutStatus  PayoutStatus  @default(pending) @map("payout_status")
+  payoutMethod  String?       @map("payout_method")
+  transferId    String?       @map("transfer_id")
+  paidOutAt     DateTime?     @map("paid_out_at")
+  refundId      String?       @map("refund_id")
+  refundedAt    DateTime?     @map("refunded_at")
   paidAt        DateTime?     @map("paid_at")
   createdAt     DateTime      @default(now()) @map("created_at")
 
@@ -454,6 +470,10 @@ model PartnerBusiness {
   verifiedAt          DateTime?          @map("verified_at")
   membershipPlan      String             @default("free") @map("membership_plan")
   membershipExpiresAt DateTime?          @map("membership_expires_at")
+  stripeAccountId     String?            @map("stripe_account_id")
+  payoutsEnabled      Boolean            @default(false) @map("payouts_enabled")
+  chargesEnabled      Boolean            @default(false) @map("charges_enabled")
+  stripeOnboardedAt   DateTime?          @map("stripe_onboarded_at")
   rating              Decimal?           @db.Decimal(3, 2)
   reviewCount         Int                @default(0) @map("review_count")
   pushRequests        Boolean            @default(true) @map("push_requests")
