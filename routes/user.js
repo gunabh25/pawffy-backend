@@ -26,7 +26,7 @@ router.patch ("/me/addresses/:id/default", verifyToken, writeLimiter, validateUu
 router.delete("/me/addresses/:id", verifyToken, writeLimiter, validateUuidParams("id"), addressController.deleteAddress);
 router.get   ("/",          verifyToken, requireRole("admin"), getAllUsers);
 router.get   ("/:id",       verifyToken, validateUuidParams("id"), requireSelfOrAdmin("id"), getUserById);
-router.patch ("/:id/role",  verifyToken, requireRole("admin"), validateUuidParams("id"), changeUserRole);
+router.patch ("/:id/role",  verifyToken, requireRole("admin"), validateUuidParams("id"), validate(v.changeUserRoleSchema), changeUserRole);
 router.delete("/:id",       verifyToken, requireRole("admin"), validateUuidParams("id"), deleteUser);
 
 module.exports = router;

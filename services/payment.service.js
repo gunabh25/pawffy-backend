@@ -391,6 +391,10 @@ async function handleStripeWebhook(rawBody, signature) {
     throw new AppError("Missing Stripe signature", 400);
   }
 
+  if (!Buffer.isBuffer(rawBody)) {
+    throw new AppError("Invalid webhook payload: raw body required", 400);
+  }
+
   const stripe = getStripe();
   const event = stripe.webhooks.constructEvent(
     rawBody,
@@ -404,10 +408,15 @@ async function handleStripeWebhook(rawBody, signature) {
 
     if (metadata.type === "wallet_top_up" && metadata.userId) {
       const walletService = require("./wallet.service");
+      const amount = walletService.amountFromStripeIntent(intent);
+      const metaAmount = Number(metadata.amount);
+      if (Number.isFinite(metaAmount) && Math.abs(metaAmount - amount) > 0.001) {
+        throw new AppError("Payment amount mismatch", 400);
+      }
       await walletService.creditFromStripePayment(
         metadata.userId,
         intent.id,
-        Number(metadata.amount)
+        amount
       );
     } else if (metadata.bookingId) {
       const chargeId = typeof intent.latest_charge === "string" ? intent.latest_charge : intent.latest_charge?.id;

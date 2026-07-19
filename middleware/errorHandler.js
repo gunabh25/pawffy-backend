@@ -32,7 +32,11 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({ success: false, message: "File too large. Maximum size is 2MB." });
   }
-  if (err.message?.includes("Only JPEG")) {
+  if (
+    err.message?.includes("Only JPEG")
+    || err.message?.includes("type is not allowed")
+    || err.message?.includes("could not be verified")
+  ) {
     return res.status(415).json({ success: false, message: err.message });
   }
 

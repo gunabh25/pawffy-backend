@@ -11,6 +11,7 @@ const {
   getPaymentByBooking, handleWebhook,
 } = require("../controllers/paymentController");
 
+// Body is a Buffer from express.raw() mounted in server.js before json parser
 router.post("/webhook", (req, res, next) => {
   req.rawBody = req.body;
   next();

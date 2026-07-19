@@ -95,7 +95,17 @@ async function debitWallet(userId, { amount, type, description, referenceId }, t
   return { balance: Number(updated.balance), transaction: formatTransaction(transaction) };
 }
 
+/**
+ * Dev-only free credit. Never available in production.
+ * Real top-ups must go through createTopUpIntent + verifyTopUp / Stripe webhook.
+ */
 async function topUp(userId, { amount }) {
+  if (process.env.NODE_ENV === "production") {
+    throw new AppError("Direct wallet top-up is disabled. Use Stripe top-up intent.", 403);
+  }
+  if (process.env.WALLET_DEV_TOPUP_ENABLED !== "true") {
+    throw new AppError("Direct wallet top-up is disabled. Set WALLET_DEV_TOPUP_ENABLED=true for local testing.", 403);
+  }
   if (process.env.WALLET_PAYMENTS_ENABLED !== "true") {
     throw new AppError("Wallet is not enabled", 503);
   }
@@ -108,8 +118,17 @@ async function topUp(userId, { amount }) {
   return creditWallet(userId, {
     amount: value,
     type: "top_up",
-    description: "Wallet top-up",
+    description: "Wallet top-up (dev)",
   });
+}
+
+/** Convert Stripe amount (minor units) to major currency units. */
+function amountFromStripeIntent(intent) {
+  const minor = Number(intent?.amount);
+  if (!Number.isFinite(minor) || minor <= 0) {
+    throw new AppError("Invalid Stripe payment amount", 400);
+  }
+  return minor / 100;
 }
 
 async function creditFromStripePayment(userId, paymentIntentId, amount) {
@@ -188,7 +207,12 @@ async function verifyTopUp(userId, paymentIntentId) {
   }
 
   if (intent.status === "succeeded") {
-    await creditFromStripePayment(userId, paymentIntentId, Number(intent.metadata.amount));
+    const amount = amountFromStripeIntent(intent);
+    const metaAmount = Number(intent.metadata?.amount);
+    if (Number.isFinite(metaAmount) && Math.abs(metaAmount - amount) > 0.001) {
+      throw new AppError("Payment amount mismatch", 400);
+    }
+    await creditFromStripePayment(userId, paymentIntentId, amount);
   }
 
   const wallet = await getWallet(userId, { limit: 5 });
@@ -226,4 +250,5 @@ module.exports = {
   createTopUpIntent,
   verifyTopUp,
   creditFromStripePayment,
+  amountFromStripeIntent,
 };

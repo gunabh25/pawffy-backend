@@ -35,6 +35,10 @@ exports.deleteAccountSchema = Joi.object({
   }),
 });
 
+exports.changeUserRoleSchema = Joi.object({
+  role: Joi.string().valid("customer", "admin", "partner", "vet").required(),
+});
+
 exports.createAddressSchema = Joi.object({
   label:     Joi.string().max(50).optional().allow("", null),
   address:   Joi.string().min(3).max(500).required(),

@@ -2,11 +2,11 @@ const prisma = require("../config/prisma");
 const asyncHandler = require("../middleware/asyncHandler");
 const AppError = require("../middleware/errors");
 const { assertOwnerOrAdmin } = require("../utils/petAccess");
+const { sanitizeUser } = require("../utils/auth");
 const accountService = require("../services/account.service");
 
 exports.getProfile = asyncHandler(async (req, res) => {
-  const { passwordHash, ...user } = req.user;
-  res.json({ success: true, data: user });
+  res.json({ success: true, data: sanitizeUser(req.user) });
 });
 
 exports.updateProfile = asyncHandler(async (req, res) => {
@@ -98,21 +98,20 @@ exports.deleteUser = asyncHandler(async (req, res) => {
 
 exports.changeUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
-  const validRoles = ["customer", "admin", "partner", "vet"];
 
-  if (!role || !validRoles.includes(role)) {
-    return res.status(400).json({
-      success: false,
-      message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
-    });
+  if (role === "admin" && process.env.ALLOW_ADMIN_PROMOTION !== "true") {
+    throw new AppError("Admin promotion is disabled. Set ALLOW_ADMIN_PROMOTION=true to allow.", 403);
   }
 
   const target = await prisma.user.findUnique({ where: { id: req.params.id } });
-  if (!target) return res.status(404).json({ success: false, message: "User not found" });
+  if (!target) throw new AppError("User not found", 404);
 
   const updated = await prisma.user.update({
     where: { id: req.params.id },
-    data: { role },
+    data: {
+      role,
+      tokenVersion: { increment: 1 },
+    },
     select: { id: true, name: true, email: true, role: true },
   });
 

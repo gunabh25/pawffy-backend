@@ -61,16 +61,19 @@ app.use(
 );
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
+const isProd = process.env.NODE_ENV === "production";
 const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:8080",
+  ...(isProd ? [] : ["http://localhost:3000", "http://localhost:8080"]),
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      // No Origin = mobile apps / server-to-server (allowed).
+      // Browser requests must match the allowlist.
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
       cb(new AppError("Not allowed by CORS", 403));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -79,14 +82,21 @@ app.use(
   })
 );
 
-// ─── Stripe webhook — raw body BEFORE json parser ─────────────────────────────
+// ─── Stripe webhook — raw Buffer body BEFORE json parser (signature verify) ───
 app.use("/api/payments/webhook", express.raw({ type: "application/json", limit: "1mb" }));
 
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+// JSON capped at 1mb (matches Joi max for base64 image fields); binary uploads use multer
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.use(hpp());
-app.use(sanitize);
+// Skip XSS sanitize for Stripe webhook raw Buffer body
+app.use((req, res, next) => {
+  if (req.path === "/api/payments/webhook" || req.originalUrl?.startsWith("/api/payments/webhook")) {
+    return next();
+  }
+  return sanitize(req, res, next);
+});
 app.use("/api", generalLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────

@@ -18,14 +18,17 @@ function validateEnv() {
     console.warn(`Warning: ${message}`);
   }
 
-  if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
-    console.warn("Warning: FRONTEND_URL is not set — CORS will only allow localhost origins");
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (isProd && !process.env.FRONTEND_URL) {
+    console.error("FRONTEND_URL is required in production for CORS");
+    process.exit(1);
   }
 
   const supabaseUrlMissing = !process.env.SUPABASE_URL;
   const supabaseKeyMissing = !process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SECRET_KEY;
 
-  if (process.env.NODE_ENV === "production" && (supabaseUrlMissing || supabaseKeyMissing)) {
+  if (isProd && (supabaseUrlMissing || supabaseKeyMissing)) {
     console.error("SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) are required in production");
     process.exit(1);
   }
@@ -40,15 +43,23 @@ function validateEnv() {
     );
   }
 
-  if (process.env.NODE_ENV === "production") {
+  const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY) || process.env.WALLET_PAYMENTS_ENABLED === "true";
+
+  if (isProd && stripeEnabled) {
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error("STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required when payments are enabled in production");
+      process.exit(1);
+    }
+  } else if (isProd) {
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
       console.warn("Warning: STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET should be set in production");
     }
-    if (!process.env.STRIPE_PUBLISHABLE_KEY) {
-      console.warn("Warning: STRIPE_PUBLISHABLE_KEY is not set — mobile Stripe SDK cannot initialize");
-    }
   } else if (!process.env.STRIPE_SECRET_KEY) {
     console.warn("Warning: STRIPE_SECRET_KEY not set — card/net banking payments disabled");
+  }
+
+  if (isProd && process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_PUBLISHABLE_KEY) {
+    console.warn("Warning: STRIPE_PUBLISHABLE_KEY is not set — mobile Stripe SDK cannot initialize");
   }
 }
 
