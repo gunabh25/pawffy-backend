@@ -20,9 +20,9 @@ function validateEnv() {
 
   const isProd = process.env.NODE_ENV === "production";
 
+  // Optional — mobile clients send no Origin. Set only if you add a web admin/app later.
   if (isProd && !process.env.FRONTEND_URL) {
-    console.error("FRONTEND_URL is required in production for CORS");
-    process.exit(1);
+    console.warn("Warning: FRONTEND_URL not set — browser origins will be denied by CORS (mobile apps are fine)");
   }
 
   const supabaseUrlMissing = !process.env.SUPABASE_URL;
